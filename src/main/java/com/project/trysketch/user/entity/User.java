@@ -2,10 +2,9 @@ package com.project.trysketch.user.entity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import javax.persistence.*;
 
-// 1. 기능   : JWT 로직
+// 1. 기능   : 유저 구성요소
 // 2. 작성자 : 서혁수
 @Entity
 @Table(name = "USERS")
@@ -25,14 +24,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    @Enumerated(value = EnumType.STRING)
-    private UserRoleEnum role;
-
-    public User(String email, String nickname, String password, UserRoleEnum role) {
+    public User(String email, String nickname, String password) {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
-        this.role = role;
     }
 }

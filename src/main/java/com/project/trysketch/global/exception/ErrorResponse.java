@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 
+// 1. 기능    : 통합 에러 메세지 생성자
+// 2. 작성자  : 안은솔
 @Getter
 @Builder
 public class ErrorResponse {

@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
+// 1. 기능    : Global 메시지 종류
+// 2. 작성자  : 안은솔
 @Getter
 @AllArgsConstructor
 public enum StatusMsgCode {

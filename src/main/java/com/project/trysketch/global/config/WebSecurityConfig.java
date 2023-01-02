@@ -38,8 +38,8 @@ public class WebSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         // 모든 static 리소스 접근 허가
         return (web -> web.ignoring().requestMatchers(PathRequest
-//                        .toStaticResources().atCommonLocations()));
-                .toH2Console()));     // h2 사용시 이것을 사용
+                        .toStaticResources().atCommonLocations()));
+//                .toH2Console()));     // h2 사용시 이것을 사용
     }
 
     @Bean

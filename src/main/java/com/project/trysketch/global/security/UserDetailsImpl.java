@@ -5,7 +5,6 @@ import com.project.trysketch.user.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.Collection;
 
 // 1. 기능   : 인증 객체

@@ -1,18 +1,18 @@
 package com.project.trysketch.user.controller;
 
 import com.project.trysketch.global.dto.ResponseMsgDto;
-import com.project.trysketch.global.security.UserDetailsImpl;
-import com.project.trysketch.user.dto.SigninRequestDto;
+import com.project.trysketch.user.dto.SignInRequestDto;
 import com.project.trysketch.user.dto.SignUpRequestDto;
 import com.project.trysketch.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+// 1. 기능    : 유저 컨트롤러
+// 2. 작성자  : 서혁수
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
@@ -29,7 +29,7 @@ public class UserController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<ResponseMsgDto> login(@RequestBody SigninRequestDto dto, HttpServletResponse response) {
+    public ResponseEntity<ResponseMsgDto> login(@RequestBody SignInRequestDto dto, HttpServletResponse response) {
         userService.login(dto, response);
         return ResponseEntity.ok(new ResponseMsgDto(HttpStatus.OK.value(), "로그인 성공!"));
     }
@@ -47,16 +47,16 @@ public class UserController {
     }
 
     // 토큰 재발행
-    @GetMapping("/issue/token")
+/*    @GetMapping("/issue/token")
     public ResponseEntity<?> issuedToken(@AuthenticationPrincipal UserDetailsImpl userDetails, HttpServletResponse response) {
         return userService.issuedToken(userDetails.getUser().getEmail(), userDetails.getUser().getNickname(), response);
-    }
+    }*/
 
     // 로그아웃
-    @PostMapping("/sign-out")
+/*    @PostMapping("/sign-out")
     public ResponseEntity<?> signOut(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         return userService.signOut(userDetails.getUser().getNickname());
-    }
+    }*/
 
 }
 

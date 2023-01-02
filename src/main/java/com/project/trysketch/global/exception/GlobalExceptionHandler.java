@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import static com.project.trysketch.global.exception.StatusMsgCode.BAD_ID_PASSWORD;
 import static com.project.trysketch.global.exception.StatusMsgCode.DUPLICATE_RESOURCE;
 
+// 1. 기능    : Global 예외처리 핸들러
+// 2. 작성자  : 안은솔
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
