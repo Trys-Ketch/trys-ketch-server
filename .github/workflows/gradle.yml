@@ -13,8 +13,14 @@ on:
   pull_request:
     branches: [ "develop" ]
 
-permissions:
-  contents: read
+# permissions:
+#   contents: read
+
+env:
+  PROJECT_NAME: trysketch
+  BUCKET_NAME: my-ec2-actions
+  CODE_DEPLOY_APP_NAME: codeDeploy
+  DEPLOYMENT_GROUP_NAME: my-codeDeploy
 
 jobs:
   build:
