@@ -1,6 +1,6 @@
 package com.project.trysketch.user.service;
 
-import com.project.trysketch.global.dto.ResponseMsgDto;
+import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
@@ -61,20 +61,20 @@ public class UserService {
     }
 
     // 중복 이메일 체크
-    public ResponseEntity<ResponseMsgDto> dupCheckEmail(SignUpRequestDto dto) {
+    public ResponseEntity<MsgResponseDto> dupCheckEmail(SignUpRequestDto dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            return ResponseEntity.badRequest().body(new ResponseMsgDto(HttpStatus.BAD_REQUEST.value(), "중복 이메일 존재"));
+            return ResponseEntity.badRequest().body(new MsgResponseDto(HttpStatus.BAD_REQUEST.value(), "중복 이메일 존재"));
         } else {
-            return ResponseEntity.ok(new ResponseMsgDto(HttpStatus.OK.value(), "사용 가능한 이메일입니다."));
+            return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "사용 가능한 이메일입니다."));
         }
     }
 
     // 중복 닉네임 체크
-    public ResponseEntity<ResponseMsgDto> dupCheckNick(SignUpRequestDto dto) {
+    public ResponseEntity<MsgResponseDto> dupCheckNick(SignUpRequestDto dto) {
         if (userRepository.existsByNickname(dto.getNickname())) {
-            return ResponseEntity.badRequest().body(new ResponseMsgDto(HttpStatus.BAD_REQUEST.value(), "중복 닉네임 존재"));
+            return ResponseEntity.badRequest().body(new MsgResponseDto(HttpStatus.BAD_REQUEST.value(), "중복 닉네임 존재"));
         } else {
-            return ResponseEntity.ok(new ResponseMsgDto(HttpStatus.OK.value(), "사용 가능한 닉네임입니다."));
+            return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "사용 가능한 닉네임입니다."));
         }
     }
 
