@@ -1,7 +1,7 @@
 package com.project.trysketch.user.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.project.trysketch.global.dto.ResponseMsgDto;
+import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.SignInRequestDto;
@@ -29,42 +29,42 @@ public class UserController {
 
     // 회원가입
     @PostMapping("/sign-up")
-    public ResponseEntity<ResponseMsgDto> signup(@RequestBody SignUpRequestDto requestDto) {
+    public ResponseEntity<MsgResponseDto> signup(@RequestBody SignUpRequestDto requestDto) {
         userService.signUp(requestDto);
-        return ResponseEntity.ok(new ResponseMsgDto(HttpStatus.OK.value(), "회원가입 성공!"));
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "회원가입 성공!"));
     }
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<ResponseMsgDto> login(@RequestBody SignInRequestDto dto, HttpServletResponse response) {
+    public ResponseEntity<MsgResponseDto> login(@RequestBody SignInRequestDto dto, HttpServletResponse response) {
         userService.login(dto, response);
-        return ResponseEntity.ok(new ResponseMsgDto(HttpStatus.OK.value(), "로그인 성공!"));
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "로그인 성공!"));
     }
 
     // 이메일 중복 확인
     @PostMapping("/email-check")
-    public ResponseEntity<ResponseMsgDto> emailCheck(@RequestBody @Valid SignUpRequestDto requestDto) {
+    public ResponseEntity<MsgResponseDto> emailCheck(@RequestBody @Valid SignUpRequestDto requestDto) {
         return userService.dupCheckEmail(requestDto);
     }
 
     // 닉네임 중복 확인
     @PostMapping("/nick-check")
-    public ResponseEntity<ResponseMsgDto> nickCheck(@RequestBody SignUpRequestDto requestDto) {
+    public ResponseEntity<MsgResponseDto> nickCheck(@RequestBody SignUpRequestDto requestDto) {
         return userService.dupCheckNick(requestDto);
     }
 
     // OAuth2.0 카카오톡 로그인
     @GetMapping("/kakao/callback")
-    public ResponseEntity<ResponseMsgDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+    public ResponseEntity<MsgResponseDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         // code: 카카오 서버로부터 받은 인가 코드
         String createToken = kakaoService.kakaoLogin(code, response);
 
         // Cookie 생성 및 직접 브라우저에 Set
-        Cookie cookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, createToken.substring(7));      //앞부분이 키값, 뒷부분이 value값
+        Cookie cookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, createToken.substring(7));
         cookie.setPath("/");
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(new ResponseMsgDto(StatusMsgCode.LOG_IN));
+        return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
     }
 
     // 토큰 재발행

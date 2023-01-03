@@ -8,20 +8,20 @@ import lombok.NoArgsConstructor;
 // 2. 작성자  : 안은솔, 황미경
 @Getter
 @NoArgsConstructor
-public class ResponseMsgDto {
+public class MsgResponseDto {
 
     private int statusCode;
     private String message;
 
-    public ResponseMsgDto(int statusCode) {
+    public MsgResponseDto(int statusCode) {
         this.statusCode = statusCode;
     }
-    public ResponseMsgDto(int statusCode, String message) {
+    public MsgResponseDto(int statusCode, String message) {
         this.statusCode = statusCode;
         this.message = message;
     }
 
-    public ResponseMsgDto(StatusMsgCode statusMsgCode){
+    public MsgResponseDto(StatusMsgCode statusMsgCode){
         this.statusCode = statusMsgCode.getHttpStatus().value();
         this.message = statusMsgCode.getDetail();
     }

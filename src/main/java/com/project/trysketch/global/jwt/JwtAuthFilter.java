@@ -1,7 +1,7 @@
 package com.project.trysketch.global.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.trysketch.global.dto.ResponseMsgDto;
+import com.project.trysketch.global.dto.MsgResponseDto;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         response.setStatus(statusCode);
         response.setContentType("application/json");
         try {
-            String json = new ObjectMapper().writeValueAsString(new ResponseMsgDto(statusCode, msg));
+            String json = new ObjectMapper().writeValueAsString(new MsgResponseDto(statusCode, msg));
             response.getWriter().write(json);
         } catch (Exception e) {
             log.error(e.getMessage());
