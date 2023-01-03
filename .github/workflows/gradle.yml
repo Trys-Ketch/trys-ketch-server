@@ -13,19 +13,15 @@ on:
   pull_request:
     branches: [ "develop" ]
 
-# permissions:
-#   contents: read
-
 env:
-  PROJECT_NAME: trysketch
-  BUCKET_NAME: my-ec2-actions
-  CODE_DEPLOY_APP_NAME: codeDeploy
-  DEPLOYMENT_GROUP_NAME: my-codeDeploy
+  PROJECT_NAME: trysketch                  # 프로젝트 이름은 직접 정하면 됩니다
+  BUCKET_NAME: my-ec2-actions              # aws S3 버킷이름
+  CODE_DEPLOY_APP_NAME: codeDeploy         # aws codedeploy 애플리케이션 이름
+  DEPLOYMENT_GROUP_NAME: my-codeDeploy     # aws codedeploy 배포 그룹 이름
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest                 # ubuntu 가장 최신버전으로 사용
 
     steps:
     - uses: actions/checkout@v3
@@ -38,39 +34,34 @@ jobs:
     
     
     - name: make application-aws.properties
-      if: true # branch가 develop일 때
+      if: true                              # branch가 develop일 때
       run: |
-        cd ./src/main/resources
-        touch ./application-key.yml
+        cd ./src/main/resources             
+        touch ./application-key.yml         
         echo "${{ secrets.PROPERTIES }}" > ./application.properties
       shell: bash
         
     - name: Grant execute permission for gradlew
       run: chmod +x ./gradlew
       shell: bash        
-      
-#     - name: Build with Gradle
-#       uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
-#       with:
-#         arguments: build
 
-    - name: Build with Gradle
+    - name: Build with Gradle               # gradle 프로젝트 빌드
       run: ./gradlew clean build
       shell: bash             
       
-    - name: Make Zip File
-      run: zip -qq -r ./$GITHUB_SHA.zip .
+    - name: Make Zip File                   # 빌드파일을 압축하여 zip 파일 생성
+      run: zip -qq -r ./$GITHUB_SHA.zip .   
       shell: bash
         
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials                  # aws 인증
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}                  # github-settings-secrets-actions-Repository secrets에 등록
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
         
-    - name: Upload to S3
+    - name: Upload to S3                  # aws s3에 생성된 zip 파일 업로드
       run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://$BUCKET_NAME/$PROJECT_NAME/$GITHUB_SHA.zip
 
-    - name: Code Deploy
+    - name: Code Deploy                  # aws s3에 업로드 된 zip 파일을 aws codedeploy가 ec2에 배포 명령
       run: aws deploy create-deployment --application-name $CODE_DEPLOY_APP_NAME --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name $DEPLOYMENT_GROUP_NAME --s3-location bucket=$BUCKET_NAME,bundleType=zip,key=$PROJECT_NAME/$GITHUB_SHA.zip
