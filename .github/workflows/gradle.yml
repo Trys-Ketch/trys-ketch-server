@@ -35,7 +35,7 @@ jobs:
       if: true # branch가 develop일 때
       run: |
         cd ./src/main/resources
-        touch ./application-key.yml
+        touch ./application-key.properties
         echo "${{ secrets.PROPERTIES }}" > ./application.properties
       shell: bash
         
