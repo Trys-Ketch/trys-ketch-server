@@ -1,24 +1,31 @@
 package com.project.trysketch.user.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.ResponseMsgDto;
+import com.project.trysketch.global.exception.StatusMsgCode;
+import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.SignInRequestDto;
 import com.project.trysketch.user.dto.SignUpRequestDto;
+import com.project.trysketch.user.service.KakaoService;
 import com.project.trysketch.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 // 1. 기능    : 유저 컨트롤러
-// 2. 작성자  : 서혁수
+// 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+    private final KakaoService kakaoService;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -44,6 +51,20 @@ public class UserController {
     @PostMapping("/nick-check")
     public ResponseEntity<ResponseMsgDto> nickCheck(@RequestBody SignUpRequestDto requestDto) {
         return userService.dupCheckNick(requestDto);
+    }
+
+    // OAuth2.0 카카오톡 로그인
+    @GetMapping("/kakao/callback")
+    public ResponseEntity<ResponseMsgDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        // code: 카카오 서버로부터 받은 인가 코드
+        String createToken = kakaoService.kakaoLogin(code, response);
+
+        // Cookie 생성 및 직접 브라우저에 Set
+        Cookie cookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, createToken.substring(7));      //앞부분이 키값, 뒷부분이 value값
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new ResponseMsgDto(StatusMsgCode.LOG_IN));
     }
 
     // 토큰 재발행
