@@ -31,8 +31,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // H2, MySQL
-    runtimeOnly 'com.h2database:h2'
+    // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // Spring Security
