@@ -7,9 +7,7 @@ import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.KakaoUserRequstDto;
 import com.project.trysketch.user.entity.User;
 import com.project.trysketch.user.repository.UserRepository;
-import io.jsonwebtoken.Jwt;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,8 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
 import javax.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
 
 // 1. 기능    : OAuth2.0 카카오 비즈니스 로직
@@ -37,10 +36,10 @@ public class KakaoService {
 
     public String kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 "액세스 토큰" 요청
-        String accessToken = getToken(code);                              // 포스트맨 확인위해 주석처리 해둠.
+        String accessToken = getToken(code);                                        // 포스트맨 확인위해 주석처리 해둠.
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken);            // 포스트맨 확인위해 accessToken에서 code로 바꿔둠
+        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken);           // 포스트맨 확인위해 accessToken에서 code로 바꿔둠
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);

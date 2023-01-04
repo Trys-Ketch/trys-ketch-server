@@ -13,7 +13,6 @@ import org.json.simple.parser.ParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -77,18 +76,6 @@ public class UserController {
 
         return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
     }
-
-    // 토큰 재발행
-/*    @GetMapping("/issue/token")
-    public ResponseEntity<?> issuedToken(@AuthenticationPrincipal UserDetailsImpl userDetails, HttpServletResponse response) {
-        return userService.issuedToken(userDetails.getUser().getEmail(), userDetails.getUser().getNickname(), response);
-    }*/
-
-    // 로그아웃
-/*    @PostMapping("/sign-out")
-    public ResponseEntity<?> signOut(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return userService.signOut(userDetails.getUser().getNickname());
-    }*/
 
 }
 
