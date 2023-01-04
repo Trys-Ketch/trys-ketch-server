@@ -53,7 +53,7 @@ public class WebSecurityConfig {
         http.httpBasic().disable()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET).permitAll()
-                .antMatchers("/api/users/**").permitAll()
+                .antMatchers("/api/users/**" , "/api/**").permitAll()
                 .anyRequest().authenticated()
 
                 // corsConfigurationSource 적용
@@ -84,7 +84,7 @@ public class WebSecurityConfig {
         // 접근 가능한 출처
         // config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOriginPattern("*");
-        config.addAllowedOrigin("http://localhost:3000/**");
+        config.addAllowedOrigin("http://**");
 
         // 브라우저에서 인증 관련 정보들을 요청에 담을 수 있도록 허가
         config.setAllowCredentials(true);

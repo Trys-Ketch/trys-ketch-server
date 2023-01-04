@@ -7,6 +7,7 @@ import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.KakaoUserRequstDto;
 import com.project.trysketch.user.entity.User;
 import com.project.trysketch.user.repository.UserRepository;
+import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -46,6 +47,7 @@ public class KakaoService {
 
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
         return createToken;
     }
 
@@ -59,7 +61,7 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "99896cbca8689b2a7b2513df031382da");
-        body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");
+        body.add("redirect_uri", "http://localhost:3000/login");    // 인가코드 받아오는 uri
         body.add("code", code);
 
         // HTTP 요청 보내기
