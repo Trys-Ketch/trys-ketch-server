@@ -33,12 +33,12 @@ public class AmazonS3Service {
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
-    public void upload(List<MultipartFile> multipartFilelist, String dirName, User user) throws IOException {
+    public void upload(ImageLikeRequestDto requestDto, List<MultipartFile> multipartFilelist, String dirName, User user) throws IOException {
 
         for (MultipartFile multipartFile : multipartFilelist){
             if (multipartFile != null){
                 File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
-                ImageFile imageFile = new ImageFile(upload(uploadFile, dirName), user);
+                ImageFile imageFile = new ImageFile(upload(uploadFile, dirName), user, requestDto.getPainter());
                 imageFileRepository.save(imageFile);
             }
         }

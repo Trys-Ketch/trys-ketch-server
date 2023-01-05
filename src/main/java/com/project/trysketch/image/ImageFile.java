@@ -17,14 +17,18 @@ public class ImageFile {
     @Column(nullable = false)           // image 경로
     private String path;
 
+    @Column(nullable = false)
+    private String painter;
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;                  // userid
 
-
     //생성자
-    public ImageFile(String path, User user) {
+    public ImageFile(String path, User user, String painter) {
         this.path = path;
         this.user = user;
+        this.painter = painter;
     }
 }
