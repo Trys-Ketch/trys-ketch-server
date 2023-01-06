@@ -3,6 +3,8 @@ package com.project.trysketch.user.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.trysketch.global.exception.CustomException;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.KakaoUserRequstDto;
 import com.project.trysketch.user.entity.User;
@@ -33,12 +35,12 @@ public class KakaoService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
-    public String kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+    public void kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 "액세스 토큰" 요청
-        String accessToken = getToken(code);                                        // 포스트맨 확인위해 주석처리 해둠.
+        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken);           // 포스트맨 확인위해 accessToken에서 code로 바꿔둠
+        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
@@ -46,7 +48,6 @@ public class KakaoService {
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
-        return createToken;
     }
 
     // 1. "인가 코드"로 "액세스 토큰" 요청
@@ -59,7 +60,10 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "99896cbca8689b2a7b2513df031382da");
-        body.add("redirect_uri", "http://localhost:3000/login");    // 인가코드 받아오는 uri
+        
+        // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
+        
+        body.add("redirect_uri", "http://localhost:3030/login");                       // 프론트의 주소
         body.add("code", code);
 
         // HTTP 요청 보내기
@@ -118,7 +122,9 @@ public class KakaoService {
         if (kakaoUser == null) {
             // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
             String kakaoEmail = kakaoUserInfo.getEmail();
+
             User sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
+
             if (sameEmailUser != null) {
                 kakaoUser = sameEmailUser;
                 // 기존 회원정보에 카카오 Id 추가
@@ -129,8 +135,8 @@ public class KakaoService {
                 String encodedPassword = passwordEncoder.encode(password);
                 String email = kakaoUserInfo.getEmail();
 
-                kakaoUser = User.builder().email(email)
-                        .password(encodedPassword)
+                kakaoUser = User.builder().email(encodedPassword)
+                        .password(password)
                         .kakaoId(kakaoId)
                         .kakaoNickname(kakaoUserInfo.getNickname())
                         .build();
