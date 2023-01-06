@@ -2,7 +2,6 @@ package com.project.trysketch.image;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.project.trysketch.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -11,11 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,7 +22,6 @@ import java.util.UUID;
 @Service
 public class AmazonS3Service {
 
-
     private final AmazonS3Client amazonS3Client;
     private final ImageFileRepository imageFileRepository;
 
@@ -33,14 +29,11 @@ public class AmazonS3Service {
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
-    public void upload(ImageLikeRequestDto requestDto, List<MultipartFile> multipartFilelist, String dirName, User user) throws IOException {
-
-        for (MultipartFile multipartFile : multipartFilelist){
-            if (multipartFile != null){
-                File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
-                ImageFile imageFile = new ImageFile(upload(uploadFile, dirName), user, requestDto.getPainter());
-                imageFileRepository.save(imageFile);
-            }
+    public void upload(ImageLikeRequestDto requestDto, MultipartFile multipartFile, String dirName, User user) throws IOException {
+        if (multipartFile != null) {
+            File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
+            ImageFile imageFile = new ImageFile(upload(uploadFile, dirName), user, requestDto.getPainter());
+            imageFileRepository.save(imageFile);
         }
     }
 
@@ -75,12 +68,6 @@ public class AmazonS3Service {
             }
             return Optional.of(convertFile);
         }
-
         return Optional.empty();
-    }
-
-    // find image from s3
-    public String getThumbnailPath(String path) {
-        return amazonS3Client.getUrl(bucket, path).toString();
     }
 }

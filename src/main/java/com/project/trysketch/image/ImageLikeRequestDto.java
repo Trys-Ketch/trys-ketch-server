@@ -8,5 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ImageLikeRequestDto {
-    private String painter;
+    private String painter;        // 그림 그린 사람
 }
