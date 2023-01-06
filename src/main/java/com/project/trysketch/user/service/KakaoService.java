@@ -38,16 +38,17 @@ public class KakaoService {
 
     public void kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         // 1. "인가 코드"로 "액세스 토큰" 요청
-        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
+//        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
+        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(code);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
 
         // 4. JWT 토큰 반환
-        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
+        String nickname = "나는야 피카소";
+        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), nickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
     }
 
@@ -134,10 +135,11 @@ public class KakaoService {
                 String encodedPassword = passwordEncoder.encode(password);
                 String email = kakaoUserInfo.getEmail();
 
-                kakaoUser = User.builder().email(encodedPassword)
-                        .password(password)
+                kakaoUser = User.builder()
+                        .password(encodedPassword)
                         .kakaoId(kakaoId)
                         .kakaoNickname(kakaoUserInfo.getNickname())
+                        .email(email)
                         .build();
             }
             userRepository.save(kakaoUser);
