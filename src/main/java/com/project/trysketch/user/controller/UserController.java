@@ -3,6 +3,7 @@ package com.project.trysketch.user.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
+import com.project.trysketch.redis.dto.TestRequestDto;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.user.dto.SignInRequestDto;
 import com.project.trysketch.user.dto.SignUpRequestDto;
@@ -43,13 +44,6 @@ public class UserController {
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "로그인 성공!"));
     }
 
-    // 비회원 로그인
-    @PostMapping("/guest")
-    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletRequest request, HttpServletResponse response) throws IOException, ParseException {
-        redisService.guestLogin(request, response);
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
-    }
-
     // 이메일 중복 확인
     @PostMapping("/email-check")
     public ResponseEntity<MsgResponseDto> emailCheck(@RequestBody @Valid SignUpRequestDto requestDto) {
@@ -75,6 +69,27 @@ public class UserController {
         response.addCookie(cookie);*/
 
         return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
+    }
+
+    // ======================== 여기서 부터는 비회원 관련입니다. ========================
+    // 비회원 로그인
+    @PostMapping("/guest")
+    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletRequest request, HttpServletResponse response, @RequestBody TestRequestDto requestDto) throws IOException, ParseException {
+        redisService.guestLogin(request, response, requestDto);
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
+    }
+
+    // 랜덤 닉네임 받아오는 부분
+    @GetMapping("/random-nick")
+    public ResponseEntity<MsgResponseDto> guestNick() {
+        String nickname = userService.RandomNick();
+        return ResponseEntity.ok().body(new MsgResponseDto(HttpStatus.OK.value(), nickname));
+    }
+
+    @GetMapping("/cookie-get")
+    public ResponseEntity<MsgResponseDto> getCookie(HttpServletRequest request, HttpServletResponse response) {
+        userService.getCookie(request, response);
+        return null;
     }
 
 }

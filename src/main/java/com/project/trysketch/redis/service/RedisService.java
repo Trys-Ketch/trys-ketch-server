@@ -1,9 +1,9 @@
 package com.project.trysketch.redis.service;
 
-import com.project.trysketch.redis.dto.RedisToken;
+import com.project.trysketch.redis.dto.NonMember;
+import com.project.trysketch.redis.dto.TestRequestDto;
+import com.project.trysketch.user.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.HashOperations;
@@ -17,12 +17,14 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
+// 1. 기능   : Redis 비즈니스 로직
+// 2. 작성자 : 서혁수
 @Service
 @RequiredArgsConstructor
 public class RedisService {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private final RandomNickService randomNickService;
+    private final UserService userService;
 
     // 랜덤 닉네임 사이트 URL
     @Value("${spring.redis.url}")
@@ -52,34 +54,32 @@ public class RedisService {
         return hashOperations.increment(key, hashKey, 1);
     }
 
+    // 쿠키 사용법 : https://goodwoong.tistory.com/125
     // 비회원 로그인시 쿠키 발급 메서드
-    public void guestLogin(HttpServletRequest request, HttpServletResponse response) throws IOException, ParseException {
+    public void guestLogin(HttpServletRequest request, HttpServletResponse response, TestRequestDto requestDto) throws IOException, ParseException {
         // RedisToken 만료 시간 : 1시간
         long expTime = 60 * 60 * 1000L;
 
-        // 랜덤 닉네임 서비스 호출 및 결과 문자열로 받기
-        String str = randomNickService.getData(url);
+        // 클라이언트로 부터 받아오는 닉네임
+        String nickname = requestDto.getNickname();
+        // 랜덤 닉네임 가져오기
+        String randomNick = userService.RandomNick();
 
-        // JSONParser 를 이용하여 JsonElement(요소) 형태로 변환하는데 사용
-        // JSONParser 에 json 데이터를 넣어 파싱한 다음 JSONObject 로 변환한다.
-        JSONParser jsonParser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) jsonParser.parse(str);
-
-        // 결과물 result 문자열에 원하는 JSON 부분의 객체를 문자열로 변환해서 담는다.
-        String result = String.valueOf(jsonObject.get("words"));
-
-        // 내가 필요한것만(닉네임) 남기고 불필요한 부분들을 모두 제거해준다.
-        result = result.replace("\"", "").replace("[", "").replace("]", "");
+        // 유저가 아무런 입력이 없을 경우에 반환할 nickname 을 랜덤 닉네임으로 지정
+        if (nickname == null || nickname.equals("")) {
+            nickname = randomNick;
+        }
 
         // 새로운 redisToken 객체에 필요한 정보를 담아서 생성
-        RedisToken redisToken = new RedisToken(0L, result, expTime);
+        NonMember nonMember = new NonMember(0L, randomNick, expTime);
 
         // AutoIncrement 역할을 하는 메서드를 호출하고 결과값을 새로운 변수 num 에 담는다.
-        long num = increaseHits(redisToken.getId());
-        setData(num, result, expTime);
+        long num = increaseHits(nonMember.getId());
+        setData(num, nickname, expTime);
 
         // 닉네임을 토큰에 담기 위해서 UTF-8 방식으로 인코딩
-        String nickname = URLEncoder.encode(redisToken.getNickname(), StandardCharsets.UTF_8);
+        nickname = URLEncoder.encode(nonMember.getNickname(), StandardCharsets.UTF_8);
+        System.out.println(getData(String.valueOf(num)));
 
         // 새로운 쿠키 만들기(비회원용, 쿠키명 지정, 고유번호 입력)
         Cookie nonMemberCookie = new Cookie("non-member", String.valueOf(num));
