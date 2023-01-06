@@ -1,7 +1,8 @@
 package com.project.trysketch.gameroom.service;
 
 import com.project.trysketch.gameroom.dto.request.GameRoomRequestDto;
-import com.project.trysketch.gameroom.dto.response.GameRoomCreateResponseDto;
+import com.project.trysketch.gameroom.dto.response.GameRoomResponseDto;
+import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.gameroom.entity.GameRoom;
 import com.project.trysketch.gameroom.entity.GameRoomUser;
 import com.project.trysketch.gameroom.repository.GameRoomRepository;
@@ -15,11 +16,11 @@ import com.project.trysketch.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -63,11 +64,29 @@ public class GameRoomService {
     }
 
     // 게임방 조회
+    @Transactional //전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
+    public List<GameRoomResponseDto> getAllGameRoom() {
+        List<GameRoom> rooms = gameRoomRepository.findAll();
+        List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
+        for (GameRoom gameRoom : rooms){
+            
+            GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
+                                .id(gameRoom.getId())
+                                .title(gameRoom.getTitle())
+                                .host(gameRoom.getHost())
+                                .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
+                                .status(gameRoom.getStatus())
+                                .build();
+            gameRoomList.add(gameRoomResponseDto);
+        }
+        return gameRoomList;
+    }
 
+    
 
     // 게임방 생성
     @Transactional
-    public GameRoomCreateResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request){
+    public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request){
 
         Claims claims = authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
@@ -91,7 +110,7 @@ public class GameRoomService {
         roomInfo.put("gameRoomtitle",gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
-        return new GameRoomCreateResponseDto(StatusMsgCode.OK,roomInfo);
+        return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
     };
 
     // 게임방 입장
@@ -132,6 +151,7 @@ public class GameRoomService {
 
         return new MsgResponseDto(StatusMsgCode.OK);
     }
+
 
 
 }

@@ -1,6 +1,8 @@
 package com.project.trysketch.gameroom.dto.response;
 
 import com.project.trysketch.user.dto.UserResponseDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +12,15 @@ import java.util.List;
 // 2. 작성자 : 김재영
 @Getter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class GameRoomResponseDto {
     private Long id;
     private String title;
-    private List<UserResponseDto> User;
+    private int GameRoomUserCount;
     private String host;
     private String status;
+
+
+
 }
