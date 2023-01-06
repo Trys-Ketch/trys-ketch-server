@@ -3,14 +3,10 @@ package com.project.trysketch.user.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.trysketch.global.exception.CustomException;
-import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.KakaoUserRequstDto;
 import com.project.trysketch.user.entity.User;
 import com.project.trysketch.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,8 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
 import javax.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
 
 // 1. 기능    : OAuth2.0 카카오 비즈니스 로직
@@ -35,19 +32,22 @@ public class KakaoService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     public void kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+        String randomNickname = userService.RandomNick();
+
         // 1. "인가 코드"로 "액세스 토큰" 요청
-        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
+//        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
+        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(code, randomNickname);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
 
         // 4. JWT 토큰 반환
-        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
+        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), randomNickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
     }
 
@@ -61,7 +61,9 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "99896cbca8689b2a7b2513df031382da");
+        
         // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
+        
         body.add("redirect_uri", "http://localhost:3030/login");                       // 프론트의 주소
         body.add("code", code);
 
@@ -83,7 +85,7 @@ public class KakaoService {
     }
 
     // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-    private KakaoUserRequstDto getKakaoUserInfo(String accessToken) throws JsonProcessingException {
+    private KakaoUserRequstDto getKakaoUserInfo(String accessToken, String randomNickname) throws JsonProcessingException {
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
@@ -109,7 +111,8 @@ public class KakaoService {
                 .get("email").asText();
 
         log.info("카카오 사용자 정보: " + id + ", " + nickname + ", " + email);
-        return new KakaoUserRequstDto(id, nickname, email);
+        log.info("저장할 사용자 정보 : " + id + ", " + randomNickname + ", " + email);
+        return new KakaoUserRequstDto(id, randomNickname, email);
     }
 
     // 3. 필요시에 회원가입
@@ -134,10 +137,11 @@ public class KakaoService {
                 String encodedPassword = passwordEncoder.encode(password);
                 String email = kakaoUserInfo.getEmail();
 
-                kakaoUser = User.builder().email(encodedPassword)
-                        .password(password)
+                kakaoUser = User.builder()
+                        .password(encodedPassword)
                         .kakaoId(kakaoId)
                         .kakaoNickname(kakaoUserInfo.getNickname())
+                        .email(email)
                         .build();
             }
             userRepository.save(kakaoUser);

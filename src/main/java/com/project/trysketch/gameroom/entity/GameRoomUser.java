@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.util.Optional;
 
+// 1. 기능   : 방에 들어가있는 유저 엔티티
+// 2. 작성자 : 김재영
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
