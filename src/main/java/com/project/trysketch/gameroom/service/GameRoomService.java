@@ -35,7 +35,7 @@ public class GameRoomService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
 
-    //유저 인증부
+    // 유저 인증부
     public Claims authorizeToken(HttpServletRequest request){
 
         String token = jwtUtil.resolveToken(request);
@@ -80,7 +80,7 @@ public class GameRoomService {
                 .status("false")
                 .build();
 
-        //DB에 저장
+        // DB에 저장
         gameRoomRepository.save(gameRoom);
 
         GameRoomUser gameRoomUser = new GameRoomUser(gameRoom,user);
@@ -103,14 +103,14 @@ public class GameRoomService {
         );
 
         // id로 DB 에서 현재 들어갈 게임방 데이터 찾기
-        Optional<GameRoom> entergameRoom =gameRoomRepository.findById(id);
+        Optional<GameRoom> entergameRoom = gameRoomRepository.findById(id);
 
         // 게임 방의 상태가 true 이면 게임이 시작중이니 입장불가능
         if (entergameRoom.get().getStatus().equals("true")){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 
-        //현재 방의 유저 리스트를 받아옴
+        // 현재 방의 유저 리스트를 받아옴
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(entergameRoom);
 
         // 현재 방의 인원이 8명 이상이면 풀방임~
@@ -118,6 +118,7 @@ public class GameRoomService {
             return new MsgResponseDto(StatusMsgCode.FULL_BANG);
         }
 
+        // 이미 방에 들어온 유저의 재입장 불가
         for (GameRoomUser gameRoomUser : gameRoomUserList){
             Optional<User> ingameUser = userRepository.findById(gameRoomUser.getUser().getId());
             if (user.getId() == ingameUser.get().getId()){
