@@ -57,6 +57,14 @@ dependencies {
 
     // stompJS
     implementation 'org.webjars:stomp-websocket:2.3.4'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.data:spring-data-redis'
+
+    // Json
+    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+
 }
 
 tasks.named('test') {
