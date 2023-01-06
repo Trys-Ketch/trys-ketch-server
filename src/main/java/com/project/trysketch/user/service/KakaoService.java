@@ -3,8 +3,6 @@ package com.project.trysketch.user.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.trysketch.global.exception.CustomException;
-import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.KakaoUserRequstDto;
 import com.project.trysketch.user.entity.User;
@@ -34,20 +32,22 @@ public class KakaoService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     public void kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+        String randomNickname = userService.RandomNick();
+
         // 1. "인가 코드"로 "액세스 토큰" 요청
 //        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(code);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
+        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(code, randomNickname);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
 
         // 4. JWT 토큰 반환
-        String nickname = "나는야 피카소";
-        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), nickname);
+        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), randomNickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
     }
 
@@ -85,7 +85,7 @@ public class KakaoService {
     }
 
     // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-    private KakaoUserRequstDto getKakaoUserInfo(String accessToken) throws JsonProcessingException {
+    private KakaoUserRequstDto getKakaoUserInfo(String accessToken, String randomNickname) throws JsonProcessingException {
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
@@ -111,7 +111,8 @@ public class KakaoService {
                 .get("email").asText();
 
         log.info("카카오 사용자 정보: " + id + ", " + nickname + ", " + email);
-        return new KakaoUserRequstDto(id, nickname, email);
+        log.info("저장할 사용자 정보 : " + id + ", " + randomNickname + ", " + email);
+        return new KakaoUserRequstDto(id, randomNickname, email);
     }
 
     // 3. 필요시에 회원가입
