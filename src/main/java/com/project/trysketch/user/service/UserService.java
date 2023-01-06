@@ -1,6 +1,5 @@
 package com.project.trysketch.user.service;
 
-import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.user.entity.RandomNick;
 import com.project.trysketch.user.repository.RandomNickRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -16,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -88,7 +86,7 @@ public class UserService {
 
     // 랜덤 닉네임 발급
     public String RandomNick() {
-        int num = (int) (Math.random() * 1000);
+        int num = (int) (Math.random() * 1000 +1);
         RandomNick randomNick = randomNickRepository.findByNum(num).orElse(null);
 
         return Objects.requireNonNull(randomNick).getNickname();

@@ -7,6 +7,6 @@ import java.util.Optional;
 
 // 1. 기능   : 랜덤 닉네임 Repository
 // 2. 작성자 : 서혁수
-public interface RandomNickRepository extends JpaRepository<RandomNick, Long> {
+public interface RandomNickRepository extends JpaRepository<RandomNick, Integer> {
     Optional<RandomNick> findByNum(int num);
 }
