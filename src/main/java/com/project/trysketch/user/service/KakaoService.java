@@ -9,8 +9,6 @@ import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.user.dto.KakaoUserRequstDto;
 import com.project.trysketch.user.entity.User;
 import com.project.trysketch.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,8 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-
 import javax.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
 
 // 1. 기능    : OAuth2.0 카카오 비즈니스 로직
@@ -62,7 +61,9 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "99896cbca8689b2a7b2513df031382da");
+        
         // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
+        
         body.add("redirect_uri", "http://localhost:3030/login");                       // 프론트의 주소
         body.add("code", code);
 
