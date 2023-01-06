@@ -16,6 +16,10 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+
+// 1. 기능   : S3 업로드 로직
+// 2. 작성자 : 황미경
+
 @Slf4j
 @Component
 @RequiredArgsConstructor

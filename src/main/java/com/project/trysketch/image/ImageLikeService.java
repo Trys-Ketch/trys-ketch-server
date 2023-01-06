@@ -11,6 +11,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+
+// 1. 기능   : ImageLike 서비스
+// 2. 작성자 : 황미경
+
 @Service
 @RequiredArgsConstructor
 public class ImageLikeService {
