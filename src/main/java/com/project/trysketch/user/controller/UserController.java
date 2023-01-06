@@ -3,7 +3,7 @@ package com.project.trysketch.user.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.redis.dto.TestRequestDto;
+import com.project.trysketch.redis.dto.NonMemberNickRequestDto;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.user.dto.SignInRequestDto;
 import com.project.trysketch.user.dto.SignUpRequestDto;
@@ -74,7 +74,7 @@ public class UserController {
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
     // 비회원 로그인
     @PostMapping("/guest")
-    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletRequest request, HttpServletResponse response, @RequestBody TestRequestDto requestDto) throws IOException, ParseException {
+    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletRequest request, HttpServletResponse response, @RequestBody NonMemberNickRequestDto requestDto) throws IOException, ParseException {
         redisService.guestLogin(request, response, requestDto);
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
     }
@@ -83,7 +83,7 @@ public class UserController {
     @GetMapping("/random-nick")
     public ResponseEntity<MsgResponseDto> guestNick() {
         String nickname = userService.RandomNick();
-        return ResponseEntity.ok().body(new MsgResponseDto(HttpStatus.OK.value(), nickname));
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), nickname));
     }
 
     @GetMapping("/cookie-get")

@@ -1,7 +1,7 @@
 package com.project.trysketch.redis.service;
 
 import com.project.trysketch.redis.dto.NonMember;
-import com.project.trysketch.redis.dto.TestRequestDto;
+import com.project.trysketch.redis.dto.NonMemberNickRequestDto;
 import com.project.trysketch.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.parser.ParseException;
@@ -56,7 +56,7 @@ public class RedisService {
 
     // 쿠키 사용법 : https://goodwoong.tistory.com/125
     // 비회원 로그인시 쿠키 발급 메서드
-    public void guestLogin(HttpServletRequest request, HttpServletResponse response, TestRequestDto requestDto) throws IOException, ParseException {
+    public void guestLogin(HttpServletRequest request, HttpServletResponse response, NonMemberNickRequestDto requestDto) throws IOException, ParseException {
         // RedisToken 만료 시간 : 1시간
         long expTime = 60 * 60 * 1000L;
 

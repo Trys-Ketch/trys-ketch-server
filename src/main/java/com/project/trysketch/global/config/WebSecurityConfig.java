@@ -83,8 +83,8 @@ public class WebSecurityConfig {
 
         // 접근 가능한 출처
         // config.addAllowedOrigin("http://localhost:3000");
-        config.addAllowedOriginPattern("*");
-        config.addAllowedOrigin("http://**");
+        // config.addAllowedOriginPattern("*");
+        config.addAllowedOrigin("http://localhost:3000");
 
         // 브라우저에서 인증 관련 정보들을 요청에 담을 수 있도록 허가
         config.setAllowCredentials(true);
