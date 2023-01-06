@@ -14,7 +14,6 @@ import javax.persistence.Id;
 // 2. 작성자 : 안은솔
 
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
