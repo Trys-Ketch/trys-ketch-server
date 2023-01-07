@@ -1,7 +1,6 @@
 package com.project.trysketch.gameroom.entity;
 
 import com.project.trysketch.global.entity.Timestamped;
-import com.project.trysketch.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,6 +33,7 @@ public class GameRoom extends Timestamped {
     private String status;
 
     @OneToMany(mappedBy = "gameRoom")
+    @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
 
 }

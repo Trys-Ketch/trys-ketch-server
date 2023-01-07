@@ -1,11 +1,15 @@
 package com.project.trysketch.gameroom.dto.response;
 
-import com.project.trysketch.user.dto.UserResponseDto;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import javax.persistence.Column;
+import java.time.LocalDateTime;
 import java.util.List;
 
 // 1. 기능   : 게임 방 response용 dto
@@ -21,6 +25,11 @@ public class GameRoomResponseDto {
     private String host;
     private String status;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
+    private LocalDateTime createdAt;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
+    private LocalDateTime modifiedAt;
 
 
 }

@@ -16,6 +16,8 @@ import com.project.trysketch.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -65,24 +67,25 @@ public class GameRoomService {
 
     // 게임방 조회
     @Transactional //전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
-    public List<GameRoomResponseDto> getAllGameRoom() {
-        List<GameRoom> rooms = gameRoomRepository.findAll();
+    public List<GameRoomResponseDto> getAllGameRoom(Pageable pageable) {
+        Page<GameRoom> rooms = gameRoomRepository.findAll(pageable);
+
         List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
         for (GameRoom gameRoom : rooms){
-            
+
             GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
                                 .id(gameRoom.getId())
                                 .title(gameRoom.getTitle())
                                 .host(gameRoom.getHost())
                                 .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
                                 .status(gameRoom.getStatus())
+                                .createdAt(gameRoom.getCreatedAt())
+                                .modifiedAt(gameRoom.getModifiedAt())
                                 .build();
             gameRoomList.add(gameRoomResponseDto);
         }
         return gameRoomList;
     }
-
-    
 
     // 게임방 생성
     @Transactional
@@ -144,14 +147,27 @@ public class GameRoomService {
                 return new MsgResponseDto(StatusMsgCode.DUPLICATE_USER);
             }
         }
-
+        
+        // 새롭게 게임방에 들어온 유저 생성
         GameRoomUser gameRoomUser = new GameRoomUser(entergameRoom,user);
 
+        // 게임방에 들어온 유저를 DB에 저장
         gameRoomUserRepository.save(gameRoomUser);
 
-        return new MsgResponseDto(StatusMsgCode.OK);
+        return new MsgResponseDto(StatusMsgCode.SUCCESS_ENTER_GAME);
     }
 
+    //게임방 나가기
+    @Transactional
+    public MsgResponseDto exitGameRoom(Long id, HttpServletRequest request) {
 
-
+        
+        
+        
+        
+        
+        
+        
+        return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
+    }
 }
