@@ -45,6 +45,8 @@ public enum StatusMsgCode {
 
     /* 200 SUCCESS */
     OK(HttpStatus.OK,"요청이 정상적으로 처리되었습니다"),
+    SUCCESS_ENTER_GAME(HttpStatus.OK,"성공적으로 방에 입장하셨습니다"),
+    SUCCESS_EXIT_GAME(HttpStatus.OK,"성공적으로 방에서 퇴장하셨습니다"),
     SIGN_UP(HttpStatus.OK, "회원가입에 성공했습니다."),
     LOG_IN(HttpStatus.OK, "로그인에 성공했습니다"),
     LIKE(HttpStatus.OK, "좋아요 성공"),

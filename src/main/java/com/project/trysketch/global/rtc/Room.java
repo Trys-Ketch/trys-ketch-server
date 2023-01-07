@@ -1,10 +1,11 @@
 package com.project.trysketch.global.rtc;
 
-import com.sun.istack.NotNull;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.web.socket.WebSocketSession;
 
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
