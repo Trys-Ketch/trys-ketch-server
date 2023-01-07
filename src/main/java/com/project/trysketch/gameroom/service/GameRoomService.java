@@ -125,15 +125,15 @@ public class GameRoomService {
         );
 
         // id로 DB 에서 현재 들어갈 게임방 데이터 찾기
-        Optional<GameRoom> entergameRoom = gameRoomRepository.findById(id);
+        Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
 
         // 게임 방의 상태가 true 이면 게임이 시작중이니 입장불가능
-        if (entergameRoom.get().getStatus().equals("true")){
+        if (enterGameRoom.get().getStatus().equals("true")){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 
         // 현재 방의 유저 리스트를 받아옴
-        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(entergameRoom);
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(enterGameRoom);
 
         // 현재 방의 인원이 8명 이상이면 풀방임~
         if (gameRoomUserList.size() >= 8){
@@ -149,7 +149,7 @@ public class GameRoomService {
         }
         
         // 새롭게 게임방에 들어온 유저 생성
-        GameRoomUser gameRoomUser = new GameRoomUser(entergameRoom,user);
+        GameRoomUser gameRoomUser = new GameRoomUser(enterGameRoom,user);
 
         // 게임방에 들어온 유저를 DB에 저장
         gameRoomUserRepository.save(gameRoomUser);
@@ -161,13 +161,54 @@ public class GameRoomService {
     @Transactional
     public MsgResponseDto exitGameRoom(Long id, HttpServletRequest request) {
 
-        
-        
-        
-        
-        
-        
-        
+        // 나갈려는 User 정보 가져오기
+        Claims claims = authorizeToken(request);
+        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
+
+        // 나가려고 하는 GameRoom 정보 가져오기
+        GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        // 나가려고 하는 GameRoomUser 정보 가져오기
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUser(user);
+
+        // 해당 user 를 GameRoomUser 에서 삭제
+        gameRoomUserRepository.delete(gameRoomUser);
+
+        // 방장이 나간 방의 UserList 정보 가져오기
+        List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findByGameRoom(enterGameRoom);
+
+        // 게임 방의 남은 인원이 0명이면 게임 방도 삭제
+        if (leftGameRoomUserList.size() ==0){
+            gameRoomRepository.delete(enterGameRoom);
+        }
+
+        // 나간 User 와 해당 GameRoom 의 방장이 같다면 && GameRoom 에 User 가 없지 않다면
+        if (user.getNickname().equals(enterGameRoom.getHost()) && !leftGameRoomUserList.isEmpty()){
+//            Long newHostId = leftGameRoomUserList.get((int) (Math.random()*leftGameRoomUserList.size())).getId();
+
+            // 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
+            Long newHostId = leftGameRoomUserList.get(0).getId();
+
+            // UserId 를 들고 GameRoomUser 정보 가져오기
+            GameRoomUser newHost = gameRoomUserRepository.findById(newHostId).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+            );
+
+            // 새로운 Host 가 선정되어 GameRoom 정보 빌드
+            GameRoom updateGameRoom = GameRoom.builder()
+                    .id(enterGameRoom.getId())
+                    .host(newHost.getUser().getNickname())
+                    .title(enterGameRoom.getTitle())
+                    .status("false")
+                    .build();
+
+            // 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
+            gameRoomRepository.save(updateGameRoom);
+        }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
 }

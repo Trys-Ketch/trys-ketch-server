@@ -1,10 +1,7 @@
 package com.project.trysketch.gameroom.entity;
 
 import com.project.trysketch.global.entity.Timestamped;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -26,7 +23,6 @@ public class GameRoom extends Timestamped {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
     private String host;
 
     @Column(nullable = false)
@@ -35,5 +31,6 @@ public class GameRoom extends Timestamped {
     @OneToMany(mappedBy = "gameRoom")
     @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
+
 
 }
