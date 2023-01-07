@@ -22,11 +22,11 @@ public class Image {
     private String path;
 
     @Column(nullable = false)            // 그린사람의 닉네임
-    private String nickname;
+    private String painter;
 
     //생성자
-    public Image(String path, String nickname) {
+    public Image(String path, String painter) {
         this.path = path;
-        this.nickname = nickname;
+        this.painter = painter;
     }
 }
