@@ -23,9 +23,9 @@ public class ImageLikeService {
     private final ImageFileRepository imageFileRepository;
 
     // S3에 이미지 저장
-    public MsgResponseDto saveImage(ImageLikeRequestDto requestDto, MultipartFile multipartFile, User user) throws IOException {
+    public MsgResponseDto saveImage(MultipartFile multipartFile, User user) throws IOException {
         if (multipartFile != null) {
-            s3Service.upload(requestDto, multipartFile, "static", user);
+            s3Service.upload(multipartFile, "static", user);
         }
         return new MsgResponseDto(StatusMsgCode.DONE_LIKE);
     }

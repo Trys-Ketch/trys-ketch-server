@@ -18,15 +18,14 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
-public class ImageLikeController {
+public class ImageController {
     private final ImageLikeService imageLikeService;
 
     // 이미지 좋아요 클릭시 S3에 업로드
     @PostMapping(value = "/image/like", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<MsgResponseDto> imageLike(@RequestPart(value = "data") ImageLikeRequestDto requestDto,
-                                                    @RequestPart(value = "file") MultipartFile multipartFile,
+    public ResponseEntity<MsgResponseDto> imageLike(@RequestPart(value = "file") MultipartFile multipartFile,
                                                     @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
-        return ResponseEntity.ok(imageLikeService.saveImage(requestDto, multipartFile, userDetails.getUser()));
+        return ResponseEntity.ok(imageLikeService.saveImage(multipartFile, userDetails.getUser()));
     }
 
 
