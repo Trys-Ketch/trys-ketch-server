@@ -19,19 +19,25 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class ImageController {
-    private final ImageLikeService imageLikeService;
+    private final ImageService imageService;
 
-    // 이미지 좋아요 클릭시 S3에 업로드
-    @PostMapping(value = "/image/like", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<MsgResponseDto> imageLike(@RequestPart(value = "file") MultipartFile multipartFile,
+    // 게임의 한 턴 끝날시 S3에 업로드
+    @PostMapping(value = "/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<MsgResponseDto> saveImage(@RequestPart(value = "file") MultipartFile multipartFile,
                                                     @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
-        return ResponseEntity.ok(imageLikeService.saveImage(multipartFile, userDetails.getUser()));
+        return ResponseEntity.ok(imageService.saveImage(multipartFile, userDetails.getUser()));
     }
 
+    // 그림 좋아요 기능
+    @PostMapping(value = "/image/like/{imageId}")
+    public ResponseEntity<MsgResponseDto> imageLike(@PathVariable Long imageId,
+                                                    @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(imageService.likeImage(imageId, userDetails.getUser()));
+    }
 
     // 마이페이지에서 좋아요 누른 사진 조회
     @GetMapping("/mypage/image-like")
-    public ResponseEntity<List<String>> getImageLike(@AuthenticationPrincipal UserDetailsImpl userDetails) {
-        return ResponseEntity.ok(imageLikeService.getImage(userDetails.getUser()));
+    public ResponseEntity<List<String>> getImage(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(imageService.getImage(userDetails.getUser()));
     }
 }

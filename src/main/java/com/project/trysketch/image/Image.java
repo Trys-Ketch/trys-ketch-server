@@ -13,7 +13,7 @@ import javax.persistence.*;
 @Getter
 @Entity
 @NoArgsConstructor
-public class ImageFile {
+public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;                     // id
@@ -21,13 +21,12 @@ public class ImageFile {
     @Column(nullable = false)            // image 경로
     private String path;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "painter_id", nullable = false)
-    private User user;                   // 그림그린 사람
+    @Column(nullable = false)            // 그린사람의 닉네임
+    private String nickname;
 
     //생성자
-    public ImageFile(String path, User user) {
+    public Image(String path, String nickname) {
         this.path = path;
-        this.user = user;
+        this.nickname = nickname;
     }
 }
