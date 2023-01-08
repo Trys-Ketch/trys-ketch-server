@@ -105,11 +105,13 @@ public class UserService {
         String num = null;
 
         for (Cookie c : myCookie) {
-            num = c.getValue();
+            if (c.getComment().equals("non-member")) {
+                num = "회원번호 : " + c.getValue();
+            }
         }
 
         System.out.println(num);
 
-        return null;
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "발급 완료"));
     }
 }

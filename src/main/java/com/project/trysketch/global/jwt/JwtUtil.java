@@ -62,14 +62,6 @@ public class JwtUtil {
                         .compact();
     }
 
-    public String createRsToken(String rt) {
-        return BEARER_PREFIX +
-                Jwts.builder()
-                        .claim("nickname" , "test")
-                        .signWith(key, signatureAlgorithm)
-                        .compact();
-    }
-
     // 유효 토큰부분 자르기
     public String resolveToken(HttpServletRequest request){
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
@@ -101,7 +93,6 @@ public class JwtUtil {
     public Claims getUserInfoFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
-
 
     // 인증 객체를 실제로 만드는 부분
     public Authentication createAuthentication(String email) {

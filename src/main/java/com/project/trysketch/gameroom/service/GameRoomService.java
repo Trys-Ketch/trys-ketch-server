@@ -6,6 +6,7 @@ import com.project.trysketch.gameroom.entity.GameRoomUser;
 import com.project.trysketch.gameroom.repository.GameRoomRepository;
 import com.project.trysketch.gameroom.repository.GameRoomUserRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
+import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 public class GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final GameRoomUserRepository gameRoomUserRepository;
+    private final RedisService redisService;
 
     //게임방 생성
     public MsgResponseDto createRoom(GameRoomRequestDto gameRoomRequestDto, User user){
@@ -48,4 +50,9 @@ public class GameRoomService {
         return new MsgResponseDto(200,"방 생성 완료");
 
     };
+
+    // 테스트중.... by 서혁수
+    public void RoomUsersInfo() {
+        redisService.getRoomUsers(2L);
+    }
 }
