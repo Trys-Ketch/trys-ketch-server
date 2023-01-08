@@ -20,8 +20,12 @@ public enum StatusMsgCode {
     PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "게시글을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "댓글을 찾을 수 없습니다."),
     INVALID_USER(HttpStatus.BAD_REQUEST, "작성자만 삭제/수정할 수 있습니다."),
+    SAVE_IMAGE(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
     ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다."),
+
+    ALREADY_PLAYING(HttpStatus.BAD_REQUEST, "게임이 이미 시작되었습니다"),
+    FULL_BANG(HttpStatus.BAD_REQUEST, "허용된 최대 사용자 수에 도달했습니다"),
 
     //    /* 401 UNAUTHORIZED : 인증되지 않은 사용자 */
 //    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "권한 정보가 없는 토큰입니다."),
@@ -34,18 +38,23 @@ public enum StatusMsgCode {
 //
 //    /* 409 CONFLICT : Resource의 현재 상태와 충돌, 보통 중복된 데이터 존재 */
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "데이터가 이미 존재합니다."),
+    DUPLICATE_USER(HttpStatus.CONFLICT, "유저가 이미 존재합니다."),
 //
 //    /* 500 INTERNAL_SERVER_ERROR */
 //    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버가 없습니다.");
 
     /* 200 SUCCESS */
+    OK(HttpStatus.OK,"요청이 정상적으로 처리되었습니다"),
+    SUCCESS_ENTER_GAME(HttpStatus.OK,"성공적으로 방에 입장하셨습니다"),
+    SUCCESS_EXIT_GAME(HttpStatus.OK,"성공적으로 방에서 퇴장하셨습니다"),
     SIGN_UP(HttpStatus.OK, "회원가입에 성공했습니다."),
     LOG_IN(HttpStatus.OK, "로그인에 성공했습니다"),
     LIKE(HttpStatus.OK, "좋아요 성공"),
     CANCEL_LIKE(HttpStatus.OK, "좋아요 취소"),
     DELETE_POST(HttpStatus.OK, "게시글을 삭제하였습니다"),
     DELETE_COMMENT(HttpStatus.OK, "댓글을 삭제하였습니다"),
-    DONE_LIKE(HttpStatus.OK, "좋아요 클릭 완료");
+    DONE_LIKE(HttpStatus.OK, "좋아요 클릭 완료"),
+    DONE_DRAWING(HttpStatus.OK, "사진 저장 완료");
 
 
     private final HttpStatus httpStatus;
