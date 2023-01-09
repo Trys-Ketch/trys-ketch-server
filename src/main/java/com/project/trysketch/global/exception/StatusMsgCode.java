@@ -20,12 +20,12 @@ public enum StatusMsgCode {
     PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "게시글을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "댓글을 찾을 수 없습니다."),
     INVALID_USER(HttpStatus.BAD_REQUEST, "작성자만 삭제/수정할 수 있습니다."),
-    SAVE_IMAGE(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
     ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다."),
 
     ALREADY_PLAYING(HttpStatus.BAD_REQUEST, "게임이 이미 시작되었습니다"),
     FULL_BANG(HttpStatus.BAD_REQUEST, "허용된 최대 사용자 수에 도달했습니다"),
+    ALREADY_CANCEL_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요 취소를 눌렀습니다"),
 
     //    /* 401 UNAUTHORIZED : 인증되지 않은 사용자 */
 //    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "권한 정보가 없는 토큰입니다."),
@@ -52,6 +52,7 @@ public enum StatusMsgCode {
     DELETE_POST(HttpStatus.OK, "게시글을 삭제하였습니다"),
     DELETE_COMMENT(HttpStatus.OK, "댓글을 삭제하였습니다"),
     DONE_LIKE(HttpStatus.OK, "좋아요 클릭 완료"),
+    LIKE_IMAGE(HttpStatus.OK, "좋아요 완료"),
     DONE_DRAWING(HttpStatus.OK, "사진 저장 완료");
 
 

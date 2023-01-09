@@ -40,4 +40,13 @@ public class ImageController {
     public ResponseEntity<List<String>> getImage(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         return ResponseEntity.ok(imageService.getImage(userDetails.getUser()));
     }
+
+    // 마이페이지에서 좋아요 누른 사진 취소
+    @PostMapping("/mypage/cancel-like/{imageId}")
+    public ResponseEntity<MsgResponseDto> cancelLike(@PathVariable Long imageId,
+                                     @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return ResponseEntity.ok(imageService.cancelLike(imageId, userDetails.getUser()));
+    }
+
+
 }

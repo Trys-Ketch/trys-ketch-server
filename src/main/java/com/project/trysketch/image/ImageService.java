@@ -3,6 +3,7 @@ package com.project.trysketch.image;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
+import com.project.trysketch.global.rtc.Room;
 import com.project.trysketch.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class ImageService {
             throw new CustomException(StatusMsgCode.ALREADY_CLICKED_LIKE);
         }
         imageLikeRepository.save(new ImageLike(image, user));
-        return new MsgResponseDto(StatusMsgCode.SAVE_IMAGE);
+        return new MsgResponseDto(StatusMsgCode.LIKE_IMAGE);
     }
 
 
@@ -62,5 +63,18 @@ public class ImageService {
     public boolean checkLike(Long imageId, User user) {
         Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
         return imageLike.isPresent();
+    }
+
+    //좋아요 취소
+    @Transactional
+    public MsgResponseDto cancelLike(Long imageId, User user) {
+        imageRepository.findById(imageId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
+        );
+        if (!checkLike(imageId, user)) {
+            throw new CustomException(StatusMsgCode.ALREADY_CANCEL_LIKE);
+        }
+        imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
+        return new MsgResponseDto(StatusMsgCode.CANCEL_LIKE);
     }
 }

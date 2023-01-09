@@ -10,4 +10,7 @@ public interface ImageLikeRepository extends JpaRepository<ImageLike, Long> {
     Optional<ImageLike> findByImageIdAndUserId(Long imageId, Long userId);
 
     List<ImageLike> findAllByUserId(Long userId);
+
+    void deleteByImageIdAndUserId(Long imageId, Long userId);
+
 }
