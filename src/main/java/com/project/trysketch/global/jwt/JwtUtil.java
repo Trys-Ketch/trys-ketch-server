@@ -1,5 +1,7 @@
 package com.project.trysketch.global.jwt;
 
+import com.project.trysketch.global.exception.CustomException;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.security.UserDetailsServiceImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -107,5 +109,21 @@ public class JwtUtil {
     public Authentication createAuthentication(String email) {
         UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(email);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    }
+
+    // request 에서 유저 정보 가져오기
+    public Claims authorizeToken(HttpServletRequest request) {
+
+        String token = resolveToken(request);
+        Claims claims;
+
+        if (token != null) {
+            if (validateToken(token)) {
+                claims = getUserInfoFromToken(token);
+                return claims;
+            } else
+                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
+        }
+        return null;
     }
 }

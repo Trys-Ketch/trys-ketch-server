@@ -39,19 +39,19 @@ public class GameRoomService {
     private final JwtUtil jwtUtil;
 
     // 유저 인증부
-    public Claims authorizeToken(HttpServletRequest request){
-
-        String token = jwtUtil.resolveToken(request);
-        Claims claims;
-
-        if(token != null){
-            if (jwtUtil.validateToken(token)){
-                claims = jwtUtil.getUserInfoFromToken(token);
-                return claims;
-            }else
-                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
-        }
-        return null;
+//    public Claims authorizeToken(HttpServletRequest request){
+//
+//        String token = jwtUtil.resolveToken(request);
+//        Claims claims;
+//
+//        if(token != null){
+//            if (jwtUtil.validateToken(token)){
+//                claims = jwtUtil.getUserInfoFromToken(token);
+//                return claims;
+//            }else
+//                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
+//        }
+//        return null;
 //        //request 의 헤더에서 Authorization 확인
 //        if(request.getHeader("Authorization") == null){
 //            throw new IllegalArgumentException("만료된 토큰");
@@ -63,7 +63,7 @@ public class GameRoomService {
 //
 //        User auth_user = jwtUtil.getUserFromAuthentication();
 
-    }
+//    }
 
     // 게임방 조회
     @Transactional //전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
@@ -91,7 +91,7 @@ public class GameRoomService {
     @Transactional
     public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request){
 
-        Claims claims = authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
@@ -119,7 +119,7 @@ public class GameRoomService {
     // 게임방 입장
     @Transactional
     public MsgResponseDto enterGameRoom(Long id, HttpServletRequest request) {
-        Claims claims = authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
@@ -162,7 +162,7 @@ public class GameRoomService {
     public MsgResponseDto exitGameRoom(Long id, HttpServletRequest request) {
 
         // 나갈려는 User 정보 가져오기
-        Claims claims = authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
