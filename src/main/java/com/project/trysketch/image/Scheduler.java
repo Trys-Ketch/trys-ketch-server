@@ -15,12 +15,12 @@ public class Scheduler {
 
     private final ImageService imageService;
 
-    // 좋아요 안 눌린 그림 DB, S3로 부터 주기적으로 삭제하는 기능. 우선은 테스트 위해 2분 단위로 삭제하도록 설정함
+    // 좋아요 안 눌린 그림 DB, S3로 부터 주기적으로 삭제하는 기능. 5시간으로 임의 설정
     @Scheduled(cron = "0 0 0/5 * * *")               // 초, 분, 시, 일, 월, 주 순서
     public void deleteImage() {
             imageService.deleteImage();
 
-        System.out.println("좋아요 안눌린 이미지 삭제. 2분마다 실행");
-        log.info("좋아요 안눌린 이미지 삭제. 2분마다 실행");
+        System.out.println("좋아요 안눌린 이미지 삭제.");
+        log.info("좋아요 안눌린 이미지 삭제.");
     }
 }
