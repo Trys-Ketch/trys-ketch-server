@@ -62,7 +62,6 @@ public class GameRoomService {
 //        }
 //
 //        User auth_user = jwtUtil.getUserFromAuthentication();
-
 //    }
 
     // 게임방 조회
