@@ -1,5 +1,7 @@
 package com.project.trysketch.global.jwt;
 
+import com.project.trysketch.global.exception.CustomException;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.security.UserDetailsServiceImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -25,7 +27,7 @@ import java.util.Date;
 public class JwtUtil {
 
     // 헤더에 설정 사항
-    public static final String AUTHORIZATION_HEADER ="Authorization";
+    public static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
     // 만료시간
@@ -50,22 +52,30 @@ public class JwtUtil {
     }
 
     // 토큰 생성
-    public String createToken(String userEmail, String nickname){
+    public String createToken(String userEmail, String nickname) {
         Date date = new Date();
         return BEARER_PREFIX +
                 Jwts.builder()
-                        .claim("email" , userEmail)
-                        .claim( "nickname" , nickname)
+                        .claim("email", userEmail)
+                        .claim("nickname", nickname)
                         .setExpiration(new Date(date.getTime() + TOKEN_TIME))
                         .setIssuedAt(date)
                         .signWith(key, signatureAlgorithm)
                         .compact();
     }
 
+    public String createRsToken(String rt) {
+        return BEARER_PREFIX +
+                Jwts.builder()
+                        .claim("nickname" , "test")
+                        .signWith(key, signatureAlgorithm)
+                        .compact();
+    }
+
     // 유효 토큰부분 자르기
-    public String resolveToken(HttpServletRequest request){
+    public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
-        if(StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)){
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(7);
         }
 
@@ -94,9 +104,27 @@ public class JwtUtil {
         return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 
+
     // 인증 객체를 실제로 만드는 부분
     public Authentication createAuthentication(String email) {
         UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(email);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    }
+
+
+    // request 에서 유저 정보 가져오기
+    public Claims authorizeToken(HttpServletRequest request) {
+
+        String token = resolveToken(request);
+        Claims claims;
+
+        if (token != null) {
+            if (validateToken(token)) {
+                claims = getUserInfoFromToken(token);
+                return claims;
+            } else
+                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
+        }
+        return null;
     }
 }
