@@ -40,16 +40,16 @@ public class GameRoomService {
     private final JwtUtil jwtUtil;
 
     // 유저 인증부
-    public Claims authorizeToken(HttpServletRequest request){
+    public Claims authorizeToken(HttpServletRequest request) {
 
         String token = jwtUtil.resolveToken(request);
         Claims claims;
 
-        if(token != null){
-            if (jwtUtil.validateToken(token)){
+        if (token != null) {
+            if (jwtUtil.validateToken(token)) {
                 claims = jwtUtil.getUserInfoFromToken(token);
                 return claims;
-            }else
+            } else
                 throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
         }
         return null;
@@ -72,26 +72,27 @@ public class GameRoomService {
         Page<GameRoom> rooms = gameRoomRepository.findAll(pageable);
 
         List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
-        for (GameRoom gameRoom : rooms){
+        for (GameRoom gameRoom : rooms) {
 
             GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
-                                .id(gameRoom.getId())
-                                .title(gameRoom.getTitle())
-                                .host(gameRoom.getHost())
-                                .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .status(gameRoom.getStatus())
-                                .createdAt(gameRoom.getCreatedAt())
-                                .modifiedAt(gameRoom.getModifiedAt())
-                                .build();
+                    .id(gameRoom.getId())
+                    .title(gameRoom.getTitle())
+                    .host(gameRoom.getHost())
+                    .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
+                    .status(gameRoom.getStatus())
+                    .createdAt(gameRoom.getCreatedAt())
+                    .modifiedAt(gameRoom.getModifiedAt())
+                    .build();
             gameRoomList.add(gameRoomResponseDto);
         }
         return gameRoomList;
     }
+
     private final RedisService redisService;
 
     // 게임방 생성
     @Transactional
-    public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request){
+    public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request) {
 
         Claims claims = authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
@@ -107,16 +108,18 @@ public class GameRoomService {
         // DB에 저장
         gameRoomRepository.save(gameRoom);
 
-        GameRoomUser gameRoomUser = new GameRoomUser(gameRoom,user);
+        GameRoomUser gameRoomUser = new GameRoomUser(gameRoom, user);
         gameRoomUserRepository.save(gameRoomUser);
 
         HashMap<String, String> roomInfo = new HashMap<>();
 
-        roomInfo.put("gameRoomtitle",gameRoom.getTitle());
+        roomInfo.put("gameRoomtitle", gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
-        return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
-    };
+        return new DataMsgResponseDto(StatusMsgCode.OK, roomInfo);
+    }
+
+    ;
 
     // 게임방 입장
     @Transactional
@@ -130,7 +133,7 @@ public class GameRoomService {
         Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
 
         // 게임 방의 상태가 true 이면 게임이 시작중이니 입장불가능
-        if (enterGameRoom.get().getStatus().equals("true")){
+        if (enterGameRoom.get().getStatus().equals("true")) {
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 
@@ -138,20 +141,20 @@ public class GameRoomService {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(enterGameRoom);
 
         // 현재 방의 인원이 8명 이상이면 풀방임~
-        if (gameRoomUserList.size() >= 8){
+        if (gameRoomUserList.size() >= 8) {
             return new MsgResponseDto(StatusMsgCode.FULL_BANG);
         }
 
         // 이미 방에 들어온 유저의 재입장 불가
-        for (GameRoomUser gameRoomUser : gameRoomUserList){
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
             Optional<User> ingameUser = userRepository.findById(gameRoomUser.getUser().getId());
-            if (user.getId() == ingameUser.get().getId()){
+            if (user.getId() == ingameUser.get().getId()) {
                 return new MsgResponseDto(StatusMsgCode.DUPLICATE_USER);
             }
         }
 
         // 새롭게 게임방에 들어온 유저 생성
-        GameRoomUser gameRoomUser = new GameRoomUser(enterGameRoom,user);
+        GameRoomUser gameRoomUser = new GameRoomUser(enterGameRoom, user);
 
         // 게임방에 들어온 유저를 DB에 저장
         gameRoomUserRepository.save(gameRoomUser);
@@ -184,12 +187,12 @@ public class GameRoomService {
         List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findByGameRoom(enterGameRoom);
 
         // 게임 방의 남은 인원이 0명이면 게임 방도 삭제
-        if (leftGameRoomUserList.size() ==0){
+        if (leftGameRoomUserList.size() == 0) {
             gameRoomRepository.delete(enterGameRoom);
         }
 
         // 나간 User 와 해당 GameRoom 의 방장이 같다면 && GameRoom 에 User 가 없지 않다면
-        if (user.getNickname().equals(enterGameRoom.getHost()) && !leftGameRoomUserList.isEmpty()){
+        if (user.getNickname().equals(enterGameRoom.getHost()) && !leftGameRoomUserList.isEmpty()) {
 //            Long newHostId = leftGameRoomUserList.get((int) (Math.random()*leftGameRoomUserList.size())).getId();
 
             // 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
@@ -213,10 +216,5 @@ public class GameRoomService {
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
-    };
+};
 
-    // 테스트중.... by 서혁수
-    public void RoomUsersInfo() {
-        redisService.getRoomUsers(2L);
-    }
-}

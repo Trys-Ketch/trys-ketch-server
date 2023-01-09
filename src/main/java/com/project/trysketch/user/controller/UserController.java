@@ -3,10 +3,7 @@ package com.project.trysketch.user.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.redis.dto.NonMemberNickRequestDto;
-import com.project.trysketch.redis.dto.TestRoomUsersDto;
-import com.project.trysketch.redis.entity.RoomUsers;
-import com.project.trysketch.redis.repositorty.RoomUsersRepository;
+import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.user.dto.SignInRequestDto;
 import com.project.trysketch.user.dto.SignUpRequestDto;
@@ -32,7 +29,6 @@ public class UserController {
     private final UserService userService;
     private final KakaoService kakaoService;
     private final RedisService redisService;
-    private final RoomUsersRepository roomUsersRepository;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -46,18 +42,6 @@ public class UserController {
     public ResponseEntity<MsgResponseDto> login(@RequestBody SignInRequestDto dto, HttpServletResponse response) {
         userService.login(dto, response);
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "로그인 성공!"));
-    }
-
-    // 이메일 중복 확인
-    @PostMapping("/email-check")
-    public ResponseEntity<MsgResponseDto> emailCheck(@RequestBody @Valid SignUpRequestDto requestDto) {
-        return userService.dupCheckEmail(requestDto);
-    }
-
-    // 닉네임 중복 확인
-    @PostMapping("/nick-check")
-    public ResponseEntity<MsgResponseDto> nickCheck(@RequestBody SignUpRequestDto requestDto) {
-        return userService.dupCheckNick(requestDto);
     }
 
     // OAuth2.0 카카오톡 로그인
@@ -80,7 +64,7 @@ public class UserController {
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
     // 비회원 로그인
     @PostMapping("/guest")
-    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletRequest request, HttpServletResponse response, @RequestBody NonMemberNickRequestDto requestDto) throws JsonProcessingException {
+    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletRequest request, HttpServletResponse response, @RequestBody GuestNickRequestDto requestDto) throws JsonProcessingException {
         redisService.guestLogin(request, response, requestDto);
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
     }
@@ -98,18 +82,5 @@ public class UserController {
         return null;
     }
 
-    // ======================== 여러개의 값 Redis 테스트 ========================
-    @GetMapping("/roomusers-test")
-    public void RoomUsersTest(@RequestBody TestRoomUsersDto dto) {
-        redisService.roomUsersTest(dto);
-    }
-
-    @GetMapping("/roomusers-get")
-    public List<RoomUsers> RoomUsersTest() {
-        List<RoomUsers> test = new ArrayList<>();
-        test = roomUsersRepository.findRoomUsersByRoomNum(1L);
-
-        return test;
-    }
 }
 
