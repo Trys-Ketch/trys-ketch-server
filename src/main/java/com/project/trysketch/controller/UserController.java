@@ -73,11 +73,5 @@ public class UserController {
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), nickname));
     }
 
-    @PostMapping("/cookie-get")
-    public ResponseEntity<MsgResponseDto> getCookie(HttpServletRequest request, HttpServletResponse response) {
-        userService.getCookie(request, response);
-        return null;
-    }
-
 }
 

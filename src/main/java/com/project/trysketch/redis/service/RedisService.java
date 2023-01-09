@@ -1,6 +1,7 @@
 package com.project.trysketch.redis.service;
 
 import com.project.trysketch.global.jwt.JwtUtil;
+import com.project.trysketch.redis.dto.GuestEnum;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 // 1. 기능   : Redis 비즈니스 로직
@@ -26,12 +28,6 @@ public class RedisService {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
-    @Value("${guest}")
-    private String guestHeader;
-
-    // 랜덤 닉네임 사이트 URL
-    @Value("${spring.redis.url}")
-    private String url;
 
     // RedisToken 생성
     public void setNonMember(String id, String value, Long expiredTime) {
@@ -65,7 +61,7 @@ public class RedisService {
         // 클라이언트로 부터 받아오는 닉네임
         String nickname = requestDto.getNickname();
 
-        Long num = incTest("guestSize");
+        Long num = incTest("guestCount");
         Long result = 10000L + num;
         // 새로운 redisToken 객체에 필요한 정보를 담아서 생성
         Guest guest = new Guest(result, nickname);
@@ -75,7 +71,7 @@ public class RedisService {
 
         String out = URLEncoder.encode(test, StandardCharsets.UTF_8);
 
-        response.addHeader(guestHeader, out);
+        response.addHeader("guest", out);
 
         System.out.println("디코딩 결과 : " + URLDecoder.decode(test, StandardCharsets.UTF_8));
 
@@ -111,4 +107,12 @@ public class RedisService {
 
     }*/
 
+    public void findTest(Long guests) {
+        Optional<Guest> guest = guestRepository.findById(guests);
+        System.out.println(guest.get().getId());
+    }
+
+    public void delTest(Long guests) {
+        guestRepository.deleteById(guests);
+    }
 }

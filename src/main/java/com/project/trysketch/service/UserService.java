@@ -1,5 +1,6 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.redis.dto.GuestEnum;
 import com.project.trysketch.suggest.RandomNick;
 import com.project.trysketch.suggest.RandomNickRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -11,7 +12,6 @@ import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,8 +31,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RandomNickRepository randomNickRepository;
-    @Value("${guest}")
-    private String guest;
 
     // 회원가입
     public void signUp(SignUpRequestDto requestDto) {
@@ -82,19 +80,4 @@ public class UserService {
 
     }
 
-    // 비회원 쿠키 정보 가져오기 (현재 테스트용으로 이리저리 만지고 있습니다.)
-    public void getCookie(HttpServletRequest request, HttpServletResponse response) {
-        Cookie[] myCookie = request.getCookies();
-        String num = null;
-
-        for (Cookie c : myCookie) {
-            if (c.getComment().equals(guest)) {
-                num = "회원번호 : " + c.getValue();
-            }
-        }
-
-        System.out.println(num);
-
-        ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "발급 완료"));
-    }
 }
