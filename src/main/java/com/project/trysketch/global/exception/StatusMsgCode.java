@@ -22,10 +22,10 @@ public enum StatusMsgCode {
     INVALID_USER(HttpStatus.BAD_REQUEST, "작성자만 삭제/수정할 수 있습니다."),
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
     ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다."),
-
     ALREADY_PLAYING(HttpStatus.BAD_REQUEST, "게임이 이미 시작되었습니다"),
     FULL_BANG(HttpStatus.BAD_REQUEST, "허용된 최대 사용자 수에 도달했습니다"),
     ALREADY_CANCEL_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요 취소를 눌렀습니다"),
+    GAMEROOM_NOT_FOUND(HttpStatus.BAD_REQUEST,"방을 찾을 수 없습니다"),
 
     //    /* 401 UNAUTHORIZED : 인증되지 않은 사용자 */
 //    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "권한 정보가 없는 토큰입니다."),
@@ -45,6 +45,8 @@ public enum StatusMsgCode {
 
     /* 200 SUCCESS */
     OK(HttpStatus.OK,"요청이 정상적으로 처리되었습니다"),
+    SUCCESS_ENTER_GAME(HttpStatus.OK,"성공적으로 방에 입장하셨습니다"),
+    SUCCESS_EXIT_GAME(HttpStatus.OK,"성공적으로 방에서 퇴장하셨습니다"),
     SIGN_UP(HttpStatus.OK, "회원가입에 성공했습니다."),
     LOG_IN(HttpStatus.OK, "로그인에 성공했습니다"),
     LIKE(HttpStatus.OK, "좋아요 성공"),

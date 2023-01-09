@@ -112,6 +112,7 @@ public class JwtUtil {
     }
 
 
+    // request 에서 유저 정보 가져오기
     public Claims authorizeToken(HttpServletRequest request) {
 
         String token = resolveToken(request);
