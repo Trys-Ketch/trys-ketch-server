@@ -21,12 +21,12 @@ public class GameRoomUser {
     @Id
     private Long id;
 
-    @JoinColumn(name = "gameroom_id")
+    @JoinColumn(name = "gameroomid")
     @ManyToOne
     private GameRoom gameRoom;
 
 //    @ManyToOne
-    @Column(name = "user_id")
+    @Column(name = "userid")
     private Long user;
 
 //    public GameRoomUser(GameRoom gameRoom, User user) {
