@@ -1,5 +1,6 @@
 package com.project.trysketch.user.service;
 
+import com.project.trysketch.redis.dto.GuestEnum;
 import com.project.trysketch.user.entity.RandomNick;
 import com.project.trysketch.user.repository.RandomNickRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -31,8 +32,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RandomNickRepository randomNickRepository;
-    @Value("${guest}")
-    private String guest;
+    private final String guestName = GuestEnum.GUEST_NAME_KEY.toString();
 
     // 회원가입
     public void signUp(SignUpRequestDto requestDto) {
@@ -88,7 +88,7 @@ public class UserService {
         String num = null;
 
         for (Cookie c : myCookie) {
-            if (c.getComment().equals(guest)) {
+            if (c.getComment().equals(guestName)) {
                 num = "회원번호 : " + c.getValue();
             }
         }

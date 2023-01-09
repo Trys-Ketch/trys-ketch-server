@@ -15,9 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
 
 // 1. 기능    : 유저 컨트롤러
 // 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
@@ -74,12 +71,6 @@ public class UserController {
     public ResponseEntity<MsgResponseDto> guestNick() {
         String nickname = userService.RandomNick();
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), nickname));
-    }
-
-    @PostMapping("/cookie-get")
-    public ResponseEntity<MsgResponseDto> getCookie(HttpServletRequest request, HttpServletResponse response) {
-        userService.getCookie(request, response);
-        return null;
     }
 
 }

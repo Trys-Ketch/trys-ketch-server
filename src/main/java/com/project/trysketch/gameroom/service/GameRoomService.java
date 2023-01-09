@@ -1,6 +1,5 @@
 package com.project.trysketch.gameroom.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.gameroom.dto.request.GameRoomRequestDto;
 import com.project.trysketch.gameroom.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -12,8 +11,9 @@ import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
+import com.project.trysketch.redis.dto.GuestEnum;
+import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.repositorty.GuestRepository;
-import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.user.entity.User;
 import com.project.trysketch.user.repository.UserRepository;
 import io.jsonwebtoken.Claims;
@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.net.URLDecoder;
@@ -47,10 +46,8 @@ public class GameRoomService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
-    @Value("${guest}")
-    private String guestNum;
-    @Value("${guest.nickname}")
-    private String guestNickname;
+    private final String guestName = GuestEnum.GUEST_NAME_KEY.toString();
+    private final String guestNick = GuestEnum.GUEST_NICKNAME_KEY.toString();
 
     // 유저 인증부
 //    public Claims authorizeToken(HttpServletRequest request){
@@ -80,7 +77,7 @@ public class GameRoomService {
 
     // 비회원 헤더 로직
     public JSONObject guest(HttpServletRequest request) throws ParseException {
-        String str = request.getHeader(guestNum);
+        String str = request.getHeader(guestName);
         str = URLDecoder.decode(str, StandardCharsets.UTF_8);
 
         JSONParser jsonParser = new JSONParser();
@@ -137,8 +134,13 @@ public class GameRoomService {
             gameRoomUser = new GameRoomUser(gameRoom,user.getId());
         } else if (guestInfo != null) {
             // 5. 비회원의 경우 로직 수행
-            String userId = guestInfo.get(guestNum).toString();            // guest PK 를 key 값을 통해서 추출
-            String nickname = guestInfo.get(guestNickname).toString();     // guest nickname 을 key 값을 통해서 추출
+            Long userId = Long.valueOf(guestInfo.get(guestName).toString()); // guest PK 를 key 값을 통해서 추출
+            String nickname = guestInfo.get(guestNick).toString();      // guest nickname 을 key 값을 통해서 추출
+
+            Optional<Guest> guest = guestRepository.findById(userId);
+            if (guestRepository.existsById(guest.get().getId())) {
+                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
+            }
 
             gameRoom = GameRoom.builder()
                     .title(gameRoomRequestDto.getTitle())
@@ -146,7 +148,7 @@ public class GameRoomService {
                     .status("false")
                     .build();
 
-            gameRoomUser = new GameRoomUser(gameRoom, Long.valueOf(userId));
+            gameRoomUser = new GameRoomUser(gameRoom, userId);
         }
 
         // DB에 저장
@@ -191,7 +193,7 @@ public class GameRoomService {
             userId = user.getId();
         }
         if (guestInfo != null) {
-            userId = Long.parseLong(guestInfo.get(guestNum).toString());
+            userId = Long.parseLong(guestInfo.get(guestName).toString());
         }
 
         // 현재 방의 유저 리스트를 받아옴 ( 수정전 코드 )

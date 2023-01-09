@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long> {
     List<GameRoomUser> findByGameRoom(GameRoom gameRoom);
     List<GameRoomUser> findByGameRoom(Optional<GameRoom> gameRoom);
-//    GameRoomUser findByUser(User user);
+    GameRoomUser findByUser(Long userId);
 
     boolean existsByGameRoom_IdAndUser(Long gameRoom, Long userId);
 
