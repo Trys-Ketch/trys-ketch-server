@@ -33,12 +33,12 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final ImageLikeRepository imageLikeRepository;
     private final UserRepository userRepository;
-    private final GameRoomService gameRoomService;
+    private final JwtUtil jwtUtil;
 
 
     // S3에 이미지 저장
     public MsgResponseDto saveImage(MultipartFile multipartFile, HttpServletRequest request) throws IOException {
-        Claims claims = gameRoomService.authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
@@ -51,7 +51,7 @@ public class ImageService {
 
     // 이미지 좋아요
     public MsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
-        Claims claims = gameRoomService.authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
@@ -70,7 +70,7 @@ public class ImageService {
     // S3에 업로드 된 이미지 조회
     @Transactional(readOnly = true)
     public List<String> getImage(HttpServletRequest request) {
-        Claims claims = gameRoomService.authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
@@ -86,7 +86,7 @@ public class ImageService {
     //좋아요 여부 확인
     @Transactional(readOnly = true)
     public boolean checkLike(Long imageId, HttpServletRequest request) {
-        Claims claims = gameRoomService.authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
@@ -98,7 +98,7 @@ public class ImageService {
     //좋아요 삭제
     @Transactional
     public MsgResponseDto cancelLike(Long imageId, HttpServletRequest request) {
-        Claims claims = gameRoomService.authorizeToken(request);
+        Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
