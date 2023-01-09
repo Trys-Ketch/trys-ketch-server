@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,12 +78,12 @@ public class ImageService {
         List<String> imagePathList = new ArrayList<>();
         for (ImageLike imageLike : imageLikeList) {
             imagePathList.add(imageLike.getImage().getPath());
-                    }
+        }
         return imagePathList;
     }
 
 
-    //좋아요 여부 확인
+    // 좋아요 여부 확인
     @Transactional(readOnly = true)
     public boolean checkLike(Long imageId, HttpServletRequest request) {
         Claims claims = jwtUtil.authorizeToken(request);
@@ -95,7 +96,7 @@ public class ImageService {
     }
 
 
-    //좋아요 삭제
+    // 좋아요 삭제
     @Transactional
     public MsgResponseDto cancelLike(Long imageId, HttpServletRequest request) {
         Claims claims = jwtUtil.authorizeToken(request);
@@ -118,8 +119,8 @@ public class ImageService {
     @Transactional
     public MsgResponseDto deleteImage() {
         List<Image> imageList = imageRepository.findAll();
-        for(Image image : imageList) {
-            if(image.getImageLikes().size()==0) {
+        for (Image image : imageList) {
+            if (image.getImageLikes().size() == 0) {
                 imageRepository.delete(image);
                 String path = image.getPath();
                 String filename = path.substring(62);
