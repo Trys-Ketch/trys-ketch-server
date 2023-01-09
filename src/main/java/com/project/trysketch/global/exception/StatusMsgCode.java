@@ -15,7 +15,7 @@ public enum StatusMsgCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     EXIST_USER(HttpStatus.BAD_REQUEST, "중복된 이메일입니다."),
     EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
-    INVALID_AUTH_TOKEN(HttpStatus.BAD_REQUEST, "토큰이 유효하지 않습니다."),
+    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
     BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "아이디나 비밀번호 패턴이 맞지 않습니다."),
     PRODUCT_NOT_FOUND(HttpStatus.BAD_REQUEST, "게시글을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "댓글을 찾을 수 없습니다."),
@@ -26,6 +26,7 @@ public enum StatusMsgCode {
     FULL_BANG(HttpStatus.BAD_REQUEST, "허용된 최대 사용자 수에 도달했습니다"),
     ALREADY_CANCEL_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요 취소를 눌렀습니다"),
     GAMEROOM_NOT_FOUND(HttpStatus.BAD_REQUEST,"방을 찾을 수 없습니다"),
+    YOUR_NOT_HOST(HttpStatus.BAD_REQUEST,"방장만 게임을 시작할 수 있습니다"),
 
     //    /* 401 UNAUTHORIZED : 인증되지 않은 사용자 */
 //    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "권한 정보가 없는 토큰입니다."),
