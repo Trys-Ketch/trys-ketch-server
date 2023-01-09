@@ -25,16 +25,21 @@ public class GameRoomUser {
     @ManyToOne
     private GameRoom gameRoom;
 
-    @JoinColumn(name = "userid")
-    @ManyToOne
-    private User user;
+//    @ManyToOne
+    @Column(name = "userid")
+    private Long user;
 
-    public GameRoomUser(GameRoom gameRoom, User user) {
+//    public GameRoomUser(GameRoom gameRoom, User user) {
+//        this.gameRoom = gameRoom;
+//        this.user = user;
+//    }
+
+    public GameRoomUser(GameRoom gameRoom, Long userId) {
         this.gameRoom = gameRoom;
-        this.user = user;
+        this.user = userId;
     }
 
-    public GameRoomUser(Optional<GameRoom> gameRoom, User user){
+    public GameRoomUser(Optional<GameRoom> gameRoom, Long user){
         this.gameRoom = gameRoom.get();
         this.user = user;
     }

@@ -67,7 +67,7 @@ public class JwtUtil {
     public String createRsToken(String rt) {
         return BEARER_PREFIX +
                 Jwts.builder()
-                        .claim("nickname", "test")
+                        .claim("nickname" , "test")
                         .signWith(key, signatureAlgorithm)
                         .compact();
     }

@@ -11,6 +11,7 @@ import com.project.trysketch.user.dto.SignInRequestDto;
 import com.project.trysketch.user.entity.User;
 import com.project.trysketch.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +31,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RandomNickRepository randomNickRepository;
+    @Value("${guest}")
+    private String guest;
 
     // 회원가입
     public void signUp(SignUpRequestDto requestDto) {
@@ -66,24 +69,6 @@ public class UserService {
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getEmail(), user.getNickname()));
     }
 
-    // 중복 이메일 체크
-    public ResponseEntity<MsgResponseDto> dupCheckEmail(SignUpRequestDto dto) {
-        if (userRepository.existsByEmail(dto.getEmail())) {
-            return ResponseEntity.badRequest().body(new MsgResponseDto(HttpStatus.BAD_REQUEST.value(), "중복 이메일 존재"));
-        } else {
-            return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "사용 가능한 이메일입니다."));
-        }
-    }
-
-    // 중복 닉네임 체크
-    public ResponseEntity<MsgResponseDto> dupCheckNick(SignUpRequestDto dto) {
-        if (userRepository.existsByNickname(dto.getNickname())) {
-            return ResponseEntity.badRequest().body(new MsgResponseDto(HttpStatus.BAD_REQUEST.value(), "중복 닉네임 존재"));
-        } else {
-            return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "사용 가능한 닉네임입니다."));
-        }
-    }
-
     // 랜덤 닉네임 발급
     public String RandomNick() {
         int num = (int) (Math.random() * 1000 +1);
@@ -98,16 +83,18 @@ public class UserService {
     }
 
     // 비회원 쿠키 정보 가져오기 (현재 테스트용으로 이리저리 만지고 있습니다.)
-    public ResponseEntity<?> getCookie(HttpServletRequest request, HttpServletResponse response) {
+    public void getCookie(HttpServletRequest request, HttpServletResponse response) {
         Cookie[] myCookie = request.getCookies();
         String num = null;
 
         for (Cookie c : myCookie) {
-            num = c.getValue();
+            if (c.getComment().equals(guest)) {
+                num = "회원번호 : " + c.getValue();
+            }
         }
 
         System.out.println(num);
 
-        return null;
+        ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "발급 완료"));
     }
 }

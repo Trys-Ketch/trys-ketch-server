@@ -8,6 +8,7 @@ import com.project.trysketch.gameroom.service.GameRoomService;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.parser.ParseException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -37,8 +38,7 @@ public class GameRoomController {
     // 게임 방 생성
     @PostMapping("/room")
     public ResponseEntity<DataMsgResponseDto> createGameRoom(@RequestBody GameRoomRequestDto gameRoomRequestDto,
-                                                             HttpServletRequest request)
-    {
+                                                             HttpServletRequest request) throws ParseException {
         log.info(">>> 메인페이지 이동 - 방 이름 : {},", gameRoomRequestDto.getTitle());
         return ResponseEntity.ok(gameRoomService.createGameRoom(gameRoomRequestDto, request));
     }
@@ -46,19 +46,18 @@ public class GameRoomController {
     // 게임 방 입장
     @PostMapping("/room/{id}")
     public ResponseEntity<MsgResponseDto> enterGameRoom(@PathVariable Long id,
-                                                        HttpServletRequest request)
-    {
+                                                        HttpServletRequest request) throws ParseException {
         log.info(">>> 방 입장 - 방 id : {}, 유저 id : {}", id, request);
         return ResponseEntity.ok(gameRoomService.enterGameRoom(id,request));
     }
 
     // 게임 방 나가기
-    @DeleteMapping("/room/{id}/exit")
-    public ResponseEntity<MsgResponseDto> exitGameRoom(@PathVariable Long id,
-                                                       HttpServletRequest request)
-    {
-        log.info(">>> 방 퇴장 - 방 id : {}, 유저 id : {}", id, request);
-        return ResponseEntity.ok(gameRoomService.exitGameRoom(id,request));
-    }
+//    @DeleteMapping("/room/{id}/exit")
+//    public ResponseEntity<MsgResponseDto> exitGameRoom(@PathVariable Long id,
+//                                                       HttpServletRequest request)
+//    {
+//        log.info(">>> 방 퇴장 - 방 id : {}, 유저 id : {}", id, request);
+//        return ResponseEntity.ok(gameRoomService.exitGameRoom(id,request));
+//    }
 
 }

@@ -38,7 +38,7 @@ public class WebSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         // 모든 static 리소스 접근 허가
         return (web -> web.ignoring().requestMatchers(PathRequest
-                        .toStaticResources().atCommonLocations()));
+                .toStaticResources().atCommonLocations()));
 //                .toH2Console()));     // h2 사용시 이것을 사용
     }
 
@@ -53,7 +53,7 @@ public class WebSecurityConfig {
         http.httpBasic().disable()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET).permitAll()
-                .antMatchers("/api/users/**" , "/api/**").permitAll()
+                .antMatchers("/api/users/**", "/api/**").permitAll()
                 .anyRequest().authenticated()
 
                 // corsConfigurationSource 적용
@@ -97,6 +97,7 @@ public class WebSecurityConfig {
 
         // 클라이언트가 접근 가능한 헤더 지정 (토큰 사용 가능하게)
         config.addExposedHeader("Authorization"); // ********
+        config.addExposedHeader("Nonmember");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
