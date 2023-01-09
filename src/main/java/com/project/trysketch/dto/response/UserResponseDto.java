@@ -1,4 +1,4 @@
-package com.project.trysketch.user.dto;
+package com.project.trysketch.dto.response;
 
 import lombok.Getter;
 

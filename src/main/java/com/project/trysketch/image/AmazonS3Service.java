@@ -2,8 +2,9 @@ package com.project.trysketch.image;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.project.trysketch.user.entity.User;
+import com.project.trysketch.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +54,12 @@ public class AmazonS3Service {
     private String putS3(File uploadFile, String fileName) {
         amazonS3Client.putObject(new PutObjectRequest(bucket, fileName, uploadFile).withCannedAcl(CannedAccessControlList.PublicRead));
         return amazonS3Client.getUrl(bucket, fileName).toString();
+    }
+
+    // S3 이미지 삭제
+    public void delete(String fileName){
+        DeleteObjectRequest request = new DeleteObjectRequest(bucket, fileName);
+        amazonS3Client.deleteObject(request);
     }
 
     // 로컬에 저장된 이미지 지우기

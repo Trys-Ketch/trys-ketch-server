@@ -1,16 +1,15 @@
-package com.project.trysketch.user.service;
+package com.project.trysketch.service;
 
-import com.project.trysketch.redis.dto.GuestEnum;
-import com.project.trysketch.user.entity.RandomNick;
-import com.project.trysketch.user.repository.RandomNickRepository;
+import com.project.trysketch.suggest.RandomNick;
+import com.project.trysketch.suggest.RandomNickRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
-import com.project.trysketch.user.dto.SignUpRequestDto;
-import com.project.trysketch.user.dto.SignInRequestDto;
-import com.project.trysketch.user.entity.User;
-import com.project.trysketch.user.repository.UserRepository;
+import com.project.trysketch.dto.request.SignUpRequestDto;
+import com.project.trysketch.dto.request.SignInRequestDto;
+import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

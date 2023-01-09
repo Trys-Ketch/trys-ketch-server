@@ -1,6 +1,6 @@
-package com.project.trysketch.gameroom.entity;
+package com.project.trysketch.entity;
 
-import com.project.trysketch.user.entity.User;
+import com.project.trysketch.entity.GameRoom;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

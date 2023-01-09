@@ -1,12 +1,12 @@
-package com.project.trysketch.user.service;
+package com.project.trysketch.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.global.jwt.JwtUtil;
-import com.project.trysketch.user.dto.KakaoUserRequstDto;
-import com.project.trysketch.user.entity.User;
-import com.project.trysketch.user.repository.UserRepository;
+import com.project.trysketch.dto.request.KakaoUserRequstDto;
+import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.UserRepository;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

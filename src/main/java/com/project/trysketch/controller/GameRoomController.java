@@ -1,10 +1,10 @@
-package com.project.trysketch.gameroom.controller;
+package com.project.trysketch.controller;
 
-import com.project.trysketch.gameroom.dto.request.GameRoomRequestDto;
-import com.project.trysketch.gameroom.dto.response.GameRoomResponseDto;
+import com.project.trysketch.dto.request.GameRoomRequestDto;
+import com.project.trysketch.dto.response.GameRoomResponseDto;
 
 import com.project.trysketch.global.dto.DataMsgResponseDto;
-import com.project.trysketch.gameroom.service.GameRoomService;
+import com.project.trysketch.service.GameRoomService;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

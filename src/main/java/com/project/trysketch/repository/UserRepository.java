@@ -1,6 +1,6 @@
-package com.project.trysketch.user.repository;
+package com.project.trysketch.repository;
 
-import com.project.trysketch.user.entity.User;
+import com.project.trysketch.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

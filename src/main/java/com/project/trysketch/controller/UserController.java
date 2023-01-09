@@ -1,14 +1,14 @@
-package com.project.trysketch.user.controller;
+package com.project.trysketch.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.service.RedisService;
-import com.project.trysketch.user.dto.SignInRequestDto;
-import com.project.trysketch.user.dto.SignUpRequestDto;
-import com.project.trysketch.user.service.KakaoService;
-import com.project.trysketch.user.service.UserService;
+import com.project.trysketch.dto.request.SignInRequestDto;
+import com.project.trysketch.dto.request.SignUpRequestDto;
+import com.project.trysketch.service.KakaoService;
+import com.project.trysketch.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.project.trysketch.user.entity;
+package com.project.trysketch.entity;
 
 import lombok.Builder;
 import lombok.Getter;

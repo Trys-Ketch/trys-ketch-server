@@ -1,4 +1,4 @@
-package com.project.trysketch.user.dto;
+package com.project.trysketch.dto.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

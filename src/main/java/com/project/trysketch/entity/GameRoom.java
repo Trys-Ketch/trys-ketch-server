@@ -1,4 +1,4 @@
-package com.project.trysketch.gameroom.entity;
+package com.project.trysketch.entity;
 
 import com.project.trysketch.global.entity.Timestamped;
 import lombok.*;
@@ -32,5 +32,7 @@ public class GameRoom extends Timestamped {
     @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
 
-
+    public void GameRoomStatusUpdate(String status) {
+        this.status = status;
+    }
 }

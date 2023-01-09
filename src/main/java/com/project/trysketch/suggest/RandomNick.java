@@ -1,4 +1,4 @@
-package com.project.trysketch.user.entity;
+package com.project.trysketch.suggest;
 
 import lombok.*;
 import javax.persistence.Column;

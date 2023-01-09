@@ -1,4 +1,4 @@
-package com.project.trysketch.gameroom.dto.request;
+package com.project.trysketch.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

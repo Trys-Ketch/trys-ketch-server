@@ -1,7 +1,7 @@
 package com.project.trysketch.global.security;
 
-import com.project.trysketch.user.entity.User;
-import com.project.trysketch.user.repository.UserRepository;
+import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

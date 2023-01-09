@@ -1,4 +1,4 @@
-package com.project.trysketch.gameroom.dto.response;
+package com.project.trysketch.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;

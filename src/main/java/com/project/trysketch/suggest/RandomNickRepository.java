@@ -1,6 +1,6 @@
-package com.project.trysketch.user.repository;
+package com.project.trysketch.suggest;
 
-import com.project.trysketch.user.entity.RandomNick;
+import com.project.trysketch.suggest.RandomNick;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
