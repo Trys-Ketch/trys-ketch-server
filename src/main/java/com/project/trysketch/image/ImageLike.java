@@ -1,6 +1,6 @@
 package com.project.trysketch.image;
 
-import com.project.trysketch.user.entity.User;
+import com.project.trysketch.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import javax.persistence.*;
