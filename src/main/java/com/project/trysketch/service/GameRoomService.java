@@ -134,8 +134,8 @@ public class GameRoomService {
             gameRoomUser = new GameRoomUser(gameRoom,user.getId());
         } else if (guestInfo != null) {
             // 5. 비회원의 경우 로직 수행
-            Long userId = Long.valueOf(guestInfo.get("guest").toString()); // guest PK 를 key 값을 통해서 추출
-            String nickname = guestInfo.get("nickname").toString();      // guest nickname 을 key 값을 통해서 추출
+            Long userId = Long.valueOf(guestInfo.get("guest").toString());  // guest PK 를 key 값을 통해서 추출
+            String nickname = guestInfo.get("nickname").toString();         // guest nickname 을 key 값을 통해서 추출
 
             Optional<Guest> guest = guestRepository.findById(userId);
             if (!guestRepository.existsById(guest.get().getId())) {

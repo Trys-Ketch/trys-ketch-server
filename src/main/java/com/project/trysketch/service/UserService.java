@@ -80,19 +80,4 @@ public class UserService {
 
     }
 
-    // 비회원 쿠키 정보 가져오기 (현재 테스트용으로 이리저리 만지고 있습니다.)
-    public void getCookie(HttpServletRequest request, HttpServletResponse response) {
-        Cookie[] myCookie = request.getCookies();
-        String num = null;
-
-        for (Cookie c : myCookie) {
-            if (c.getComment().equals("guest")) {
-                num = "회원번호 : " + c.getValue();
-            }
-        }
-
-        System.out.println(num);
-
-        ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "발급 완료"));
-    }
 }
