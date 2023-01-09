@@ -1,10 +1,10 @@
 package com.project.trysketch.image;
 
-import com.project.trysketch.user.entity.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 // 1. 기능   : ImageFile 구성요소
@@ -23,6 +23,10 @@ public class Image {
 
     @Column(nullable = false)            // 그린사람의 닉네임
     private String painter;
+
+    @OneToMany(mappedBy = "image")
+    private List<ImageLike> imageLikes = new ArrayList<>();
+
 
     //생성자
     public Image(String path, String painter) {

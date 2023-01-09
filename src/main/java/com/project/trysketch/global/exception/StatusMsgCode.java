@@ -55,7 +55,8 @@ public enum StatusMsgCode {
     DELETE_COMMENT(HttpStatus.OK, "댓글을 삭제하였습니다"),
     DONE_LIKE(HttpStatus.OK, "좋아요 클릭 완료"),
     LIKE_IMAGE(HttpStatus.OK, "좋아요 완료"),
-    DONE_DRAWING(HttpStatus.OK, "사진 저장 완료");
+    DONE_DRAWING(HttpStatus.OK, "사진 저장 완료"),
+    DELETE_IMAGE(HttpStatus.OK, "사진 삭제 완료");
 
 
     private final HttpStatus httpStatus;

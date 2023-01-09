@@ -1,14 +1,11 @@
 package com.project.trysketch.image;
 
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.global.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
@@ -49,6 +46,4 @@ public class ImageController {
                                                      HttpServletRequest request) {
         return ResponseEntity.ok(imageService.cancelLike(imageId, request));
     }
-
-
 }

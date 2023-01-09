@@ -1,6 +1,5 @@
 package com.project.trysketch.image;
 
-import com.project.trysketch.gameroom.service.GameRoomService;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
@@ -13,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,6 +45,7 @@ public class ImageService {
         }
         return new MsgResponseDto(StatusMsgCode.DONE_DRAWING);
     }
+
 
     // 이미지 좋아요
     public MsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
@@ -83,6 +81,7 @@ public class ImageService {
         return imagePathList;
     }
 
+
     //좋아요 여부 확인
     @Transactional(readOnly = true)
     public boolean checkLike(Long imageId, HttpServletRequest request) {
@@ -94,6 +93,7 @@ public class ImageService {
         Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
         return imageLike.isPresent();
     }
+
 
     //좋아요 삭제
     @Transactional
@@ -111,5 +111,21 @@ public class ImageService {
         }
         imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
         return new MsgResponseDto(StatusMsgCode.CANCEL_LIKE);
+    }
+
+
+    // 스케줄러 통해서 관리. 좋아요 안 눌린 이미지 삭제
+    @Transactional
+    public MsgResponseDto deleteImage() {
+        List<Image> imageList = imageRepository.findAll();
+        for(Image image : imageList) {
+            if(image.getImageLikes().size()==0) {
+                imageRepository.delete(image);
+                String path = image.getPath();
+                String filename = path.substring(62);
+                s3Service.delete(filename);
+            }
+        }
+        return new MsgResponseDto(StatusMsgCode.DELETE_IMAGE);
     }
 }
