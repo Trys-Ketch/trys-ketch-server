@@ -28,7 +28,6 @@ public class RedisService {
     private final UserService userService;
     private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
-    private final String guestName = GuestEnum.GUEST_NAME_KEY.toString();
 
     // RedisToken 생성
     public void setNonMember(String id, String value, Long expiredTime) {
@@ -72,7 +71,7 @@ public class RedisService {
 
         String out = URLEncoder.encode(test, StandardCharsets.UTF_8);
 
-        response.addHeader(guestName, out);
+        response.addHeader("guest", out);
 
         System.out.println("디코딩 결과 : " + URLDecoder.decode(test, StandardCharsets.UTF_8));
 

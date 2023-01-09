@@ -46,8 +46,6 @@ public class GameRoomService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
-    private final String guestName = GuestEnum.GUEST_NAME_KEY.toString();
-    private final String guestNick = GuestEnum.GUEST_NICKNAME_KEY.toString();
 
     // 유저 인증부
 //    public Claims authorizeToken(HttpServletRequest request){
@@ -77,12 +75,14 @@ public class GameRoomService {
 
     // 비회원 헤더 로직
     public JSONObject guest(HttpServletRequest request) throws ParseException {
-        String str = request.getHeader(guestName);
-        str = URLDecoder.decode(str, StandardCharsets.UTF_8);
-
-        JSONParser jsonParser = new JSONParser();
-
-        return (JSONObject) jsonParser.parse(str);
+        String str = request.getHeader("guest");
+        if (str != null) {
+            str = URLDecoder.decode(str, StandardCharsets.UTF_8);
+            JSONParser jsonParser = new JSONParser();
+            return (JSONObject) jsonParser.parse(str);
+        } else {
+            return null;
+        }
     }
 
     // 게임방 조회
@@ -134,11 +134,11 @@ public class GameRoomService {
             gameRoomUser = new GameRoomUser(gameRoom,user.getId());
         } else if (guestInfo != null) {
             // 5. 비회원의 경우 로직 수행
-            Long userId = Long.valueOf(guestInfo.get(guestName).toString()); // guest PK 를 key 값을 통해서 추출
-            String nickname = guestInfo.get(guestNick).toString();      // guest nickname 을 key 값을 통해서 추출
+            Long userId = Long.valueOf(guestInfo.get("guest").toString()); // guest PK 를 key 값을 통해서 추출
+            String nickname = guestInfo.get("nickname").toString();      // guest nickname 을 key 값을 통해서 추출
 
             Optional<Guest> guest = guestRepository.findById(userId);
-            if (guestRepository.existsById(guest.get().getId())) {
+            if (!guestRepository.existsById(guest.get().getId())) {
                 throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
             }
 
@@ -193,7 +193,7 @@ public class GameRoomService {
             userId = user.getId();
         }
         if (guestInfo != null) {
-            userId = Long.parseLong(guestInfo.get(guestName).toString());
+            userId = Long.parseLong(guestInfo.get("guest").toString());
         }
 
         // 현재 방의 유저 리스트를 받아옴 ( 수정전 코드 )

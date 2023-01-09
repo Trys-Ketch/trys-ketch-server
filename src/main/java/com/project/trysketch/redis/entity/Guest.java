@@ -9,7 +9,7 @@ import javax.persistence.Id;
 // 1. 기능   : 비회원 구성요소
 // 2. 작성자 : 서혁수
 @Getter
-@RedisHash(value = "guest", timeToLive = 20)
+@RedisHash(value = "guest", timeToLive = 36000)
 public class Guest {
     // RedisHash : Hash Collection 명시
     // Jpa 의 Entity 에 해당하는 어노테이션 즉, value 는 Key 를 만들 때 사용하는 것으로
