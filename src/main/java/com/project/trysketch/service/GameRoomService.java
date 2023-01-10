@@ -45,37 +45,11 @@ public class GameRoomService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
-    private static final String email = "email";                                    // 이메일 상수
     private static final String extId = "id";                                       // 유저 고유번호 상수
     private static final String extNick = "nickname";                               // 유저 닉네임 상수
 
-    // 유저 인증부
-//    public Claims authorizeToken(HttpServletRequest request){
-//
-//        String token = jwtUtil.resolveToken(request);
-//        Claims claims;
-//
-//        if(token != null){
-//            if (jwtUtil.validateToken(token)){
-//                claims = jwtUtil.getUserInfoFromToken(token);
-//                return claims;
-//            }else
-//                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
-//        }
-//        return null;
-//        //request 의 헤더에서 Authorization 확인
-//        if(request.getHeader("Authorization") == null){
-//            throw new IllegalArgumentException("만료된 토큰");
-//        }
-//
-//        if (!jwtUtil.validateToken(request.getHeader("Authorization"))){
-//            throw new IllegalArgumentException("만료된 토큰");
-//        }
-//
-//        User auth_user = jwtUtil.getUserFromAuthentication();
-//    }
 
-    // 비회원 헤더 로직
+    // =========================== 비회원 헤더 로직 ============================
     public JSONObject guest(HttpServletRequest request) throws ParseException {
         String guestValue = request.getHeader(GuestKey.GUEST_NUM.key());            // request 안의 "guest" 라는 이름의 헤더의 값을 가져온다.
         if (guestValue != null) {
@@ -87,7 +61,7 @@ public class GameRoomService {
         }
     }
 
-    // 회원 Id, Nickname 추출
+    // ======================== 회원 Id, Nickname 추출 ========================
     public HashMap<String, String> extValue(HttpServletRequest request) throws ParseException {
         Claims claims = jwtUtil.authorizeToken(request);                            // 회원 검증 로직 및 회원 정보 추출
         JSONObject guestInfo = guest(request);                                      // 비회원 정보 추출
@@ -96,7 +70,7 @@ public class GameRoomService {
 
         // 회원, 비회원 분기처리 시작
         if (claims != null) {
-            User user = userRepository.findByEmail(claims.get(email).toString()).orElseThrow(
+            User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
             result.put(extId, user.getId().toString());                             // 회원 Id 를 key 값으로 value 추출 해서 result 에 주입
@@ -115,8 +89,8 @@ public class GameRoomService {
         return result;
     }
 
-    // 게임방 조회
-    @Transactional //전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
+    // ============================== 게임방 조회 ==============================
+    @Transactional // 전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
     public List<GameRoomResponseDto> getAllGameRoom(Pageable pageable) {
         Page<GameRoom> rooms = gameRoomRepository.findAll(pageable);
 
@@ -137,35 +111,9 @@ public class GameRoomService {
         return gameRoomList;
     }
 
-    // 게임방 생성
+    // ============================== 게임방 생성 ==============================
     @Transactional
     public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request) throws ParseException {
-/*        // 1. 메서드를 이용해서 회원, 비회원 정보 가져오기
-        Claims claims = jwtUtil.authorizeToken(request);
-        JSONObject guestInfo = guest(request);
-
-        // 2. 공통적으로 사용되는 부분을 미리 선언
-        Long userId = null;
-        String nickname = null;
-
-        // 3. 분기처리를 통해서 회원, 비회원에 해당하는 경우로 수행
-        if (claims != null) {
-            // 4. 회원의 경우 로직 수행
-            User user = userRepository.findByEmail(claims.get(email).toString()).orElseThrow(
-                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-            );
-            userId = user.getId();
-            nickname = user.getNickname();
-        } else if (guestInfo != null) {
-            // 5. 비회원의 경우 로직 수행
-            userId = Long.valueOf(guestInfo.get(GuestKey.GUEST_NUM.key()).toString()); // guest PK 를 key 값을 통해서 추출
-            nickname = guestInfo.get(GuestKey.GUEST_NICK.key()).toString();            // guest nickname 을 key 값을 통해서 추출
-
-            Optional<Guest> guest = guestRepository.findById(userId);                  // guest 정보가 DB 에 있는지 확인(검증)
-            if (!guestRepository.existsById(guest.get().getId())) {
-                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
-            }
-        }*/
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
         HashMap<String, String> extInfo = extValue(request);
 
@@ -202,7 +150,7 @@ public class GameRoomService {
         return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
     };
 
-    // 게임방 입장
+    // ============================== 게임방 입장 ==============================
     @Transactional
     public MsgResponseDto enterGameRoom(Long id, HttpServletRequest request) throws ParseException {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
@@ -211,7 +159,7 @@ public class GameRoomService {
         // 2. id로 DB 에서 현재 들어갈 게임방 데이터 찾기
         Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
 
-        // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장불가능
+        // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장 불가능
         if (enterGameRoom.get().getStatus().equals("true")){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
@@ -241,51 +189,62 @@ public class GameRoomService {
         return new MsgResponseDto(StatusMsgCode.SUCCESS_ENTER_GAME);
     }
 
-    // 게임방 나가기
+    // ============================= 게임방 나가기 =============================
     @Transactional
     public MsgResponseDto exitGameRoom(Long id, HttpServletRequest request) throws ParseException {
         HashMap<String, String> extInfo = extValue(request);
 
-        // 나가려고 하는 GameRoom 정보 가져오기
+        // 1. 나가려고 하는 GameRoom 정보 가져오기
         GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
 
-        // 나가려고 하는 GameRoomUser 정보 가져오기
+        // 2. 나가려고 하는 GameRoomUser 정보 가져오기
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserId(Long.valueOf(extInfo.get(extId)));
 
-        // 해당 user 를 GameRoomUser 에서 삭제
+        // 3. 나가려는 유저가 요청한 방에 존재하지 않으면 잘못된 요청
+        if (!gameRoomUserRepository.existsByGameRoomIdAndUserId(id, gameRoomUser.getUserId())) {
+            return new MsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
+        }
+
+        // 4. 해당 user 를 GameRoomUser 에서 삭제
         gameRoomUserRepository.delete(gameRoomUser);
 
-        // 방장이 나간 방의 UserList 정보 가져오기
+        // 5. 방장이 나간 방의 UserList 정보 가져오기
         List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findByGameRoom(enterGameRoom);
 
-        // 게임 방의 남은 인원이 0명이면 게임 방도 삭제
+        // 6. 게임 방의 남은 인원이 0명이면 게임 방도 삭제
         if (leftGameRoomUserList.size() == 0){
             gameRoomRepository.delete(enterGameRoom);
         }
 
-        // 나간 User 와 해당 GameRoom 의 방장이 같다면 && GameRoom 에 User 가 없지 않다면
+        // 7. 나간 User 와 해당 GameRoom 의 방장이 같다면 && GameRoom 에 User 가 없지 않다면
         if (extInfo.get(extNick).equals(enterGameRoom.getHost()) && !leftGameRoomUserList.isEmpty()){
+            String hostNick = null;
 
-            // 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
-            Long newHostId = leftGameRoomUserList.get(0).getId();
+            // 8. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
+            Long newHostId = leftGameRoomUserList.get(0).getUserId();
 
-            // UserId 를 들고 GameRoomUser 정보 가져오기
-            GameRoomUser newHost = gameRoomUserRepository.findById(newHostId).orElseThrow(
-                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-            );
-            Optional<User> newHostInfo = userRepository.findById(newHost.getId());
+            // 9. UserId 를 들고 GameRoomUser 정보 가져오기
+            GameRoomUser userHost = gameRoomUserRepository.findById(newHostId).orElse(null);
+            Guest guestHost = guestRepository.findById(newHostId).orElse(null);
 
-            // 새로운 Host 가 선정되어 GameRoom 정보 빌드
+            // 10. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
+            if (userHost != null) {
+                hostNick = userHost.getNickname();
+            } else if (guestHost != null) {
+                hostNick = guestHost.getNickname();
+            }
+
+            // 11. 새로운 Host 가 선정되어 GameRoom 정보 빌드
             GameRoom updateGameRoom = GameRoom.builder()
                     .id(enterGameRoom.getId())
-                    .host(newHostInfo.get().getNickname())
+                    .host(hostNick)
                     .title(enterGameRoom.getTitle())
                     .status("false")
                     .build();
 
-            // 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
+            // 12. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
             gameRoomRepository.save(updateGameRoom);
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);

@@ -18,4 +18,6 @@ public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long
     Long countByGameRoomIdOrderByUserId(Long gameRoomId);
 
     boolean existsByUserId(Long userId);
+
+    boolean existsByGameRoomIdAndUserId(Long roomId, Long userId);
 }
