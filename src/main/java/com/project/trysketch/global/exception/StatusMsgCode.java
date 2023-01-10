@@ -33,6 +33,7 @@ public enum StatusMsgCode {
     /* 409 CONFLICT : Resource의 현재 상태와 충돌, 보통 중복된 데이터 존재 */
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "데이터가 이미 존재합니다."),
     DUPLICATE_USER(HttpStatus.CONFLICT, "유저가 이미 존재합니다."),
+    ONE_MAN_ONE_ROOM(HttpStatus.CONFLICT, "이미 접속중인 방이 있습니다"),
 
 
     /* 200 SUCCESS */

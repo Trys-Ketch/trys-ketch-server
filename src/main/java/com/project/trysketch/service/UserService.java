@@ -1,9 +1,7 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.redis.dto.GuestEnum;
 import com.project.trysketch.suggest.RandomNick;
 import com.project.trysketch.suggest.RandomNickRepository;
-import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
@@ -12,12 +10,8 @@ import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Objects;
 
