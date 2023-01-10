@@ -1,9 +1,6 @@
 package com.project.trysketch.global.rtc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -12,50 +9,58 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
-// 1. 기능   : Signaling Handler
+// 1. 기능   : Signaling Server 역할
 // 2. 작성자 : 안은솔
-// 3. 참고사항 : 아직 수정 중이라 코드가 깔끔하지 못해도 양해 바랍니다..
+// 3. 참고사항: 추후 게임방 DB와 연결 필요
 
+@Slf4j
 @Component
-@RequiredArgsConstructor
 public class SignalingHandler extends TextWebSocketHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // 어떤 방에 어떤 유저가 들어있는지 저장 -> { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], ... }
+    private final Map<String, List<Map<String, String>>> roomInfo = new HashMap<>();
 
-    // roomId와 room 매핑
-    private Map<String, Room> sessionIdToRoomMap = new HashMap<>();
-    private List<WebSocketSession> sessions = new LinkedList<>();
+    // userUUID 기준 어떤 방에 들어있는지 저장 -> { userUUID1 : 방번호, userUUID2 : 방번호, ... }
+    private final Map<String, String> userInfo = new HashMap<>();
 
-    // 시그널링에 사용되는 메세지 타입:
-    // SDP Offer message
+    // 세션 정보 저장 -> { userUUID1 : 세션객체, userUUID2 : 세션객체, ... }
+    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
+    // 방의 최대 인원수
+    private static final int MAXIMUM = 8;
+
+
+    // 시그널링에 사용되는 메시지 타입 :
+    // SDP Offer 메시지
     private static final String MSG_TYPE_OFFER = "offer";
-    // SDP Answer message
+    // SDP Answer 메시지
     private static final String MSG_TYPE_ANSWER = "answer";
-    // New ICE Candidate message
-    private static final String MSG_TYPE_ICE = "ice";
-    // join room data message
-    private static final String MSG_TYPE_JOIN = "join";
-    // leave room data message
-    private static final String MSG_TYPE_LEAVE = "leave";
+    // 새로운 ICE Candidate 메시지
+    private static final String MSG_TYPE_CANDIDATE = "candidate";
+    // 방 입장 메시지
+    private static final String MSG_TYPE_JOIN = "join_room";
 
-    // 소켓 메시지 처리
+
+    // 웹소켓 연결 시
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) {
+        log.info(">>> [ws] 클라이언트 접속 : 세션 - {}", session);
+    }
+
+    // 양방향 데이터 통신
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage textMessage) throws Exception {
-
         try {
-            // 웹 소켓으로부터 전달받은 메시지
-            // 소켓쪽에서는 socket.send 로 메시지를 발송한다 => 참고로 JSON 형식으로 변환해서 전달해온다
-            WebSocketMessage message = objectMapper.readValue(textMessage.getPayload(), WebSocketMessage.class);
-            logger.debug("[ws] Message of {} type from {} received", message.getType(), message.getFrom());
+            // 웹 소켓으로부터 전달받은 메시지를 deserialization(JSON -> Java Object)
+            Message message = Utils.getObject(textMessage.getPayload());
+            log.info(">>> [ws] 시작!!! 세션 객체 {}", session);
+
             // 유저 uuid 와 roomID 를 저장
-            String userUUID = message.getFrom(); // 유저 uuid
-            String roomId = message.getData(); // roomId
-
-            logger.info("Message {}", message.toString());
-
-//            ChatRoomDto room;
+            String userUUID = session.getId(); // 유저 uuid
+            String roomId = message.getRoom(); // roomId
+            log.info(">>> [ws] 메시지 타입 {}, 보낸 사람 {}", message.getType(), userUUID);
 
             // 메시지 타입에 따라서 서버에서 하는 역할이 달라진다
             switch (message.getType()) {
@@ -63,138 +68,156 @@ public class SignalingHandler extends TextWebSocketHandler {
                 // 클라이언트에게서 받은 메시지 타입에 따른 signal 프로세스
                 case MSG_TYPE_OFFER:
                 case MSG_TYPE_ANSWER:
-                case MSG_TYPE_ICE:
+                case MSG_TYPE_CANDIDATE:
+
+                    // 전달받은 메시지로부터 candidate, sdp, receiver 를 저장
                     Object candidate = message.getCandidate();
                     Object sdp = message.getSdp();
+                    String receiver = message.getReceiver();   // 클라이언트에서 보내주는 1명의 receiver
+                    log.info(">>> [ws] receiver {}", receiver);
 
-                    logger.debug("[ws] Signal: {}",
-                            candidate != null
-                                    ? candidate.toString().substring(0, 64)
-                                    : sdp.toString().substring(0, 64));
-
-                    /* 여기도 마찬가지 */
-//                    ChatRoomDto roomDto = rooms.get(roomId);
-                    Room rm = sessionIdToRoomMap.get(session.getId());
-                    if (rm != null) {
-                        sendMessage(session,
-                                WebSocketMessage.builder()
-                                        .from(userUUID)
+                    // sessions 에서 receiver 를 찾아 메시지 전달
+                    sessions.values().forEach(s -> {
+                        try {
+                            if(s.getId().equals(receiver)) {
+                                s.sendMessage(new TextMessage(Utils.getString(Message.builder()
                                         .type(message.getType())
-                                        .data(roomId)
+                                        .sdp(sdp)
                                         .candidate(candidate)
-                                        .sdp(sdp).build());
-
-//                        Map<String, WebSocketSession> clients = roomService.getClients(rm);
-
-                        /*
-                         * Map.Entry 는 Map 인터페이스 내부에서 Key, Value 를 쌍으로 다루기 위해 정의된 내부 인터페이스
-                         * 보통 key 값들을 가져오는 entrySet() 과 함께 사용한다.
-                         * entrySet 을 통해서 key 값들을 불러온 후 Map.Entry 를 사용하면서 Key 에 해당하는 Value 를 쌍으로 가져온다
-                         *
-                         * 여기를 고치면 1:1 대신 1:N 으로 바꿀 수 있지 않을까..?
-                         */
-//                        for(Map.Entry<String, WebSocketSession> client : clients.entrySet())  {
-//
-//                            // send messages to all clients except current user
-//                            if (!client.getKey().equals(userUUID)) {
-//                                // select the same type to resend signal
-//                                sendMessage(client.getValue(),
-//                                        new WebSocketMessage(
-//                                                userUUID,
-//                                                message.getType(),
-//                                                roomId,
-//                                                candidate,
-//                                                sdp));
-//                            }
-//                        }
-                    }
+                                        .sender(userUUID)
+                                        .receiver(receiver).build())));
+                            }
+                        }
+                        catch (Exception e) {
+                            log.info(">>> 에러 발생 : offer, candidate, answer 메시지 전달 실패 {}", e.getMessage());
+                        }
+                    });
                     break;
 
-                // identify user and their opponent
+                // 방 입장
                 case MSG_TYPE_JOIN:
-                    // message.data contains connected room id
-                    logger.debug("[ws] {} has joined Room: #{}", userUUID, message.getData());
-                    sendMessage(session,
-                            WebSocketMessage.builder()
-                                    .from(userUUID)
-                                    .type(message.getType())
-                                    .data(roomId).build());
 
-//                    room = rtcChatService.findRoomByRoomId(roomId)
-//                            .orElseThrow(() -> new IOException("Invalid room number received!"));
-//                    room = ChatRoomMap.getInstance().getChatRooms().get(roomId);
-//
-//                    // room 안에 있는 userList 에 유저 추가
-//                    rtcChatService.addClient(room, userUUID, session);
-//
-//                    // 채팅방 입장 후 유저 카운트+1
-//                    chatServiceMain.plusUserCnt(roomId);
-//
-//                    rooms.put(roomId, room);
+                    log.info(">>> [ws] {} 가 #{}번 방에 들어감", userUUID, roomId);
+
+                    // 방이 기존에 생성되어 있다면
+                    if (roomInfo.containsKey(roomId)) {
+
+                        // 현재 입장하려는 방에 있는 인원수
+                        int currentRoomLength = roomInfo.get(roomId).size();
+
+                        // 인원수가 꽉 찼다면 돌아간다
+                        if (currentRoomLength == MAXIMUM) {
+
+                            // 해당 유저에게 방이 꽉 찼다는 메시지를 보내준다
+                            session.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                                    .type("room_full")
+                                    .sender(userUUID).build())));
+                            return;
+                        }
+
+                        // 여분의 자리가 있다면 해당 방 배열에 추가
+                        Map<String, String> userDetail = new HashMap<>();
+                        userDetail.put("id", userUUID);
+                        roomInfo.get(roomId).add(userDetail);
+                        log.info(">>> [ws] #{}번 방의 유저들 {}", roomId, roomInfo.get(roomId));
+
+                    } else {
+
+                        // 방이 존재하지 않는다면 값을 생성하고 추가
+                        Map<String, String> userDetail = new HashMap<>();
+                        userDetail.put("id", userUUID);
+                        List<Map<String, String>> newRoom = new ArrayList<>();
+                        newRoom.add(userDetail);
+                        roomInfo.put(roomId, newRoom);
+                    }
+
+                    // 세션 저장, user 정보 저장 -> 방 입장
+                    sessions.put(userUUID, session);
+                    userInfo.put(userUUID, roomId);
+
+
+                    // 해당 방에 다른 유저가 있었다면 offer-answer 를 위해 유저 리스트를 만들어 클라이언트에 전달
+
+                    // roomInfo = { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], 방번호 : [ { id : userUUID3 }, { id: userUUID4 }, …], ... }
+                    // originRoomUser -> 본인을 제외한 해당 방의 다른 유저들
+                    List<Map<String, String>> originRoomUser = new ArrayList<>();
+                    for (Map<String, String> userDetail : roomInfo.get(roomId)) {
+
+                        // userUUID 가 본인과 같지 않다면 list 에 추가
+                        if (!(userDetail.get("id").equals(userUUID))) {
+                            Map<String, String> userMap = new HashMap<>();
+                            userMap.put("id", userDetail.get("id"));
+                            originRoomUser.add(userMap);
+                        }
+                    }
+
+                    log.info(">>> [ws] 본인 {} 을 제외한 #{}번 방의 다른 유저들 {}", userUUID, roomId, originRoomUser);
+
+                    // all_users 라는 타입으로 메시지 전달
+                    session.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                            .type("all_users")
+                            .allUsers(originRoomUser)
+                            .sender(userUUID).build())));
                     break;
 
-                case MSG_TYPE_LEAVE:
-                    // message data contains connected room id
-                    logger.info("[ws] {} is going to leave Room: #{}", userUUID, message.getData());
-
-                    // roomID 기준 채팅방 찾아오기
-//                    room = rooms.get(message.getData());
-//
-//                    // room clients list 에서 해당 유저 삭제
-//                    // 1. room 에서 client List 를 받아와서 keySet 을 이용해서 key 값만 가져온 후 stream 을 사용해서 반복문 실행
-//                    Optional<String> client = rtcChatService.getClients(room).keySet().stream()
-//                            // 2. 이때 filter - 일종의 if문 -을 사용하는데 entry 에서 key 값만 가져와서 userUUID 와 비교한다
-//                            .filter(clientListKeys -> StringUtils.equals(clientListKeys, userUUID))
-//                            // 3. 하여튼 동일한 것만 가져온다
-//                            .findAny();
-//
-//                    // 만약 client 의 값이 존재한다면 - Optional 임으로 isPersent 사용 , null  아니라면 - removeClientByName 을 실행
-//                    client.ifPresent(userID -> rtcChatService.removeClientByName(room, userID));
-//
-//                    // 채팅방에서 떠날 시 유저 카운트 -1
-//                    chatServiceMain.minusUserCnt(roomId);
-//
-//                    logger.debug("삭제 완료 [{}] ",client);
-                    break;
-
-                // something should be wrong with the received message, since it's type is unrecognizable
+                // 메시지 타입이 잘못되었을 경우
                 default:
-                    logger.debug("[ws] Type of the received message {} is undefined!", message.getType());
-                    // handle this if needed
+                    log.info(">>> [ws] 잘못된 메시지 타입 {}", message.getType());
             }
-
         } catch (IOException e) {
-            logger.debug("An error occured: {}", e.getMessage());
+            log.info(">>> 에러 발생 : 양방향 데이터 통신 실패 {}", e.getMessage());
         }
-
     }
 
-    // 소켓 연결되었을 때 이벤트 처리
+    // 소켓 연결 종료
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        log.info(">>> [ws] 클라이언트 접속 해제 : 세션 - {}, 상태 - {}", session, status);
 
-        sessions.add(session);
-        super.afterConnectionEstablished(session);
+        // 유저 uuid 와 roomID 를 저장
+        String userUUID = session.getId(); // 유저 uuid
+        String roomId = userInfo.get(userUUID); // roomId
 
-        sendMessage(session, new WebSocketMessage("Server", MSG_TYPE_JOIN, Boolean.toString(!sessionIdToRoomMap.isEmpty()), null, null));
-        logger.info("[ws] webSocket has been opened {}", session);
+        // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
+        sessions.remove(userUUID);
+        userInfo.remove(userUUID);
+
+        // roomInfo = { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], 방번호 : [ { id : userUUID3 }, { id: userUUID4 }, …], ... }
+        // 해당하는 방의 value 인 user list 의 element 의 value 가 현재 userUUID 와 같다면 roomInfo 에서 remove
+        List<Map<String, String>> removed = new ArrayList<>();
+        roomInfo.get(roomId).forEach(s -> {
+            try {
+                if(s.containsValue(userUUID)) {
+                    removed.add(s);
+                }
+            }
+            catch (Exception e) {
+                log.info(">>> 에러 발생 : if문 생성 실패 {}", e.getMessage());
+            }
+        });
+        roomInfo.get(roomId).removeAll(removed);
+
+        // 본인을 제외한 모든 유저에게 user_exit 라는 타입으로 메시지 전달
+        sessions.values().forEach(s -> {
+            try {
+                if(!(s.getId().equals(userUUID))) {
+                    s.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                            .type("user_exit")
+                            .sender(userUUID).build())));
+                }
+            }
+            catch (Exception e) {
+                log.info(">>> 에러 발생 : user_exit 메시지 전달 실패 {}", e.getMessage());
+            }
+        });
+
+        log.info(">>> [ws] #{}번 방에서 {} 삭제 완료", roomId, userUUID);
+        log.info(">>> [ws] #{}번 방에 남은 유저 {}", roomId, roomInfo.get(roomId));
     }
 
-    // 연결 끊어졌을 때 이벤트처리
+    // 소켓 통신 에러
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-
-        sessions.remove(session);
-        super.afterConnectionClosed(session, status);
-        logger.info("[ws] Session has been closed with status [{} {}]", status, session);
-    }
-
-    private void sendMessage(WebSocketSession session, WebSocketMessage message) {
-        try {
-            String json = objectMapper.writeValueAsString(message);
-            session.sendMessage(new TextMessage(json));
-        } catch (IOException e) {
-            logger.debug("An error occured: {}", e.getMessage());
-        }
+    public void handleTransportError(WebSocketSession session, Throwable exception) {
+        log.info(">>> 에러 발생 : 소켓 통신 에러 {}", exception.getMessage());
     }
 }
