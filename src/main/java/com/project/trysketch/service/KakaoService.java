@@ -38,10 +38,10 @@ public class KakaoService {
         String randomNickname = userService.RandomNick();
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
-//        String accessToken = getToken(code);                                           // 포스트맨 확인위해 주석처리 필요
+        String accessToken = getToken(code);                                                        // 포스트맨 확인위해 주석처리 필요
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(code, randomNickname);             // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
+        KakaoUserRequstDto kakaoUserInfo = getKakaoUserInfo(accessToken, randomNickname);           // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
@@ -64,7 +64,7 @@ public class KakaoService {
         
         // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
         
-        body.add("redirect_uri", "http://localhost:3030/login");                       // 프론트의 주소
+        body.add("redirect_uri", "http://localhost:3000/login");                       // 프론트의 주소
         body.add("code", code);
 
         // HTTP 요청 보내기
@@ -105,13 +105,9 @@ public class KakaoService {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         Long id = jsonNode.get("id").asLong();
-        String nickname = jsonNode.get("properties")
-                .get("nickname").asText();
         String email = jsonNode.get("kakao_account")
                 .get("email").asText();
 
-        log.info("카카오 사용자 정보: " + id + ", " + nickname + ", " + email);
-        log.info("저장할 사용자 정보 : " + id + ", " + randomNickname + ", " + email);
         return new KakaoUserRequstDto(id, randomNickname, email);
     }
 
