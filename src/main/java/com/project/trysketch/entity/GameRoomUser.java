@@ -1,6 +1,5 @@
 package com.project.trysketch.entity;
 
-import com.project.trysketch.entity.GameRoom;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,7 +26,7 @@ public class GameRoomUser {
 
 //    @ManyToOne
     @Column(name = "userid")
-    private Long user;
+    private Long userId;
 
 //    public GameRoomUser(GameRoom gameRoom, User user) {
 //        this.gameRoom = gameRoom;
@@ -36,11 +35,11 @@ public class GameRoomUser {
 
     public GameRoomUser(GameRoom gameRoom, Long userId) {
         this.gameRoom = gameRoom;
-        this.user = userId;
+        this.userId = userId;
     }
 
-    public GameRoomUser(Optional<GameRoom> gameRoom, Long user){
+    public GameRoomUser(Optional<GameRoom> gameRoom, Long userId){
         this.gameRoom = gameRoom.get();
-        this.user = user;
+        this.userId = userId;
     }
 }

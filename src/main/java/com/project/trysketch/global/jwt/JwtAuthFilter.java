@@ -1,10 +1,7 @@
 package com.project.trysketch.global.jwt;
 
-import ch.qos.logback.classic.helpers.MDCInsertingServletFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.global.exception.CustomException;
-import com.project.trysketch.global.exception.StatusMsgCode;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

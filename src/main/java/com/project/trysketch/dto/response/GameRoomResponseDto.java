@@ -5,12 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-
-import javax.persistence.Column;
 import java.time.LocalDateTime;
-import java.util.List;
 
 // 1. 기능   : 게임 방 response용 dto
 // 2. 작성자 : 김재영
