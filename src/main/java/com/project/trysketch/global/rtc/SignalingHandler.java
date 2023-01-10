@@ -1,6 +1,8 @@
 package com.project.trysketch.global.rtc;
 
+import com.project.trysketch.service.GameRoomService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -18,6 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 public class SignalingHandler extends TextWebSocketHandler {
+
+    // service 주입
+    @Autowired
+    private GameRoomService gameRoomService;
 
     // 어떤 방에 어떤 유저가 들어있는지 저장 -> { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], ... }
     private final Map<String, List<Map<String, String>>> roomInfo = new HashMap<>();
@@ -57,9 +63,10 @@ public class SignalingHandler extends TextWebSocketHandler {
             Message message = Utils.getObject(textMessage.getPayload());
             log.info(">>> [ws] 시작!!! 세션 객체 {}", session);
 
-            // 유저 uuid 와 roomID 를 저장
+            // 유저 uuid 와 roomId 와 token 을 저장
             String userUUID = session.getId(); // 유저 uuid
-            String roomId = message.getRoom(); // roomId
+            Long roomId = message.getRoom(); // roomId
+            String token = message.getToken();
             log.info(">>> [ws] 메시지 타입 {}, 보낸 사람 {}", message.getType(), userUUID);
 
             // 메시지 타입에 따라서 서버에서 하는 역할이 달라진다
@@ -89,7 +96,8 @@ public class SignalingHandler extends TextWebSocketHandler {
                             }
                         }
                         catch (Exception e) {
-                            log.info(">>> 에러 발생 : offer, candidate, answer 메시지 전달 실패 {}", e.getMessage());
+                            log.info(">>> 에러 발생 : offer," +
+                                    " candidate, answer 메시지 전달 실패 {}", e.getMessage());
                         }
                     });
                     break;
@@ -133,7 +141,14 @@ public class SignalingHandler extends TextWebSocketHandler {
 
                     // 세션 저장, user 정보 저장 -> 방 입장
                     sessions.put(userUUID, session);
-                    userInfo.put(userUUID, roomId);
+//                    userInfo.put(userUUID, roomId);
+
+                    // TODO
+                    // gameroomservice로 보내야 하는것
+                    // gameroomId, token, sessionId
+                    // gameroomId와 token에 있는 userId로 GameRoomRepository에서 해당 gameRoomUser 데이터를 찾고
+                    // websessionId column에 접속한 sessionId를 update
+                    gameRoomService.websessionIdUpate(roomId, token);
 
 
                     // 해당 방에 다른 유저가 있었다면 offer-answer 를 위해 유저 리스트를 만들어 클라이언트에 전달

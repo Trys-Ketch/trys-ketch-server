@@ -290,4 +290,16 @@ public class GameRoomService {
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
+
+    @Transactional
+    public MsgResponseDto websessionIdUpate(Long gameRoomId, String token){
+        Claims claims = jwtUtil.authorizeToken1(token);
+        Long userId = (Long) claims.get("id");
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(user.getId(), gameRoomId);
+
+    }
+
 }
