@@ -11,11 +11,11 @@ import java.util.List;
 public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long> {
     List<GameRoomUser> findByGameRoom(GameRoom gameRoom);
 
-    GameRoom findByGameRoom_Id(Long gameRoomId);
+    GameRoom findByGameRoomId(Long gameRoomId);
 
     GameRoomUser findByUserId(Long userId);
 
-    Long countByGameRoom_IdOrderByUserId(Long gameRoom);
+    Long countByGameRoomIdOrderByUserId(Long gameRoomId);
 
     boolean existsByUserId(Long userId);
 }

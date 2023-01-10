@@ -180,7 +180,7 @@ public class GameRoomService {
         }
 
         // 현재 방의 인원이 8명 이상이면 풀방임~
-        Long num = gameRoomUserRepository.countByGameRoom_IdOrderByUserId(enterGameRoom.get().getId());
+        Long num = gameRoomUserRepository.countByGameRoomIdOrderByUserId(enterGameRoom.get().getId());
         if (num >= 8) {
             return new MsgResponseDto(StatusMsgCode.FULL_BANG);
         }
