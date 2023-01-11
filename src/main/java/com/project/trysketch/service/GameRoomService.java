@@ -88,17 +88,22 @@ public class GameRoomService {
     }
 
     // ============================== 게임방 조회 ==============================
-    @Transactional // 전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
-    public List<GameRoomResponseDto> getAllGameRoom(Pageable pageable) {
+    @Transactional
+    public Map<String, Object> getAllGameRoom(Pageable pageable) {
 
+        // pageable 객체로 GameRoom 을 Page<> 에 담아 가져오기
         Page<GameRoom> rooms = gameRoomRepository.findAll(pageable);
 
+        // GameRoom 을 Dto 형태로 담아줄 List 선언
         List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
 
+        // GameRoom의 정보와 LastPage 정보를 담아줄 Map 선언
+        Map<String, Object> getAllGameRoom = new HashMap<>();
+
         // 총 페이지 수 가져오기
-        HashMap<String, Integer> pageInfo = new HashMap<>();
-        pageInfo.put("LastPage",rooms.getTotalPages());
-        
+//        Map<String, Integer> pageInfo = new HashMap<>();
+//        pageInfo.put("LastPage",rooms.getTotalPages());
+//        int a = rooms.getTotalPages();
         for (GameRoom gameRoom : rooms){
 
             GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
@@ -109,13 +114,18 @@ public class GameRoomService {
                                 .status(gameRoom.getStatus())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
-                                .pageInfo(pageInfo)
+//                                .pageInfo(pageInfo)
                                 .build();
             gameRoomList.add(gameRoomResponseDto);
         }
-        
-        return gameRoomList;
+
+
+        getAllGameRoom.put("Rooms", gameRoomList);
+        getAllGameRoom.put("LastPage",rooms.getTotalPages());
+
+        return getAllGameRoom;
     }
+
 
     // ============================== 게임방 생성 ==============================
     @Transactional
