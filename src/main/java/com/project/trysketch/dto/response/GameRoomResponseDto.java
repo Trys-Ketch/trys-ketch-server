@@ -21,7 +21,7 @@ public class GameRoomResponseDto {
     private Long id;
     private String title;
     private int GameRoomUserCount;
-    private String host;
+    private String hostNick;
     private String status;
     private HashMap<String, Integer> pageInfo;
 

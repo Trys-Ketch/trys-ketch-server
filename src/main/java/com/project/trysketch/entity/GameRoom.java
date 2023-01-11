@@ -23,7 +23,11 @@ public class GameRoom extends Timestamped {
     @Column(nullable = false)
     private String title;
 
-    private String host;
+    @Column
+    private Long hostId;
+
+    @Column
+    private String hostNick;
 
     @Column(nullable = false)
     private String status;
