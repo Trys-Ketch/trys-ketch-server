@@ -1,6 +1,6 @@
 package com.project.trysketch.redis.service;
 
-import com.project.trysketch.redis.dto.StaticString;
+import com.project.trysketch.redis.dto.GuestKey;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;
@@ -46,7 +46,7 @@ public class RedisService {
         String encodeResult = URLEncoder.encode(test, StandardCharsets.UTF_8);
 
         // 헤더에 헤더값 지정 및 바디 값 넣어주기
-        response.addHeader(StaticString.guestKey, encodeResult);
+        response.addHeader(GuestKey.GUEST_NUM.key(), encodeResult);
 
         // 디코딩 확인용 코드입니다. 최종적으로는 삭제하면 됩니다.
         System.out.println("디코딩 결과 : " + URLDecoder.decode(test, StandardCharsets.UTF_8));

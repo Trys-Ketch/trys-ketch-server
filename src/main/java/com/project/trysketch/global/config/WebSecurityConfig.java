@@ -54,6 +54,7 @@ public class WebSecurityConfig {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET).permitAll()
                 .antMatchers("/api/users/**", "/api/**").permitAll()
+                .antMatchers("/signal/**", "/ws/chat/**").permitAll()
                 .anyRequest().authenticated()
 
                 // corsConfigurationSource 적용
@@ -97,7 +98,7 @@ public class WebSecurityConfig {
 
         // 클라이언트가 접근 가능한 헤더 지정 (토큰 사용 가능하게)
         config.addExposedHeader("Authorization"); // ********
-        config.addExposedHeader("Nonmember");
+        config.addExposedHeader("guest");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

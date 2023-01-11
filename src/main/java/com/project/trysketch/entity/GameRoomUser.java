@@ -20,22 +20,30 @@ public class GameRoomUser {
     @Id
     private Long id;
 
-    @JoinColumn(name = "gameroomid")
+    @JoinColumn(name = "gameroom_id")
     @ManyToOne
     private GameRoom gameRoom;
 
 //    @ManyToOne
-    @Column(name = "userid")
+    @Column(name = "user_id")
     private Long userId;
+
+    @Column(name = "nickname")
+    private String nickname;
+
+    @Column(name = "web_session_id")
+    private String webSessionId;
 
 //    public GameRoomUser(GameRoom gameRoom, User user) {
 //        this.gameRoom = gameRoom;
 //        this.user = user;
 //    }
 
-    public GameRoomUser(GameRoom gameRoom, Long userId) {
+    public GameRoomUser(GameRoom gameRoom, Long userId, String nickname, String webSessionId) {
         this.gameRoom = gameRoom;
         this.userId = userId;
+        this.nickname = nickname;
+        this.webSessionId = webSessionId;
     }
 
     public GameRoomUser(Optional<GameRoom> gameRoom, Long userId){

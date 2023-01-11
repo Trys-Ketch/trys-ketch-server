@@ -56,6 +56,7 @@ public class GameRoomService {
             return (JSONObject) jsonParser.parse(guestValue);                       // Json 형식으로 변환 후 반환
         } else {
             return null;                                                            // 위에 해당하지 않을 시 null 을 반환
+
         }
     }
 
@@ -76,6 +77,21 @@ public class GameRoomService {
         } else if (guestInfo != null) {
             Long userId = Long.parseLong(guestInfo.get(GuestKey.GUEST_NUM.key()).toString());   // guestId 를 key 값으로 value 추출
             String nickname = guestInfo.get(GuestKey.GUEST_NICK.key()).toString();              // guestId 를 key 값으로 value 추출
+
+            Optional<Guest> guest = guestRepository.findById(userId);                           // guest 정보가 DB 에 있는지 확인(검증)
+            if (!guestRepository.existsById(guest.get().getId())) {
+                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
+            }
+            result.put(extId, userId.toString());                                   // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(extNick, nickname);                                          // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
+
+        }
+        return result;
+    }
+
+    // ============================== 게임방 조회 ==============================
+    @Transactional // 전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
+    public List<GameRoomResponseDto> getAllGameRoom(Pageable pageable) {
 
             Optional<Guest> guest = guestRepository.findById(userId);                           // guest 정보가 DB 에 있는지 확인(검증)
             if (!guestRepository.existsById(guest.get().getId())) {
@@ -114,18 +130,15 @@ public class GameRoomService {
                                 .status(gameRoom.getStatus())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
-//                                .pageInfo(pageInfo)
                                 .build();
             gameRoomList.add(gameRoomResponseDto);
         }
-
 
         getAllGameRoom.put("Rooms", gameRoomList);
         getAllGameRoom.put("LastPage",rooms.getTotalPages());
 
         return getAllGameRoom;
     }
-
 
     // ============================== 게임방 생성 ==============================
     @Transactional
