@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class GameRoomController {
 
     // 게임 방 전체 조회 페이징 처리
     @GetMapping("/rooms")
-    public ResponseEntity<List<GameRoomResponseDto>> getAllGameRoom(@PageableDefault(size = 10
+    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 10
                                                                     ,sort = "createdAt"
                                                                     ,direction = Sort.Direction.DESC) Pageable pageable)
     {
