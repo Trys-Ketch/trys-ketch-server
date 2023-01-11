@@ -90,9 +90,15 @@ public class GameRoomService {
     // ============================== 게임방 조회 ==============================
     @Transactional // 전체 list, 각 방 title, 각 방 인원, 각 방 시작상태 반환할 것
     public List<GameRoomResponseDto> getAllGameRoom(Pageable pageable) {
+
         Page<GameRoom> rooms = gameRoomRepository.findAll(pageable);
 
         List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
+
+        // 총 페이지 수 가져오기
+        HashMap<String, Integer> pageInfo = new HashMap<>();
+        pageInfo.put("LastPage",rooms.getTotalPages());
+        
         for (GameRoom gameRoom : rooms){
 
             GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
@@ -103,9 +109,11 @@ public class GameRoomService {
                                 .status(gameRoom.getStatus())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
+                                .pageInfo(pageInfo)
                                 .build();
             gameRoomList.add(gameRoomResponseDto);
         }
+        
         return gameRoomList;
     }
 
