@@ -1,10 +1,13 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.dto.response.GameStartResponseDto;
+import com.project.trysketch.entity.GameInfo;
 import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
+import com.project.trysketch.global.dto.DataMsgResponseDto;
+import com.project.trysketch.repository.GameInfoRepository;
 import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
-import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
@@ -20,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -30,12 +34,13 @@ public class GameService {
     private final JwtUtil jwtUtil;
     private final GameRoomRepository gameRoomRepository;
     private final GameRoomUserRepository gameRoomUserRepository;
+    private final GameInfoRepository gameInfoRepository;
     private final AdjectiveRepository adjectiveRepository;
     private final NounRepository nounRepository;
     private final int adSize = 117;
     private final int nounSize = 1335;
 
-    public MsgResponseDto startGame(Long roomId, HttpServletRequest request) {
+    public DataMsgResponseDto startGame(Long roomId, HttpServletRequest request) {
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
@@ -60,22 +65,43 @@ public class GameService {
         // 형용사 리스트 가져오기
         List<AdjectiveEntity> adjectiveEntityList = adjectiveRepository.findAll();
 
-        // 제시어 조합부
-        for (GameRoomUser gameRoomUser : gameRoomUserList){
+        // 게임을 시작하면 기본으로 제공되는 제시어
+        HashMap<String, String> keywordMap = new HashMap<>();
 
+        // 최초 제시어를 조합해서 GameRoomUser 와 매칭
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
             // 형용사 리스트중 1개
             int adId = (int) (Math.random() * adSize +1);
             AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
 
-            // 동사 리스트중 1개
+            // 명사 리스트중 1개
             int nuId = (int) (Math.random() * nounSize +1);
             NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
 
-            // 형용사 + 동사
-            String Keyword = adjectiveEntity.getAdjective() + nounEntity.getNoun();
+            // 형용사 + 명사
+            String keyword = adjectiveEntity.getAdjective() + nounEntity.getNoun();
 
-
+            keywordMap.put(gameRoomUser.getNickname(), keyword);
         }
-        return new MsgResponseDto(StatusMsgCode.OK);
+
+        // 새로운 게임 생성
+        GameInfo gameInfo = GameInfo.builder()
+                .gameRoomId(gameRoom.getId())
+                .round(1)
+                .timeout(60)
+//                .keyword(keywordMap)
+                .build();
+
+        GameStartResponseDto gameStartResponseDto = GameStartResponseDto.builder()
+                .gameId(gameInfo.getGameRoomId())
+                .timeout(gameInfo.getTimeout())
+                .keyword(keywordMap)
+                .build();
+
+        // 새로운 게임 저장
+        gameInfoRepository.save(gameInfo);
+
+        // 시작된 게임정보 반환
+        return new DataMsgResponseDto(StatusMsgCode.START_GAME,gameStartResponseDto);
     }
 }

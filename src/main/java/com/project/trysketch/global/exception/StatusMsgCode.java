@@ -44,7 +44,8 @@ public enum StatusMsgCode {
     CANCEL_LIKE(HttpStatus.OK, "좋아요 취소"),
     LIKE_IMAGE(HttpStatus.OK, "좋아요 완료"),
     DONE_DRAWING(HttpStatus.OK, "사진 저장 완료"),
-    DELETE_IMAGE(HttpStatus.OK, "사진 삭제 완료");
+    DELETE_IMAGE(HttpStatus.OK, "사진 삭제 완료"),
+    START_GAME(HttpStatus.OK, "게임이 시작되었습니다");
 
 
 
