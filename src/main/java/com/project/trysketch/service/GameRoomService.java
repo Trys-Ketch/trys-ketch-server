@@ -275,7 +275,7 @@ public class GameRoomService {
         HashMap<String, String> extInfo = new HashMap<>();
 
         // userUUID로 해당 GameRoomUser 정보가져오기
-        GameRoomUser gameRoomUser1 = gameRoomUserRepository.findByWebsessionId(userUUID);
+        GameRoomUser gameRoomUser1 = gameRoomUserRepository.findByWebSessionId(userUUID);
 
         // extValue 메소드 호출X 직접 입력
         extInfo.put(extId, gameRoomUser1.getUserId().toString());

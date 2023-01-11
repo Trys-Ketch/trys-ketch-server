@@ -31,7 +31,7 @@ public class GameRoomUser {
     @Column(name = "nickname")
     private String nickname;
 
-    @Column(name = "websession_id")
+    @Column(name = "web_session_id")
     private String webSessionId;
 
 //    public GameRoomUser(GameRoom gameRoom, User user) {
