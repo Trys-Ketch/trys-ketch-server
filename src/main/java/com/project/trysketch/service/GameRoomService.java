@@ -25,14 +25,12 @@ import org.json.simple.parser.ParseException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.Transactional;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 // 1. 기능   : 프로젝트 메인 로직
 // 2. 작성자 : 김재영
@@ -192,7 +190,18 @@ public class GameRoomService {
     // ============================= 게임방 나가기 =============================
     @Transactional
     public MsgResponseDto exitGameRoom(Long id, HttpServletRequest request) throws ParseException {
-        HashMap<String, String> extInfo = extValue(request);
+        HashMap<String, String> extInfo = new HashMap<>();
+        if (request != null) {
+            extInfo = extValue(request);
+        }
+//            GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebsessionId(userUUID);
+//            extInfo.put(extId, gameRoomUser.getUserId().toString());
+//            extInfo.put(extNick, gameRoomUser.getNickname());
+//            id = gameRoomUser.getGameRoom().getId();
+
+
+//        result.put(extId, userId.toString());                                   // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+//            result.put(extNick, nickname);
 
         // 1. 나가려고 하는 GameRoom 정보 가져오기
         GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
@@ -249,4 +258,122 @@ public class GameRoomService {
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
+
+    // 웹소켓 연결이 헤제되면 게임방 나가기
+    @Transactional
+    public void exitGameRoom(String userUUID) {
+
+        // extInfo 선언
+        HashMap<String, String> extInfo = new HashMap<>();
+
+        // userUUID로 해당 GameRoomUser 정보가져오기
+        GameRoomUser gameRoomUser1 = gameRoomUserRepository.findByWebsessionId(userUUID);
+
+        // extValue 메소드 호출X 직접 입력
+        extInfo.put(extId, gameRoomUser1.getUserId().toString());
+        extInfo.put(extNick, gameRoomUser1.getNickname());
+
+        // GameRoom 정보 가져오기
+        Long id = gameRoomUser1.getGameRoom().getId();
+
+
+//        result.put(extId, userId.toString());                                   // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+//            result.put(extNick, nickname);
+
+        // 나가려고 하는 GameRoom 정보 가져오기
+        GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        // 나가려고 하는 GameRoomUser 정보 가져오기
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserId(Long.valueOf(extInfo.get(extId)));
+
+        // 해당 user 를 GameRoomUser 에서 삭제
+        gameRoomUserRepository.delete(gameRoomUser);
+
+        // 방장이 나간 방의 UserList 정보 가져오기
+        List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findByGameRoom(enterGameRoom);
+
+        // 게임 방의 남은 인원이 0명이면 게임 방도 삭제
+        if (leftGameRoomUserList.size() == 0){
+            gameRoomRepository.delete(enterGameRoom);
+        }
+
+        // 나간 User 와 해당 GameRoom 의 방장이 같다면 && GameRoom 에 User 가 없지 않다면
+        if (extInfo.get(extNick).equals(enterGameRoom.getHost()) && !leftGameRoomUserList.isEmpty()){
+
+            // 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
+            Long newHostId = leftGameRoomUserList.get(0).getId();
+
+            // UserId 를 들고 GameRoomUser 정보 가져오기
+            GameRoomUser newHost = gameRoomUserRepository.findById(newHostId).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+            );
+            Optional<User> newHostInfo = userRepository.findById(newHost.getId());
+
+            // 새로운 Host 가 선정되어 GameRoom 정보 빌드
+            GameRoom updateGameRoom = GameRoom.builder()
+                    .id(enterGameRoom.getId())
+                    .host(newHostInfo.get().getNickname())
+                    .title(enterGameRoom.getTitle())
+                    .status("false")
+                    .build();
+
+            // 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
+            gameRoomRepository.save(updateGameRoom);
+        }
+    }
+
+    @Transactional
+    public void websessionIdUpate(Long gameRoomId, String token, String userUUID) {
+        // 유저 정보 인증부
+        Claims claims = jwtUtil.authorizeToken1(token);
+        Long userId = (Long) claims.get("id");
+        User user = userRepository.findById(userId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
+
+        // 해당 User 데이터로 GameRoomUser 데이터 가져오기
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(user.getId(), gameRoomId);
+
+        // 해당 GameRoomUser 업데이트
+        GameRoomUser updateGameRoomUser = GameRoomUser.builder()
+                .id(gameRoomUser.getId())
+                .gameRoom(gameRoomUser.getGameRoom())
+                .userId(gameRoomUser.getUserId())
+                .nickname(gameRoomUser.getNickname())
+                .webSessionId(userUUID)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, String>> getAllGameRoomUsersExceptMe(Long roomId, String userUUID){
+
+        // GameRoomId 데이터로 GameRoomUser 데이터의 List 가져오기
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(roomId);
+
+        // [ { id : userUUID1 }, { id : userUUID1 }, ...  ]
+        // 해당 방에 본인을 제외한 전체 유저 리스트 생성
+        List<Map<String, String>> originGameRoomUserUUIDList = new ArrayList<>();
+
+        for (GameRoomUser gameRoomUser : gameRoomUserList){
+
+            // GameRoomUser 의 WebSessionId 가져오기
+            String userSessionId = gameRoomUser.getWebSessionId();
+
+            // 만약 가져온 WebSessionId 와 본인( userUUID ) 가 같지않다면
+            if (!userSessionId.equals(userUUID)) {
+                // userMap 선언
+                Map<String, String> userMap = new HashMap<>();
+
+                // 본인을 제외한 GameRoomUser 의 WebSessionId 추가
+                userMap.put("Id", userSessionId);
+
+                // userMap 을 List 의 객체로 추가
+                originGameRoomUserUUIDList.add(userMap);
+            }
+        }
+        return originGameRoomUserUUIDList;
+    }
+
 }

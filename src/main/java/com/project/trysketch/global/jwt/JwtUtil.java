@@ -127,4 +127,19 @@ public class JwtUtil {
         }
         return null;
     }
+
+    // token 에서 유저 정보 가져오기
+    public Claims authorizeToken1(String token) {
+
+        Claims claims;
+
+        if (token != null) {
+            if (validateToken(token)) {
+                claims = getUserInfoFromToken(token);
+                return claims;
+            } else
+                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
+        }
+        return null;
+    }
 }
