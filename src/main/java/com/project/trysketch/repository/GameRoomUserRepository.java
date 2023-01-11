@@ -23,7 +23,7 @@ public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long
 
     List<GameRoomUser> findAllByGameRoomId(Long roomId);
 
-    GameRoomUser findByWebsessionId(String userUUID);
+    GameRoomUser findByWebSessionId(String userUUID);
 
     boolean existsByGameRoomIdAndUserId(Long roomId, Long userId);
 }
