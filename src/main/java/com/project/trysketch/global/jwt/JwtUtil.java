@@ -64,14 +64,6 @@ public class JwtUtil {
                         .compact();
     }
 
-    public String createRsToken(String rt) {
-        return BEARER_PREFIX +
-                Jwts.builder()
-                        .claim("nickname" , "test")
-                        .signWith(key, signatureAlgorithm)
-                        .compact();
-    }
-
     // 유효 토큰부분 자르기
     public String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
@@ -129,8 +121,11 @@ public class JwtUtil {
     }
 
     // token 에서 유저 정보 가져오기
-    public Claims authorizeToken1(String token) {
+    public Claims authorizeSocketToken(String token) {
 
+        if (StringUtils.hasText(token) && token.startsWith(BEARER_PREFIX)) {
+            token = token.substring(7);
+        }
         Claims claims;
 
         if (token != null) {

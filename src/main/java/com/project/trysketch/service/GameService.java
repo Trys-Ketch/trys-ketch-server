@@ -50,7 +50,7 @@ public class GameService {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(gameRoom);
 
         // 방장이 아닐경우
-        if (!gameRoom.getHost().equals(user.getNickname())){
+        if (!gameRoom.getHostNick().equals(user.getNickname())){
             throw new CustomException(StatusMsgCode.YOUR_NOT_HOST);
         }
 

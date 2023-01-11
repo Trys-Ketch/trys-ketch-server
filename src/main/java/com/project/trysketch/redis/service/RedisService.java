@@ -1,6 +1,6 @@
 package com.project.trysketch.redis.service;
 
-import com.project.trysketch.redis.dto.GuestKey;
+import com.project.trysketch.redis.dto.GamerKey;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;
@@ -40,13 +40,13 @@ public class RedisService {
         guestRepository.save(guest);                    // DB 에 저장
 
         // Json 타입으로 변환하기 위해서 문자열 형태로 만들어 줌
-        String test = String.format("{\"guest\":\"%d\", \"nickname\":\"%s\"}", result, nickname);
+        String test = String.format("%d,%s", result, nickname);
 
         // Json 형태로 만든 문자열을 헤더에 넣기 위해서 UTF-8 으로 인코딩
         String encodeResult = URLEncoder.encode(test, StandardCharsets.UTF_8);
 
         // 헤더에 헤더값 지정 및 바디 값 넣어주기
-        response.addHeader(GuestKey.GUEST_NUM.key(), encodeResult);
+        response.addHeader(GamerKey.GAMER_NUM.key(), encodeResult);
 
         // 디코딩 확인용 코드입니다. 최종적으로는 삭제하면 됩니다.
         System.out.println("디코딩 결과 : " + URLDecoder.decode(test, StandardCharsets.UTF_8));

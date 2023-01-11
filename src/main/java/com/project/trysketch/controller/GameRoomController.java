@@ -38,15 +38,15 @@ public class GameRoomController {
     // 게임 방 생성
     @PostMapping("/room")
     public ResponseEntity<DataMsgResponseDto> createGameRoom(@RequestBody GameRoomRequestDto gameRoomRequestDto,
-                                                             HttpServletRequest request) throws ParseException {
+                                                             HttpServletRequest request) {
         log.info(">>> 메인페이지 이동 - 방 이름 : {},", gameRoomRequestDto.getTitle());
         return ResponseEntity.ok(gameRoomService.createGameRoom(gameRoomRequestDto, request));
     }
 
     // 게임 방 입장
-    @PostMapping("/room/{id}")
+    @PostMapping("/room/enter/{id}")
     public ResponseEntity<MsgResponseDto> enterGameRoom(@PathVariable Long id,
-                                                        HttpServletRequest request) throws ParseException {
+                                                        HttpServletRequest request) {
         log.info(">>> 방 입장 - 방 id : {}, 유저 id : {}", id, request);
         return ResponseEntity.ok(gameRoomService.enterGameRoom(id,request));
     }
@@ -54,9 +54,9 @@ public class GameRoomController {
     // 게임 방 나가기
     @DeleteMapping("/room/{id}/exit")
     public ResponseEntity<MsgResponseDto> exitGameRoom(@PathVariable Long id,
-                                                       HttpServletRequest request) throws ParseException {
+                                                       HttpServletRequest request) {
         log.info(">>> 방 퇴장 - 방 id : {}, 유저 id : {}", id, request);
-        return ResponseEntity.ok(gameRoomService.exitGameRoom(id,request));
+        return ResponseEntity.ok(gameRoomService.exitGameRoom(id,request, null));
     }
 
 }

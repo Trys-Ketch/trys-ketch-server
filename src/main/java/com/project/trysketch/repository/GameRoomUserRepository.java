@@ -11,7 +11,7 @@ import java.util.List;
 public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long> {
     List<GameRoomUser> findByGameRoom(GameRoom gameRoom);
 
-    GameRoom findByGameRoomId(Long gameRoomId);
+    List<GameRoomUser> findAllByGameRoom(GameRoom gameRoom);
 
     GameRoomUser findByUserId(Long userId);
 

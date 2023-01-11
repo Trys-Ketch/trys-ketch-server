@@ -153,7 +153,7 @@ public class SignalingHandler extends TextWebSocketHandler {
                     // gameroomId, token, sessionId
                     // gameroomId와 token에 있는 userId로 GameRoomRepository에서 해당 gameRoomUser 데이터를 찾고
                     // websessionId column에 접속한 sessionId를 update
-                    gameRoomService.websessionIdUpate(roomId, token, userUUID);
+                    gameRoomService.webSessionIdUpdate(roomId, token, userUUID);
 
 
                     // 해당 방에 다른 유저가 있었다면 offer-answer 를 위해 유저 리스트를 만들어 클라이언트에 전달
@@ -191,7 +191,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 
     // 소켓 연결 종료
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws ParseException {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         log.info(">>> [ws] 클라이언트 접속 해제 : 세션 - {}, 상태 - {}", session, status);
 
         // 유저 uuid 와 roomID 를 저장
@@ -202,7 +202,7 @@ public class SignalingHandler extends TextWebSocketHandler {
         // userUUID를 가지고 GameRoomService 가서
         // 너 맞니? 그래 나가~ 하면 됨
 
-        gameRoomService.exitGameRoom(userUUID);
+        gameRoomService.exitGameRoom(null, null, userUUID);
 
         // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
         sessions.remove(userUUID);
