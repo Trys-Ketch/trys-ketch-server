@@ -1,6 +1,5 @@
 package com.project.trysketch.controller;
 
-import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.service.GameService;
 import lombok.RequiredArgsConstructor;
@@ -20,15 +19,16 @@ public class GameController {
 
     //  게임시작
     @PostMapping("/game/{roomId}/start")
-    public ResponseEntity<DataMsgResponseDto> startGame(@PathVariable Long roomId, HttpServletRequest request){
+    public ResponseEntity<MsgResponseDto> startGame(@PathVariable Long roomId, HttpServletRequest request){
         log.info(">>> 게임이 시작되었습니다 - 게임 방 번호 : {},",roomId);
         return ResponseEntity.ok(gameService.startGame(roomId,request));
     }
 
-    // 제시어 줘
+    //
     @PostMapping("/ingame/{keywordnum}/{round}")
-    public void keywordStatus(@PathVariable Long keywordnum, @PathVariable Long round){
-        gameService.
+    public void keywordStatus(@PathVariable Long keywordnum, @PathVariable Long round, HttpServletRequest request){
+//        gameService.
+
     }
 
 
@@ -41,14 +41,14 @@ public class GameController {
 //5user : 제시어 api(5,1)
 
 
-                그림 테이블 : (user's nickname), roundId, keyword's Id, gameUd
-                제시어 테이블:                   roundId, keyword's Id, gameid
-
-            [ [제시어, 그림, 제시어(5번유저) ],
-            [제시어, 그림, 제시어(4번유저), 제시어, 그림, 제시어],
-            [제시어, 그림, 제시어(5번유저) ],
-            [제시어, 그림, 제시어(1번유저) ],
-            [제시어, 그림, 제시어(2번유저), 그림, 제시어 ]]
+//                그림 테이블 : (user's nickname), roundId, keyword's Id, gameUd
+//                제시어 테이블:                   roundId, keyword's Id, gameid
+//
+//            [ [제시어, 그림, 제시어(5번유저) ],
+//            [제시어, 그림, 제시어(4번유저), 제시어, 그림, 제시어],
+//            [제시어, 그림, 제시어(5번유저) ],
+//            [제시어, 그림, 제시어(1번유저) ],
+//            [제시어, 그림, 제시어(2번유저), 그림, 제시어 ]]
 
 
 
