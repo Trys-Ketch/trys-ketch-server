@@ -1,22 +1,19 @@
 package com.project.trysketch.controller;
 
 import com.project.trysketch.dto.request.GameRoomRequestDto;
-import com.project.trysketch.dto.response.GameRoomResponseDto;
-
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.service.GameRoomService;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.simple.parser.ParseException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
 import java.util.Map;
 
 @Slf4j

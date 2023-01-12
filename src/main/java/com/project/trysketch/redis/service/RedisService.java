@@ -46,7 +46,7 @@ public class RedisService {
         String encodeResult = URLEncoder.encode(test, StandardCharsets.UTF_8);
 
         // 헤더에 헤더값 지정 및 바디 값 넣어주기
-        response.addHeader(GamerKey.GAMER_NUM.key(), encodeResult);
+        response.addHeader("guest", encodeResult);
 
         // 디코딩 확인용 코드입니다. 최종적으로는 삭제하면 됩니다.
         System.out.println("디코딩 결과 : " + URLDecoder.decode(test, StandardCharsets.UTF_8));
