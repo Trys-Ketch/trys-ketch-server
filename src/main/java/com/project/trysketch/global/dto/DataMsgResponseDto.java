@@ -9,12 +9,12 @@ import org.springframework.http.HttpStatus;
 // 2. 작성자 : 김재영
 @Getter
 @NoArgsConstructor
-public class DataMsgResponseDto<HashMap> {
+public class DataMsgResponseDto {
     private HttpStatus httpStatus;
     private String statusMsg;
-    private HashMap data;
+    private Object data;
 
-    public DataMsgResponseDto(StatusMsgCode statusMsgCode, HashMap data) {
+    public DataMsgResponseDto(StatusMsgCode statusMsgCode, Object data) {
         this.httpStatus = statusMsgCode.getHttpStatus();
         this.statusMsg = statusMsgCode.getDetail();
         this.data = data;
