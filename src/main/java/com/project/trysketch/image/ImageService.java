@@ -21,7 +21,6 @@ import java.util.Optional;
 
 // 1. 기능   : ImageLike 서비스
 // 2. 작성자 : 황미경
-
 @Service
 @RequiredArgsConstructor
 public class ImageService {

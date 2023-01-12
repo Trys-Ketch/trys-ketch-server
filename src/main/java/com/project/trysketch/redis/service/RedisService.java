@@ -1,6 +1,5 @@
 package com.project.trysketch.redis.service;
 
-import com.project.trysketch.redis.dto.GamerKey;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;

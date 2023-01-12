@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 // 1. 기능   : 클라이언트와 주고 받을 Message 객체
 // 2. 작성자 : 안은솔
-
 @Getter
 @Builder
 @AllArgsConstructor

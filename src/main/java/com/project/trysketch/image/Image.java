@@ -9,7 +9,6 @@ import java.util.List;
 
 // 1. 기능   : ImageFile 구성요소
 // 2. 작성자 : 황미경
-
 @Getter
 @Entity
 @NoArgsConstructor

@@ -8,7 +8,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 // 1. 기능   : WebSocket 설정
 // 2. 작성자 : 안은솔
-
 @Configuration
 @EnableWebSocketMessageBroker // 문자 채팅용
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {

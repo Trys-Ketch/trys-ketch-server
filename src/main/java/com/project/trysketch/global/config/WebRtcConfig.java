@@ -8,8 +8,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 // 1. 기능   : WebRtc 설정
-// 2. 작성자 : 안은솔
-
+// 2. 작성자 : 안은솔, 김재영
 @Configuration
 @EnableWebSocket // 웹 소켓에 대해 자동 설정
 public class WebRtcConfig implements WebSocketConfigurer {

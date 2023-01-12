@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 // 1. 기능   : ObjectMapper 관련 메서드 제공
 // 2. 작성자 : 안은솔
-
 public class Utils {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();

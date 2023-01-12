@@ -20,7 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 // 1. 기능   : Spring Security 설정
-// 2. 작성자 : 서혁수
+// 2. 작성자 : 서혁수, 안은솔
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity

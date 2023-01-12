@@ -1,5 +1,7 @@
 package com.project.trysketch.redis.dto;
 
+// 1. 기능    : Gamer 공통 사용 열거형 클래스
+// 2. 작성자  : 김재영
 public enum GamerKey {
     GAMER_NUM("id"),            // PK 즉, 고유번호
     GAMER_NICK("nickname")      // 닉네임

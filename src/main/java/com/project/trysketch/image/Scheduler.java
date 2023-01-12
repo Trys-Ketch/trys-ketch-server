@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 // 1. 기능   : Scheduler
 // 2. 작성자 : 황미경
-
 @Slf4j
 @Component
 @RequiredArgsConstructor

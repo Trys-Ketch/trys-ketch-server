@@ -13,7 +13,6 @@ import java.util.List;
 
 // 1. 기능   : ImageLike 컨트롤러
 // 2. 작성자 : 황미경
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")

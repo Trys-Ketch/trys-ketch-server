@@ -1,10 +1,7 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.dto.response.GameStartResponseDto;
-import com.project.trysketch.entity.GameInfo;
 import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
-import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.repository.GameInfoRepository;
 import com.project.trysketch.repository.GameRoomRepository;
@@ -12,9 +9,7 @@ import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
-import com.project.trysketch.suggest.AdjectiveEntity;
 import com.project.trysketch.suggest.AdjectiveRepository;
-import com.project.trysketch.suggest.NounEntity;
 import com.project.trysketch.suggest.NounRepository;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.repository.UserRepository;
@@ -24,9 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
 
+// 1. 기능   : 프로젝트 메인 로직
+// 2. 작성자 : 김재영, 황미경
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -41,7 +37,7 @@ public class GameService {
     private final int adSize = 117;
     private final int nounSize = 1335;
 
-    public void startGame(Long roomId, HttpServletRequest request) {
+    public MsgResponseDto startGame(Long roomId, HttpServletRequest request) {
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
@@ -62,6 +58,8 @@ public class GameService {
 
         // 게임이 시작되었습니다
         gameRoom.GameRoomStatusUpdate("true");
+
+        return new MsgResponseDto(StatusMsgCode.START_GAME);
         }
     }
     
@@ -112,6 +110,3 @@ public class GameService {
 //3user : 제시어 api(3,1)
 //4user : 제시어 api(4,1)
 //5user : 제시어 api(5,1)
-
-
-}

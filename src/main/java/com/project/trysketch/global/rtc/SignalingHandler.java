@@ -10,14 +10,12 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 // 1. 기능   : Signaling Server 역할
 // 2. 작성자 : 안은솔
 // 3. 참고사항: 추후 게임방 DB와 연결 필요
-
 @Slf4j
 @Component
 public class SignalingHandler extends TextWebSocketHandler {

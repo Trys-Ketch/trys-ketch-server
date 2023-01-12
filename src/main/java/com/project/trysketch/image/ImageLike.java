@@ -7,7 +7,6 @@ import javax.persistence.*;
 
 // 1. 기능   : ImageLike 요소
 // 2. 작성자 : 황미경
-
 @Entity
 @Getter
 @NoArgsConstructor

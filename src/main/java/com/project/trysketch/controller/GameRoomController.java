@@ -12,10 +12,11 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 import java.util.Map;
 
+// 1. 기능    : 게임 방 컨트롤러
+// 2. 작성자  : 김재영, 안은솔
 @Slf4j
 @RequiredArgsConstructor
 @RestController

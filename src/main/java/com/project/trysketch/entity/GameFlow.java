@@ -9,6 +9,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.*;
 
+// 1. 기능    : 게임 진행중 세부 정보
+// 2. 작성자  : 김재영, 황미경
 @Getter
 @Entity
 @NoArgsConstructor

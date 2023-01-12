@@ -1,6 +1,5 @@
 package com.project.trysketch.suggest;
 
-import com.project.trysketch.suggest.RandomNick;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

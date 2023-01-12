@@ -20,7 +20,7 @@ import java.util.Base64;
 import java.util.Date;
 
 // 1. 기능   : JWT 로직
-// 2. 작성자 : 서혁수
+// 2. 작성자 : 서혁수, 황미경, 안은솔
 @Slf4j
 @Component
 @RequiredArgsConstructor

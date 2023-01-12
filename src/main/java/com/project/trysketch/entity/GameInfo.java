@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 
 // 1. 기능   : 시작된 게임 정보
-// 2. 작성자 : 김재영
+// 2. 작성자 : 김재영, 황미경
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor

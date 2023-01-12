@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+// 1. 기능    : 게임 컨트롤러
+// 2. 작성자  : 김재영, 황미경
 @Slf4j
 @RequiredArgsConstructor
 @RestController

@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 
 // 1. 기능    : OAuth2.0 카카오 입력 요소
 // 2. 작성자  : 황미경
-
 @Getter
 @NoArgsConstructor
 public class KakaoUserRequstDto {
