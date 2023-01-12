@@ -23,7 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.servlet.http.HttpServletRequest;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -41,48 +40,61 @@ public class GameRoomService {
     private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
 
-    // =========================== 비회원 헤더 로직 ============================
-    public HashMap<String, String> guest(HttpServletRequest request) {
-        String guestValue = request.getHeader(GamerKey.GAMER_NUM.key());            // request 안의 "guest" 라는 이름의 헤더의 값을 가져온다.
-        HashMap<String, String> guestMap = new HashMap<>();
+    // ======================== 헤더값 추출 및 회원 검증 ========================
+    public String validHeader(HttpServletRequest request) {
+        String userToken = request.getHeader("Authorization");                 // 유저 헤더값 추출
+        String guestInfo = request.getHeader("guest");                         // 게스트 헤더값 추출
 
-        if (guestValue != null) {
-            guestValue = URLDecoder.decode(guestValue, StandardCharsets.UTF_8);     // 값이 null 이 아니면 UTF-8 형식으로 디코딩
-            String[] guestInfo = guestValue.split(",");
-
-            guestMap.put(GamerKey.GAMER_NUM.key(), guestInfo[0]);
-            guestMap.put(GamerKey.GAMER_NICK.key(), guestInfo[1]);
-            return guestMap;
+        if (userToken != null) {
+            Claims claims = jwtUtil.authorizeToken(request);                        // 유저 검증
+            return claims.get("email").toString();                                  // 이메일 값만을 반환
         } else {
-            return null;                                                            // 위에 해당하지 않을 시 null 을 반환
+            return guestInfo;
         }
     }
 
     // ======================== 회원 Id, Nickname 추출 ========================
-    public HashMap<String, String> extValue(HttpServletRequest request) {
-        Claims claims = jwtUtil.authorizeToken(request);                            // 회원 검증 로직 및 회원 정보 추출
-        HashMap<String, String> guestMap = guest(request);                          // 비회원 정보 추출
-
+    public HashMap<String, String> gamerInfo(String token) {
         HashMap<String, String> result = new HashMap<>();                           // 결과물을 담기위한 HashMap
 
-        // 회원, 비회원 분기처리 시작
-        if (claims != null) {
-            User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
+        log.info(">>>>>>> 이건 로그야 회원, 비회원 추출에서 나오는 토큰 : {}", token);
+        // 1. 회원, 비회원 분기처리 시작
+        if (token.contains("@")) {
+            // 2. 문자열 안에 @ 가 있으면 request 로 받아온다. 유저가 사용한다고 판단하고 시작
+            // request 를 통해 받아온 값은 email 이기 때문에 @ 을 포함하고 있다.
+            // 그래서 validHeader 를 통한 결과값이 회원 이메일을 받아온 것이므로 회원 기준으로 시작
+            User user = userRepository.findByEmail(token).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
             result.put(GamerKey.GAMER_NUM.key(), user.getId().toString());          // 회원 Id 를 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerKey.GAMER_NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
-        } else if (guestMap != null) {
-            Long userId = Long.valueOf(guestMap.get(GamerKey.GAMER_NUM.key()));     // 비회원 고유번호 추출
-            String nickname = guestMap.get(GamerKey.GAMER_NICK.key());              // 비회원 닉네임 추출
+        } else if (token.startsWith("Bearer ")) {
+            // 3. 문자열의 시작이 Bearer 이면 문자열 형태로 받아오는 webSession 에서 사용된다고 판단하고 시작
+            Claims claims = jwtUtil.authorizeSocketToken(token);                    // 검증 및 정보 가져오기
+            String email = (String) claims.get("email");                            // 토큰에서 이메일 값만을 추출
 
-            Optional<Guest> guest = guestRepository.findById(userId);               // guest 정보가 DB 에 있는지 확인(검증)
+            User user = userRepository.findByEmail(email).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+            );
+            result.put(GamerKey.GAMER_NUM.key(), user.getId().toString());          // 회원 id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerKey.GAMER_NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+        } else {
+            // 4. 위의 분기에 해당하지 않을 경우에는 guest 라고 판단하고 시작
+            log.info(">>>>>>> 게임 Room 서비스의 guest 의 token : {}", token);
+            token = URLDecoder.decode(token, StandardCharsets.UTF_8);               // 비회원의 토큰 정보를 얻기 위해서 디코딩
+            log.info(">>>>>>> 게임 Room 서비스의 guest 의 token 디코딩 결과 : {}", token);
+
+            // 게스트의 원하는 정보를 뽑아서 사용하기 위해서 배열에다가 하나씩 넣어준다.
+            // guestInfo 예시 형태 : "10001,유저닉네임"
+            String[] guestInfo = token.split(",");
+
+            // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
+            Optional<Guest> guest = guestRepository.findById(Long.valueOf(guestInfo[0]));
             if (!guestRepository.existsById(guest.get().getId())) {
                 throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
             }
-
-            result.put(GamerKey.GAMER_NUM.key(), userId.toString());                // guest Id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerKey.GAMER_NICK.key(), nickname);                        // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerKey.GAMER_NUM.key(), guestInfo[0]);                     // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerKey.GAMER_NICK.key(), guestInfo[1]);                    // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
         }
         return result;
     }
@@ -97,7 +109,7 @@ public class GameRoomService {
         // GameRoom 을 Dto 형태로 담아줄 List 선언
         List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
 
-        // GameRoom의 정보와 LastPage 정보를 담아줄 Map 선언
+        // GameRoom 의 정보와 LastPage 정보를 담아줄 Map 선언
         Map<String, Object> getAllGameRoom = new HashMap<>();
 
         // 총 페이지 수 가져오기
@@ -126,12 +138,12 @@ public class GameRoomService {
         return getAllGameRoom;
     }
 
-
     // ============================== 게임방 생성 ==============================
     @Transactional
     public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request) {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
-        HashMap<String, String> extInfo = extValue(request);
+        String header = validHeader(request);
+        HashMap<String, String> extInfo = gamerInfo(header);
 
         // 2. 요청을 한 유저가 이미 속한 방이 있으면 생성 불가능
         if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))) {
@@ -171,7 +183,8 @@ public class GameRoomService {
     @Transactional
     public MsgResponseDto enterGameRoom(Long id, HttpServletRequest request) {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
-        HashMap<String, String> extInfo = extValue(request);
+        String header = validHeader(request);
+        HashMap<String, String> extInfo = gamerInfo(header);
 
         // 2. id로 DB 에서 현재 들어갈 게임방 데이터 찾기
         Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
@@ -214,7 +227,8 @@ public class GameRoomService {
         // 1. 분기처리 시작
         if (request != null && userUUID == null) {
             // 2. API 요청으로 게임방을 나가는 경우
-            extInfo = extValue(request);
+            String header = validHeader(request);
+            extInfo = gamerInfo(header);
         } else {
             // 3. 소켓 연결이 종료됨으로 인해서 게임방에서 나가지는 경우
             // 예) 웹 브라우저 창 닫기, 팅겼을 경우
@@ -284,19 +298,19 @@ public class GameRoomService {
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
 
+    // ======================== 유저별 웹세션 ID 업데이트 ========================
     @Transactional
     public void webSessionIdUpdate(Long gameRoomId, String token, String userUUID) {
-        // 유저 정보 인증부
-        Claims claims = jwtUtil.authorizeSocketToken(token);
-        String email = (String) claims.get("email");
-        User user = userRepository.findByEmail(email).orElseThrow(
-                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-        );
+        // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
+        HashMap<String, String> extInfo = gamerInfo(token);
+        Long gamerId = Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key()));
+        log.info(">>>>>>>> gamerId {}", gamerId);
+        log.info(">>>>>>>> gameRoomId {}", gameRoomId);
 
-        // 해당 User 데이터로 GameRoomUser 데이터 가져오기
-        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(user.getId(), gameRoomId);
+        // 2. 해당 User 데이터로 GameRoomUser 데이터 가져오기
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(gamerId, gameRoomId);
 
-        // 해당 GameRoomUser 업데이트
+        // 3. 해당 GameRoomUser 업데이트
         GameRoomUser updateGameRoomUser = GameRoomUser.builder()
                 .id(gameRoomUser.getId())
                 .gameRoom(gameRoomUser.getGameRoom())
@@ -307,30 +321,31 @@ public class GameRoomService {
         gameRoomUserRepository.save(updateGameRoomUser);
     }
 
+    // =================== 본인을 제외한 GameRoom 의 유저 리스트 ===================
     @Transactional(readOnly = true)
     public List<Map<String, String>> getAllGameRoomUsersExceptMe(Long roomId, String userUUID){
 
-        // GameRoomId 데이터로 GameRoomUser 데이터의 List 가져오기
+        // 1. GameRoomId 데이터로 GameRoomUser 데이터의 List 가져오기
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(roomId);
 
-        // [ { id : userUUID1 }, { id : userUUID1 }, ...  ]
-        // 해당 방에 본인을 제외한 전체 유저 리스트 생성
+        // 2. 해당 방에 본인을 제외한 전체 유저 리스트 생성
+        // 예) [ { id : userUUID1 }, { id : userUUID2 }, ...  ]
         List<Map<String, String>> originGameRoomUserUUIDList = new ArrayList<>();
 
         for (GameRoomUser gameRoomUser : gameRoomUserList){
 
-            // GameRoomUser 의 WebSessionId 가져오기
+            // 3. GameRoomUser 의 WebSessionId 가져오기
             String userSessionId = gameRoomUser.getWebSessionId();
 
-            // 만약 가져온 WebSessionId 와 본인( userUUID ) 가 같지않다면
+            // 4. 만약 가져온 WebSessionId 와 본인( userUUID ) 가 같지않다면
             if (!userSessionId.equals(userUUID)) {
-                // userMap 선언
+                // 5. userMap 선언
                 Map<String, String> userMap = new HashMap<>();
 
-                // 본인을 제외한 GameRoomUser 의 WebSessionId 추가
-                userMap.put("Id", userSessionId);
+                // 6. 본인을 제외한 GameRoomUser 의 WebSessionId 추가
+                userMap.put("id", userSessionId);
 
-                // userMap 을 List 의 객체로 추가
+                // 7. userMap 을 List 의 객체로 추가
                 originGameRoomUserUUIDList.add(userMap);
             }
         }
