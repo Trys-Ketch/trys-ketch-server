@@ -43,6 +43,7 @@ public class GameService {
     private final AmazonS3Service s3Service;
     private final int adSize = 117;
     private final int nounSize = 1335;
+    private final String directoryName = "static";
 
 
     // 게임 시작
@@ -155,7 +156,7 @@ public class GameService {
         // Image 엔티티 painter( 그린사람 nickname )+ imagePath 저장
         // image 엔티티 imagePath → s3 저장
         if (multipartFile != null) {
-            s3Service.upload(multipartFile, "static", user, round, keywordIndex, roomId);
+            s3Service.upload(multipartFile, directoryName, user, round, keywordIndex, roomId);
         }
 //        GameFlow gameFlow = GameFlow.builder()
 //                .roomId(roomId)
