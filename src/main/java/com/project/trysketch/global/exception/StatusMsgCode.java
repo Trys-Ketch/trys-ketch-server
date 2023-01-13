@@ -28,6 +28,8 @@ public enum StatusMsgCode {
     FULL_BANG(HttpStatus.BAD_REQUEST, "허용된 최대 사용자 수에 도달했습니다"),
     GAMEROOM_NOT_FOUND(HttpStatus.BAD_REQUEST,"방을 찾을 수 없습니다"),
     YOUR_NOT_HOST(HttpStatus.BAD_REQUEST,"방장만 게임을 시작할 수 있습니다"),
+    GAME_NOT_ONLINE(HttpStatus.BAD_REQUEST,"진행되는 게임이 없습니다"),
+    NOT_STARTED_YET(HttpStatus.BAD_REQUEST,"아직 게임이 시작되지 않았습니다"),
 
 
     /* 409 CONFLICT : Resource의 현재 상태와 충돌, 보통 중복된 데이터 존재 */
@@ -45,7 +47,12 @@ public enum StatusMsgCode {
     LIKE_IMAGE(HttpStatus.OK, "좋아요 완료"),
     DONE_DRAWING(HttpStatus.OK, "사진 저장 완료"),
     DELETE_IMAGE(HttpStatus.OK, "사진 삭제 완료"),
-    START_GAME(HttpStatus.OK, "게임이 시작되었습니다");
+    END_GAME(HttpStatus.OK, "게임이 정상 종료되었습니다"),
+    SHUTDOWN_GAME(HttpStatus.OK," 게임이 비정상 종료되었습니다"),
+    START_GAME(HttpStatus.OK, "게임이 시작되었습니다"),
+    SUBMIT_IMAGE_DONE(HttpStatus.OK, "이미지 제출이 되었습니다"),
+    SUBMIT_KEYWORD_DONE(HttpStatus.OK, "단어 제출이 되었습니다");
+
 
 
 
