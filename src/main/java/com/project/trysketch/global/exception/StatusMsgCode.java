@@ -27,6 +27,7 @@ public enum StatusMsgCode {
     ALREADY_PLAYING(HttpStatus.BAD_REQUEST, "게임이 이미 시작되었습니다"),
     FULL_BANG(HttpStatus.BAD_REQUEST, "허용된 최대 사용자 수에 도달했습니다"),
     GAMEROOM_NOT_FOUND(HttpStatus.BAD_REQUEST,"방을 찾을 수 없습니다"),
+    GAMEFLOW_NOT_FOUND(HttpStatus.BAD_REQUEST,"게임 플로우를 찾을 수 없습니다"),
     YOUR_NOT_HOST(HttpStatus.BAD_REQUEST,"방장만 게임을 시작할 수 있습니다"),
     GAME_NOT_ONLINE(HttpStatus.BAD_REQUEST,"진행되는 게임이 없습니다"),
     NOT_STARTED_YET(HttpStatus.BAD_REQUEST,"아직 게임이 시작되지 않았습니다"),

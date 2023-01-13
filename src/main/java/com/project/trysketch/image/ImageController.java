@@ -19,12 +19,12 @@ import java.util.List;
 public class ImageController {
     private final ImageService imageService;
 
-    // 게임의 한 턴 끝날시 S3에 업로드
-    @PostMapping(value = "/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<MsgResponseDto> saveImage(@RequestPart(value = "file") MultipartFile multipartFile,
-                                                    HttpServletRequest request) throws IOException {
-        return ResponseEntity.ok(imageService.saveImage(multipartFile, request));
-    }
+//    // 게임의 한 턴 끝날시 S3에 업로드
+//    @PostMapping(value = "/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+//    public ResponseEntity<MsgResponseDto> saveImage(@RequestPart(value = "file") MultipartFile multipartFile,
+//                                                    HttpServletRequest request) throws IOException {
+//        return ResponseEntity.ok(imageService.saveImage(multipartFile, request));
+//    }
 
     // 그림 좋아요 기능
     @PostMapping(value = "/image/like/{imageId}")
