@@ -4,7 +4,9 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.project.trysketch.entity.GameFlow;
 import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.GameFlowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,20 +30,32 @@ public class AmazonS3Service {
 
     private final AmazonS3Client amazonS3Client;
     private final ImageRepository imageRepository;
+    private final GameFlowRepository gameFlowRepository;
 
     @Value("${cloud.aws.s3.bucket}")         // bucket 이름
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
-    public void upload(MultipartFile multipartFile, String dirName, User user) throws IOException {
+    public void upload(MultipartFile multipartFile, String dirName, User user, int round, int keywordIndex, Long roomId) throws IOException {
         if (multipartFile != null) {
             File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
+
             Image image = new Image(upload(uploadFile, dirName), user.getNickname());
+
+            GameFlow gameFlow = GameFlow.builder()
+                    .roomId(roomId)
+                    .round(round)
+                    .keywordIndex(keywordIndex)
+                    .imagePath(image.getPath())
+                    .nickname(user.getNickname())
+                    .build();
+
             imageRepository.save(image);
+            gameFlowRepository.save(gameFlow);
         }
     }
 
-    // S3로 파일 업로드하기 (파일이름 지정, 파일 업로드, 로컬파일 삭제)
+    // S3로 파일 업로드 (파일이름 지정, 로컬파일 삭제 + 파일 업로드 메서드 호출)
     private String upload(File uploadFile, String dirName) {
         String fileName = dirName + "/" + UUID.randomUUID();     // S3에 저장될 파일 이름
         String uploadImageUrl = putS3(uploadFile, fileName);     // s3로 업로드
@@ -49,7 +63,7 @@ public class AmazonS3Service {
         return uploadImageUrl;
     }
 
-    // S3로 업로드
+    // S3로 실제 파일 업로드
     private String putS3(File uploadFile, String fileName) {
         amazonS3Client.putObject(new PutObjectRequest(bucket, fileName, uploadFile).withCannedAcl(CannedAccessControlList.PublicRead));
         return amazonS3Client.getUrl(bucket, fileName).toString();

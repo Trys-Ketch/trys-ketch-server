@@ -32,18 +32,18 @@ public class ImageService {
     private final JwtUtil jwtUtil;
 
 
-    // S3에 이미지 저장
-    public MsgResponseDto saveImage(MultipartFile multipartFile, HttpServletRequest request) throws IOException {
-        Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-        );
-
-        if (multipartFile != null) {
-            s3Service.upload(multipartFile, "static", user);
-        }
-        return new MsgResponseDto(StatusMsgCode.DONE_DRAWING);
-    }
+//    // S3에 이미지 저장
+//    public MsgResponseDto saveImage(MultipartFile multipartFile, HttpServletRequest request) throws IOException {
+//        Claims claims = jwtUtil.authorizeToken(request);
+//        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+//                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+//        );
+//
+//        if (multipartFile != null) {
+//            s3Service.upload(multipartFile, "static", user);
+//        }
+//        return new MsgResponseDto(StatusMsgCode.DONE_DRAWING);
+//    }
 
 
     // 이미지 좋아요
@@ -127,4 +127,6 @@ public class ImageService {
         }
         return new MsgResponseDto(StatusMsgCode.DELETE_IMAGE);
     }
+
+    //
 }
