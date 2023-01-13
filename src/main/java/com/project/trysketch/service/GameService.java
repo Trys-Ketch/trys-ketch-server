@@ -98,6 +98,36 @@ public class GameService {
         return new MsgResponseDto(StatusMsgCode.END_GAME);
     }
 
+
+//        // 게임을 시작하면 기본으로 제공되는 제시어
+//        HashMap<String, String> keywordMap = new HashMap<>();
+//
+//        // 최초 제시어를 조합해서 GameRoomUser 와 매칭
+//        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+//            // 형용사 리스트중 1개
+//            int adId = (int) (Math.random() * adSize +1);
+//            AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
+//
+//            // 명사 리스트중 1개
+//            int nuId = (int) (Math.random() * nounSize +1);
+//            NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
+//
+//            // 형용사 + 명사
+//            String keyword = adjectiveEntity.getAdjective() + nounEntity.getNoun();
+//
+//            keywordMap.put(gameRoomUser.getNickname(), keyword);
+//        }
+//
+//        // 새로운 게임 생성
+//        GameInfo gameInfo = GameInfo.builder()
+//                .gameRoomId(gameRoom.getId())
+//                .roundTimeout(60)
+//                .build();
+//
+//        GameStartResponseDto gameStartResponseDto = GameStartResponseDto.builder()
+//                .gameRoomId(gameInfo.getGameRoomId())
+//                .roundTimeout(gameInfo.getRoundTimeout())
+
     // 강제 종료( 비정상적인 종료 )
     @Transactional
     public MsgResponseDto shutDownGame(Long roomId) {

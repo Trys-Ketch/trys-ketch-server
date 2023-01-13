@@ -33,8 +33,6 @@ import java.util.*;
 public class GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final GameRoomUserRepository gameRoomUserRepository;
-    private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
     private final GuestRepository guestRepository;
     private final UserService userService;
 
@@ -97,6 +95,7 @@ public class GameRoomService {
                 .userId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
                 .nickname(extInfo.get(GamerKey.GAMER_NICK.key()))
                 .webSessionId(null)
+                .readyStatus(true)
                 .build();
 
         // 5. 게임 방 DB에 저장 및 입장중인 유저 정보 저장
@@ -147,6 +146,7 @@ public class GameRoomService {
                 .userId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
                 .nickname(extInfo.get(GamerKey.GAMER_NICK.key()))
                 .webSessionId(null)
+                .readyStatus(false)
                 .build();
 
         // 7. 게임방에 들어온 유저를 DB에 저장
@@ -204,10 +204,10 @@ public class GameRoomService {
             String hostNick = null;
 
             // 11. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
-            Long newHostId = leftGameRoomUserList.get(0).getId();
+            Long newHostId = leftGameRoomUserList.get(0).getUserId();
 
             // 12. UserId 를 들고 GameRoomUser 정보 가져오기
-            GameRoomUser userHost = gameRoomUserRepository.findById(newHostId).orElse(null);
+            GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
             Guest guestHost = guestRepository.findById(newHostId).orElse(null);
 
             // 13. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
@@ -236,7 +236,7 @@ public class GameRoomService {
 
     // ======================== 유저별 웹세션 ID 업데이트 ========================
     @Transactional
-    public void webSessionIdUpdate(Long gameRoomId, String token, String userUUID) {
+    public void updateWebSessionId(Long gameRoomId, String token, String userUUID) {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
         HashMap<String, String> extInfo = userService.gamerInfo(token);
         Long gamerId = Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key()));
@@ -288,4 +288,97 @@ public class GameRoomService {
         return originGameRoomUserUUIDList;
     }
 
+    // =================== 해당 GameRoom 의 전체 유저 session id 리스트 ===================
+    @Transactional(readOnly = true)
+    public List<String> getALLGameRoomUsers(Long roomId) {
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(roomId);
+        List<String> allUsers = new ArrayList<>();
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+            allUsers.add(gameRoomUser.getWebSessionId());
+        }
+        return allUsers;
+    }
+
+    // ===================== 해당 방 유저의 ready 상태 업데이트 =====================
+    @Transactional
+    public boolean updateReadyStatus(Long gameRoomId, String userUUID) {
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByGameRoomIdAndWebSessionId(gameRoomId, userUUID);
+        if (gameRoomUser.isReadyStatus()) {
+            gameRoomUser.update(false);
+            return false;
+        } else {
+            gameRoomUser.update(true);
+            return true;
+        }
+
+    }
+
+    // ===================== 해당 방 유저의 ready 상태 조회 =====================
+    @Transactional
+    public Map<String, Object> getGameReadyStatus(Long gameRoomId) {
+
+        Map<String, Object> gameRaedyStatusAndHost = new HashMap<>();
+
+        // 현재 gameRoom 방장의 유저 id 추출
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        Long hostId = gameRoom.getHostId();
+
+        // 해당 gameRoom 모든 유저의 ready 상태가 true && 방 인원이 4명 이상이면 flag = true
+        // 위에서 가져온 방장의 유저 id로 방장의 webSessionId 추출
+        boolean flag = true;
+        String webSessionId = "";
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+            if (!gameRoomUser.isReadyStatus()) {
+                flag = false;
+            }
+            if (hostId.equals(gameRoomUser.getUserId())) {
+                webSessionId = gameRoomUser.getWebSessionId();
+            }
+        }
+        if (gameRoomUserList.size() < 4) {
+            flag = false;
+        }
+
+        // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경
+        if (flag) {
+            gameRoom.GameRoomStatusUpdate("true");
+        }
+
+        gameRaedyStatusAndHost.put("status", flag);
+        gameRaedyStatusAndHost.put("host", webSessionId);
+        return gameRaedyStatusAndHost;
+
+    }
+
+    // ===================== 해당 방의 방장 여부와 방장 session id 조회 =====================
+    @Transactional
+    public Map<String, Object> getGameRoomHost(Long gameRoomId, String userUUID) {
+
+        Map<String, Object> hostMap = new HashMap<>();
+
+        // 현재 gameRoom 방장의 유저 id 추출
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        Long hostId = gameRoom.getHostId();
+
+        String hostSessionId = "";
+        boolean amIHost = false;
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+            if (gameRoomUser.getUserId().equals(hostId)) {
+                hostSessionId = gameRoomUser.getWebSessionId();
+            }
+
+            if (gameRoomUser.getUserId().equals(hostId) && gameRoomUser.getWebSessionId().equals(userUUID)) {
+                amIHost = true;
+            }
+        }
+        hostMap.put("isHost", amIHost);
+        hostMap.put("hostId", hostSessionId);
+        return hostMap;
+    }
 }
