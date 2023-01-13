@@ -126,7 +126,7 @@ public class GameRoomService {
         );
 
         // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장 불가능
-        if (enterGameRoom.isStatus() == true){
+        if (enterGameRoom.isStatus()){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 

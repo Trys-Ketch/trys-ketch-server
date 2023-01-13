@@ -36,7 +36,7 @@ public class GameRoom extends Timestamped {
     @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
 
-    public void GameRoomStatusUpdate(Boolean status) {
+    public void GameRoomStatusUpdate(boolean status) {
         this.status = status;
     }
 }
