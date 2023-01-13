@@ -344,7 +344,7 @@ public class GameRoomService {
 
         // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경
         if (flag) {
-            gameRoom.GameRoomStatusUpdate("true");
+            gameRoom.GameRoomStatusUpdate(true);
         }
 
         gameRaedyStatusAndHost.put("status", flag);

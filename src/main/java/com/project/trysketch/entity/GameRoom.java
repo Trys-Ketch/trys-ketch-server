@@ -30,6 +30,7 @@ public class GameRoom extends Timestamped {
     private String hostNick;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean status = false;
 
     @OneToMany(mappedBy = "gameRoom")
