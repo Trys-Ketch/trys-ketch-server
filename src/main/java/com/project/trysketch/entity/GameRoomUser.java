@@ -34,6 +34,9 @@ public class GameRoomUser {
     @Column(name = "web_session_id")
     private String webSessionId;
 
+    @Column(name = "ready_status")
+    private boolean readyStatus;
+
 //    public GameRoomUser(GameRoom gameRoom, User user) {
 //        this.gameRoom = gameRoom;
 //        this.user = user;
@@ -49,5 +52,9 @@ public class GameRoomUser {
     public GameRoomUser(Optional<GameRoom> gameRoom, Long userId){
         this.gameRoom = gameRoom.get();
         this.userId = userId;
+    }
+
+    public void update(boolean readyStatus) {
+        this.readyStatus = readyStatus;
     }
 }
