@@ -290,7 +290,7 @@ public class SignalingHandler extends TextWebSocketHandler {
     // 본인을 포함한 현재 방의 세션 객체 리스트 반환
     public List<WebSocketSession> getRoomSessionList(Long roomId) {
         List<WebSocketSession> sessionList = new ArrayList<>();
-        List<String> allUsers = gameRoomService.getALLGameRoomUsers(roomId);
+        List<String> allUsers = gameRoomService.getAllGameRoomUsers(roomId);
         sessions.values().forEach(s -> {
             try {
                 for (String allUser : allUsers) {

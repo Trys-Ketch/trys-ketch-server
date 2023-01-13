@@ -11,10 +11,8 @@ import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.repositorty.GuestRepository;
-import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -56,7 +54,7 @@ public class GameRoomService {
                                 .title(gameRoom.getTitle())
                                 .hostNick(gameRoom.getHostNick())
                                 .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .status(gameRoom.isStatus())
+                                .status(gameRoom.isPlaying())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
                                 .build();
@@ -86,7 +84,7 @@ public class GameRoomService {
                 .title(gameRoomRequestDto.getTitle())
                 .hostId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
                 .hostNick(extInfo.get(GamerKey.GAMER_NICK.key()))
-                .status(false)
+                .isPlaying(false)
                 .build();
 
         // 4. 방에 입장한 유저 정보 생성
@@ -125,7 +123,7 @@ public class GameRoomService {
         );
 
         // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장 불가능
-        if (enterGameRoom.isStatus()){
+        if (enterGameRoom.isPlaying()){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 
@@ -225,7 +223,7 @@ public class GameRoomService {
                     .hostId(hostId)
                     .hostNick(hostNick)
                     .title(enterGameRoom.getTitle())
-                    .status(false)
+                    .isPlaying(false)
                     .build();
 
             // 15. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
@@ -237,7 +235,7 @@ public class GameRoomService {
     // ======================== 유저별 웹세션 ID 업데이트 ========================
     @Transactional
     public void updateWebSessionId(Long gameRoomId, String token, String userUUID) {
-        // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
+        // 1. 받아온 토큰으로부터 유저 또는 guest 정보를 받아온다.
         HashMap<String, String> extInfo = userService.gamerInfo(token);
         Long gamerId = Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key()));
         log.info(">>>>>>>> gamerId {}", gamerId);
@@ -246,7 +244,7 @@ public class GameRoomService {
         // 2. 해당 User 데이터로 GameRoomUser 데이터 가져오기
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(gamerId, gameRoomId);
 
-        // 3. 해당 GameRoomUser 업데이트
+        // 3. 해당 GameRoomUser 에 WebSessionId 업데이트
         GameRoomUser updateGameRoomUser = GameRoomUser.builder()
                 .id(gameRoomUser.getId())
                 .gameRoom(gameRoomUser.getGameRoom())
@@ -288,9 +286,9 @@ public class GameRoomService {
         return originGameRoomUserUUIDList;
     }
 
-    // =================== 해당 GameRoom 의 전체 유저 session id 리스트 ===================
+    // ================= 해당 GameRoom 의 전체 유저 session id 리스트 =================
     @Transactional(readOnly = true)
-    public List<String> getALLGameRoomUsers(Long roomId) {
+    public List<String> getAllGameRoomUsers(Long roomId) {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(roomId);
         List<String> allUsers = new ArrayList<>();
         for (GameRoomUser gameRoomUser : gameRoomUserList) {
@@ -299,7 +297,7 @@ public class GameRoomService {
         return allUsers;
     }
 
-    // ===================== 해당 방 유저의 ready 상태 업데이트 =====================
+    // =================== 해당 GameRoom 유저의 ready 상태 업데이트 ===================
     @Transactional
     public boolean updateReadyStatus(Long gameRoomId, String userUUID) {
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByGameRoomIdAndWebSessionId(gameRoomId, userUUID);
@@ -344,7 +342,7 @@ public class GameRoomService {
 
         // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경
         if (flag) {
-            gameRoom.GameRoomStatusUpdate("true");
+            gameRoom.GameRoomStatusUpdate(true);
         }
 
         gameRaedyStatusAndHost.put("status", flag);
