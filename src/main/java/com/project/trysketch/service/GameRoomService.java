@@ -94,7 +94,7 @@ public class GameRoomService {
                 .title(gameRoomRequestDto.getTitle())
                 .hostId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
                 .hostNick(extInfo.get(GamerKey.GAMER_NICK.key()))
-                .status("false")
+                .status(false)
                 .build();
 
         // 4. 방에 입장한 유저 정보 생성
@@ -126,15 +126,18 @@ public class GameRoomService {
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
         // 2. id로 DB 에서 현재 들어갈 게임방 데이터 찾기
-        Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
+//        Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
+        GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
 
         // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장 불가능
-        if (enterGameRoom.get().getStatus().equals("true")){
+        if (enterGameRoom.getStatus()){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 
         // 4. 현재 방의 인원이 8명 이상이면 풀방임~
-        Long checkUsers = gameRoomUserRepository.countByGameRoomIdOrderByUserId(enterGameRoom.get().getId());
+        Long checkUsers = gameRoomUserRepository.countByGameRoomIdOrderByUserId(enterGameRoom.getId());
         if (checkUsers >= 8) {
             return new MsgResponseDto(StatusMsgCode.FULL_BANG);
         }
@@ -146,7 +149,7 @@ public class GameRoomService {
 
         // 6. 새롭게 게임방에 들어온 유저 생성
         GameRoomUser gameRoomUser = GameRoomUser.builder()
-                .gameRoom(enterGameRoom.get())
+                .gameRoom(enterGameRoom)
                 .userId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
                 .nickname(extInfo.get(GamerKey.GAMER_NICK.key()))
                 .webSessionId(null)
@@ -228,7 +231,7 @@ public class GameRoomService {
                     .hostId(hostId)
                     .hostNick(hostNick)
                     .title(enterGameRoom.getTitle())
-                    .status("false")
+                    .status(false)
                     .build();
 
             // 15. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트

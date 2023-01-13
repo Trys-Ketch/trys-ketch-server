@@ -30,13 +30,13 @@ public class GameRoom extends Timestamped {
     private String hostNick;
 
     @Column(nullable = false)
-    private String status;
+    private Boolean status = false;
 
     @OneToMany(mappedBy = "gameRoom")
     @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
 
-    public void GameRoomStatusUpdate(String status) {
+    public void GameRoomStatusUpdate(Boolean status) {
         this.status = status;
     }
 }
