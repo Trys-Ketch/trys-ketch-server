@@ -40,8 +40,8 @@ public class GameController {
 
     // 단어 제출하는 라운드 끝났을 때 for Test!
     @PostMapping("/game/finish/{roomId}/voca")
-    public MsgResponseDto postVocabulary(@RequestParam int round, @RequestParam int keywordIndex, @RequestParam String keyword, @PathVariable Long roomId
-            , HttpServletRequest request) {
+    public MsgResponseDto postVocabulary(@RequestParam int round, @RequestParam int keywordIndex, @RequestParam String keyword,
+                                         @PathVariable Long roomId, HttpServletRequest request) {
         log.info(">>>>>> {} : 라운드 시작", round);
         log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
         log.info(">>>>>> {} : 게임 방 번호", roomId);
@@ -51,8 +51,8 @@ public class GameController {
 
     // 그림 제출하는 라운드 끝났을 때 for Test!
     @PostMapping(value = "/test/finish/{roomId}/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public MsgResponseDto postImage(@RequestParam int round, @RequestParam int keywordIndex, @PathVariable Long roomId,
-                                    HttpServletRequest request,
+    public MsgResponseDto postImage(@RequestParam int round, @RequestParam int keywordIndex,
+                                    @PathVariable Long roomId, HttpServletRequest request,
                                     @RequestPart(value = "file") MultipartFile multipartFile) throws IOException {
         log.info(">>>>>> {} : 그림 라운드 끝", round);
         log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
@@ -63,7 +63,8 @@ public class GameController {
 
     // 단어적는 라운드 시작  ← 이전 라운드의 그림 response 로 줘야함! (GepMapping)
     @GetMapping("/test/start/{roomId}/before/image")
-    public ImageResponseDto getPreviousImage(@RequestParam int round, @RequestParam int keywordIndex, @PathVariable Long roomId) {
+    public ImageResponseDto getPreviousImage(@RequestParam int round, @RequestParam int keywordIndex,
+                                             @PathVariable Long roomId) {
         log.info(">>>>>> {} : 라운드 시작", round);
         log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
         log.info(">>>>>> {} : 게임 방 번호", roomId);
@@ -72,7 +73,8 @@ public class GameController {
 
     // 그림그리는 라운드 시작  ← 이전 라운드의 단어 response 로 줘야함! (GetMapping)
     @GetMapping("/test/start/{roomId}/before/keyword")
-    public KeywordResponseDto getPreviousKeyword(@RequestParam int round, @RequestParam int keywordIndex, @PathVariable Long roomId) {
+    public KeywordResponseDto getPreviousKeyword(@RequestParam int round, @RequestParam int keywordIndex,
+                                                 @PathVariable Long roomId) {
         log.info(">>>>>>> {} : 이번 라운드", round);
         log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
         log.info(">>>>>> {} : 게임 방 번호", roomId);

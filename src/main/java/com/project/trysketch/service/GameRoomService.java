@@ -51,10 +51,6 @@ public class GameRoomService {
         // GameRoom 의 정보와 LastPage 정보를 담아줄 Map 선언
         Map<String, Object> getAllGameRoom = new HashMap<>();
 
-        // 총 페이지 수 가져오기
-//        Map<String, Integer> pageInfo = new HashMap<>();
-//        pageInfo.put("LastPage",rooms.getTotalPages());
-//        int a = rooms.getTotalPages();
         for (GameRoom gameRoom : rooms){
 
             GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
@@ -62,14 +58,12 @@ public class GameRoomService {
                                 .title(gameRoom.getTitle())
                                 .hostNick(gameRoom.getHostNick())
                                 .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .status(gameRoom.getStatus())
+                                .status(gameRoom.isStatus())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
-//                                .pageInfo(pageInfo)
                                 .build();
             gameRoomList.add(gameRoomResponseDto);
         }
-
 
         getAllGameRoom.put("Rooms", gameRoomList);
         getAllGameRoom.put("LastPage",rooms.getTotalPages());
@@ -132,7 +126,7 @@ public class GameRoomService {
         );
 
         // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장 불가능
-        if (enterGameRoom.getStatus()){
+        if (enterGameRoom.isStatus() == true){
             return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 

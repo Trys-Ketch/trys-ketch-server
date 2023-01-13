@@ -83,7 +83,7 @@ public class GameService {
         );
 
         // 현재 GameRoom 이 시작되지 않았다면
-        if (!gameRoom.getStatus()) {
+        if (!gameRoom.isStatus()) {
             throw new CustomException(StatusMsgCode.NOT_STARTED_YET);
         }
 
