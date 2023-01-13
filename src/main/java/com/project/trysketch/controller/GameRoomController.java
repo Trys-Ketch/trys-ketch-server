@@ -12,7 +12,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
-
 import java.util.Map;
 
 // 1. 기능    : 게임 방 컨트롤러
@@ -27,10 +26,7 @@ public class GameRoomController {
 
     // 게임 방 전체 조회 페이징 처리
     @GetMapping("/rooms")
-    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 10
-                                                                    ,sort = "createdAt"
-                                                                    ,direction = Sort.Direction.DESC) Pageable pageable)
-    {
+    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 10, sort = "createdAt" , direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(gameRoomService.getAllGameRoom(pageable));
     }
 
@@ -47,7 +43,7 @@ public class GameRoomController {
     public ResponseEntity<MsgResponseDto> enterGameRoom(@PathVariable Long id,
                                                         HttpServletRequest request) {
         log.info(">>> 방 입장 - 방 id : {}, 유저 id : {}", id, request);
-        return ResponseEntity.ok(gameRoomService.enterGameRoom(id,request));
+        return ResponseEntity.ok(gameRoomService.enterGameRoom(id, request));
     }
 
     // 게임 방 나가기
@@ -55,7 +51,7 @@ public class GameRoomController {
     public ResponseEntity<MsgResponseDto> exitGameRoom(@PathVariable Long id,
                                                        HttpServletRequest request) {
         log.info(">>> 방 퇴장 - 방 id : {}, 유저 id : {}", id, request);
-        return ResponseEntity.ok(gameRoomService.exitGameRoom(id,request, null));
+        return ResponseEntity.ok(gameRoomService.exitGameRoom(id, request, null));
     }
 
 }
