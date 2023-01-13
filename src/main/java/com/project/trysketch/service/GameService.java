@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 // 1. 기능   : 프로젝트 메인 로직
@@ -84,7 +85,7 @@ public class GameService {
         );
 
         // 현재 GameRoom 이 시작되지 않았다면
-        if (!gameRoom.isStatus()) {
+        if (!gameRoom.isPlaying()) {
             throw new CustomException(StatusMsgCode.NOT_STARTED_YET);
         }
 
@@ -232,22 +233,35 @@ public class GameService {
             roundTotalNum = Math.max(gameFlow.getRound(), roundTotalNum);
         }
 
+        // 반환될 2차원 배열 선언
         String[][] listlist = new String[roundTotalNum][roundTotalNum];
+
         for (int i = 1; i <= roundTotalNum; i++) {
             for (int j = 1; j <= roundTotalNum; j++) {
+
+                List<String> resultList = new ArrayList<>();
+
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 불러와야 함
                     GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(roomId, j, i).orElseThrow(
                             () -> new CustomException(StatusMsgCode.GAMEFLOW_NOT_FOUND)
                     );
-                    listlist[i - 1][j - 1] = gameFlow.getImagePath();
+
+                    resultList.add(gameFlow.getNickname());
+                    resultList.add(gameFlow.getImagePath());
+
+                    listlist[i - 1][j - 1] = resultList.toString();
 
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기!
                     GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(roomId, j, i).orElseThrow(
                             () -> new CustomException(StatusMsgCode.GAMEFLOW_NOT_FOUND)
                     );
-                    listlist[i - 1][j - 1] = gameFlow.getKeyword();
+
+                    resultList.add(gameFlow.getNickname());
+                    resultList.add(gameFlow.getKeyword());
+
+                    listlist[i - 1][j - 1] = resultList.toString();
                 }
             }
         }
