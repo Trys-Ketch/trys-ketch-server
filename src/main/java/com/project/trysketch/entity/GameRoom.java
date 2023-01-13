@@ -31,13 +31,13 @@ public class GameRoom extends Timestamped {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean status = false;
+    private boolean isPlaying = false;
 
     @OneToMany(mappedBy = "gameRoom")
     @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
 
-    public void GameRoomStatusUpdate(boolean status) {
-        this.status = status;
+    public void GameRoomStatusUpdate(boolean isPlaying) {
+        this.isPlaying = isPlaying;
     }
 }
