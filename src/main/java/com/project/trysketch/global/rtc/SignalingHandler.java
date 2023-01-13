@@ -39,17 +39,25 @@ public class SignalingHandler extends TextWebSocketHandler {
 
     // 시그널링에 사용되는 메시지 타입 :
     // SDP Offer 메시지
-    private static final String MSG_TYPE_OFFER = "offer";
+    private static final String MSG_TYPE_OFFER = "rtc/offer";
     // SDP Answer 메시지
-    private static final String MSG_TYPE_ANSWER = "answer";
+    private static final String MSG_TYPE_ANSWER = "rtc/answer";
     // 새로운 ICE Candidate 메시지
-    private static final String MSG_TYPE_CANDIDATE = "candidate";
+    private static final String MSG_TYPE_CANDIDATE = "rtc/candidate";
     // 방 입장 메시지
-    private static final String MSG_TYPE_JOIN = "join_room";
+    private static final String MSG_TYPE_JOIN_ROOM = "ingame/join_room";
     // 본인을 제외한 현재방의 유저 리스트 반환 메시지
-    private static final String MSG_TYPE_ALL_USERS = "all_users";
+    private static final String MSG_TYPE_ALL_USERS = "rtc/all_users";
     // 방 나가기 메시지
-    private static final String MSG_TYPE_EXIT = "user_exit";
+    private static final String MSG_TYPE_USER_EXIT = "rtc/user_exit";
+    // 게임 준비 메시지
+    private static final String MSG_TYPE_TOGGLE_READY = "ingame/toggle_ready";
+    // 접속한 유저의 준비 상태 반환 메시지
+    private static final String MSG_TYPE_READY = "ingame/ready";
+    // 해당 방 전체 유저의 준비 상태 반환 메시지
+    private static final String MSG_TYPE_ALL_READY = "ingame/all_ready";
+    // 방장 여부와 방장 session id 반환 메시지
+    private static final String MSG_TYPE_IS_HOST = "ingame/is_host";
 
 
     // 웹소켓 연결 시
@@ -70,10 +78,49 @@ public class SignalingHandler extends TextWebSocketHandler {
             String userUUID = session.getId(); // 유저 uuid
             Long roomId = message.getRoom();   // roomId
             String token = message.getToken(); // 로그인한 유저 token
-            log.info(">>> [ws] 메시지 타입 {}, 보낸 사람 {}", message.getType(), userUUID);
+            log.info(">>> [ws] 메시지 타입 {}, 보낸 사람 {}, 방 번호 {}", message.getType(), userUUID, roomId);
 
             // 메시지 타입에 따라서 서버에서 하는 역할이 달라진다
             switch (message.getType()) {
+
+                // 방 입장
+                case MSG_TYPE_JOIN_ROOM:
+
+                    log.info(">>> [ws] {} 가 #{}번 방에 들어감", userUUID, roomId);
+
+                    // 세션 저장, user 정보 저장 -> 방 입장
+                    sessions.put(userUUID, session);
+
+                    // gameroomId 와 token 에 있는 userId 로 GameRoomRepository 에서 해당 gameRoomUser 데이터를 찾고
+                    // 해당 webSessionId 로 접속한 sessionId를 update
+                    gameRoomService.updateWebSessionId(roomId, token, userUUID);
+
+                    // 방장 여부와 해당 방의 방장 session id 가져오기
+                    Map<String, Object> gameRoomHost = gameRoomService.getGameRoomHost(roomId, userUUID);
+                    log.info(">>> [ws] {} 가 방장인가? {}", userUUID, gameRoomHost.get("isHost"));
+                    log.info(">>> [ws] #{}번 방 방장은 누구인가? {}", roomId, gameRoomHost.get("hostId"));
+
+
+                    // 해당 방에 다른 유저가 있었다면 offer-answer 를 위해 유저 리스트를 만들어 클라이언트에 전달
+
+                    // roomInfo = { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], 방번호 : [ { id : userUUID3 }, { id: userUUID4 }, …], ... }
+                    // originRoomUser -> 본인을 제외한 해당 방의 다른 유저들
+                    List<Map<String, String>> originRoomUser = gameRoomService.getAllGameRoomUsersExceptMe(roomId, userUUID);
+                    log.info(">>> [ws] 본인 {} 을 제외한 #{}번 방의 다른 유저들 {}", userUUID, roomId, originRoomUser);
+
+                    // all_users 라는 타입으로 메시지 전달
+                    session.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                            .type(MSG_TYPE_ALL_USERS)
+                            .allUsers(originRoomUser)
+                            .sender(userUUID).build())));
+
+                    // is_host 라는 타입으로 메시지 전달
+                    session.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                            .type(MSG_TYPE_IS_HOST)
+                            .hostId((String) gameRoomHost.get("hostId"))
+                            .host((boolean) gameRoomHost.get("isHost"))
+                            .build())));
+                    break;
 
                 // 클라이언트에게서 받은 메시지 타입에 따른 signal 프로세스
                 case MSG_TYPE_OFFER:
@@ -97,85 +144,64 @@ public class SignalingHandler extends TextWebSocketHandler {
                                         .sender(userUUID)
                                         .receiver(receiver).build())));
                             }
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             log.info(">>> 에러 발생 : offer," +
                                     " candidate, answer 메시지 전달 실패 {}", e.getMessage());
                         }
                     });
                     break;
 
-                // 방 입장
-                case MSG_TYPE_JOIN:
-
-                    log.info(">>> [ws] {} 가 #{}번 방에 들어감", userUUID, roomId);
-
-                    // 방이 기존에 생성되어 있다면
-//                    if (roomInfo.containsKey(roomId)) {
-//
-//                        // 현재 입장하려는 방에 있는 인원수
-//                        int currentRoomLength = roomInfo.get(roomId).size();
-//
-//                        // 인원수가 꽉 찼다면 돌아간다
-//                        if (currentRoomLength == MAXIMUM) {
-//
-//                            // 해당 유저에게 방이 꽉 찼다는 메시지를 보내준다
-//                            session.sendMessage(new TextMessage(Utils.getString(Message.builder()
-//                                    .type("room_full")
-//                                    .sender(userUUID).build())));
-//                            return;
-//                        }
-//
-//                        // 여분의 자리가 있다면 해당 방 배열에 추가
-//                        Map<String, String> userDetail = new HashMap<>();
-//                        userDetail.put("id", userUUID);
-//                        roomInfo.get(roomId).add(userDetail);
-//                        log.info(">>> [ws] #{}번 방의 유저들 {}", roomId, roomInfo.get(roomId));
-//
-//                    } else {
-//
-//                        // 방이 존재하지 않는다면 값을 생성하고 추가
-//                        Map<String, String> userDetail = new HashMap<>();
-//                        userDetail.put("id", userUUID);
-//                        List<Map<String, String>> newRoom = new ArrayList<>();
-//                        newRoom.add(userDetail);
-////                        roomInfo.put(roomId, newRoom);
-//                    }
-
-                    // 세션 저장, user 정보 저장 -> 방 입장
-                    sessions.put(userUUID, session);
-//                    userInfo.put(userUUID, roomId);
-
+                // 유저 게임 준비
+                case MSG_TYPE_TOGGLE_READY:
                     // TODO
-                    // gameroomservice로 보내야 하는것
-                    // gameroomId, token, sessionId
-                    // gameroomId와 token에 있는 userId로 GameRoomRepository에서 해당 gameRoomUser 데이터를 찾고
-                    // websessionId column에 접속한 sessionId를 update
-                    gameRoomService.webSessionIdUpdate(roomId, token, userUUID);
+                    // 1. 접속한 유저의 roomId와 userUUID 를 service 에 넘겨서 status 변경
+                    // 2. 나를 제외한 현재 방의 전체 유저 session 객체에게 접속한 유저의 변경된 status 메시지 보내기
+                    // 3. 해당 방에 있는 모든 유저의 ready 상태가 true 이고,
+                    //    방 인원이 4명 이상 이면 gameRoom 의 ready status true 로 변경
+                    // 4. host 에게 gameRoom status 메시지 보내기
 
+                    log.info(">>> [ws] #{}번 방 유저, {} 타입으로 들어옴", roomId, message.getType());
 
-                    // 해당 방에 다른 유저가 있었다면 offer-answer 를 위해 유저 리스트를 만들어 클라이언트에 전달
+                    // 해당 유저의 readyStatus 가 true 였다면 false 로, false 였다면 true 로 DB 업데이트
+                    boolean userReadyStatus = gameRoomService.updateReadyStatus(roomId, userUUID);
+                    log.info(">>> [ws] #{}번 방에 있는 {}, 게임 준비 상태 {} ", roomId, userUUID, userReadyStatus);
 
-                    // roomInfo = { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], 방번호 : [ { id : userUUID3 }, { id: userUUID4 }, …], ... }
-                    // originRoomUser -> 본인을 제외한 해당 방의 다른 유저들
-                    List<Map<String, String>> originRoomUser = gameRoomService.getAllGameRoomUsersExceptMe(roomId, userUUID);
-//                    for (Map<String, String> userDetail : roomInfo.get(roomId)) {
-//
-//                        // userUUID 가 본인과 같지 않다면 list 에 추가
-//                        if (!(userDetail.get("id").equals(userUUID))) {
-//                            Map<String, String> userMap = new HashMap<>();
-//                            userMap.put("id", userDetail.get("id"));
-//                            originRoomUser.add(userMap);
-//                        }
-//                    }
+                    // 본인을 포함한 현재 방의 전체 유저 객체를 가져와서 변경된 본인 ready 상태 메시지 전달
+                    try {
+                        for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
+                            log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
+                            webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                                    .type(MSG_TYPE_READY)
+                                    .status(userReadyStatus)
+                                    .sender(userUUID).build())));
+                        }
+                        log.info(">>> [ws] 본인의 ready 변경 상태를 해당 방 전체 유저에게 전달 성공!!");
+                    } catch (Exception e) {
+                        log.info(">>> 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
+                    }
 
-                    log.info(">>> [ws] 본인 {} 을 제외한 #{}번 방의 다른 유저들 {}", userUUID, roomId, originRoomUser);
+                    // 현재 방에 있는 모든 유저의 ready 상태가 true 인지 && 방 인원이 4명 이상인지 판단
+                    Map<String, Object> gameReadyStatus = gameRoomService.getGameReadyStatus(roomId);
+                    log.info(">>> [ws] #{}번 방 게임 시작 가능 여부 {}", roomId, gameReadyStatus.get("status"));
+                    log.info(">>> [ws] #{}번 방 host 웹세션 id {}", roomId, gameReadyStatus.get("host"));
 
-                    // all_users 라는 타입으로 메시지 전달
-                    session.sendMessage(new TextMessage(Utils.getString(Message.builder()
-                            .type(MSG_TYPE_ALL_USERS)
-                            .allUsers(originRoomUser)
-                            .sender(userUUID).build())));
+                    // 현재 방의 host 에게 게임 시작이 가능한 상태인지 메시지 전달
+                    sessions.values().forEach(s -> {
+                        if (gameReadyStatus.get("host").equals(s.getId())) {
+                            try {
+                                log.info(">>> [ws] #{}번 방의 host 웹세션 id {}", roomId, gameReadyStatus.get("host"));
+                                s.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                                        .type(MSG_TYPE_ALL_READY)
+                                        .status((boolean) gameReadyStatus.get("status"))
+                                        .build())));
+                                log.info(">>> [ws] 현재 방이 게임을 시작할 수 있는 상태인지 방장에게 전달 성공!!");
+                            }
+                            catch (Exception e) {
+                                log.info(">>> 에러 발생 : 방장에게 메시지 전달 실패 {}", e.getMessage());
+                            }
+                        }
+                    });
+
                     break;
 
                 // 메시지 타입이 잘못되었을 경우
@@ -195,10 +221,6 @@ public class SignalingHandler extends TextWebSocketHandler {
         // 유저 uuid 와 roomID 를 저장
         String userUUID = session.getId(); // 유저 uuid
 //        String roomId = userInfo.get(userUUID); // roomId
-
-        // TODO
-        // userUUID를 가지고 GameRoomService 가서
-        // 너 맞니? 그래 나가~ 하면 됨
 
         gameRoomService.exitGameRoom(null, null, userUUID);
 
@@ -225,8 +247,9 @@ public class SignalingHandler extends TextWebSocketHandler {
         sessions.values().forEach(s -> {
             try {
                 if(!(s.getId().equals(userUUID))) {
+                    log.info(">>> [ws] user_exit 메시지 받고 있는 userUUID 리스트 {}", s.getId());
                     s.sendMessage(new TextMessage(Utils.getString(Message.builder()
-                            .type(MSG_TYPE_EXIT)
+                            .type(MSG_TYPE_USER_EXIT)
                             .sender(userUUID).build())));
                 }
             }
@@ -244,5 +267,42 @@ public class SignalingHandler extends TextWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.info(">>> 에러 발생 : 소켓 통신 에러 {}", exception.getMessage());
+    }
+
+    // 본인을 제외한 현재 방의 세션 객체 리스트 반환
+//    public List<WebSocketSession> getRoomSessionListExceptMe(Long roomId, String userUUID) {
+//        List<WebSocketSession> sessionList = new ArrayList<>();
+//        List<Map<String, String>> originRoomUser = gameRoomService.getAllGameRoomUsersExceptMe(roomId, userUUID);
+//        sessions.values().forEach(s -> {
+//            try {
+//                for (Map<String, String> roomUser : originRoomUser) {
+//                    if (roomUser.get("id").equals(s.getId())) {
+//                        sessionList.add(s);
+//                    }
+//                }
+//            } catch (Exception e) {
+//                log.info(">>> 에러 발생 : 본인을 제외한 현재 방의 세션 객체 리스트 생성 실패 {}", e.getMessage());
+//            }
+//        });
+//        return sessionList;
+//    }
+
+    // 본인을 포함한 현재 방의 세션 객체 리스트 반환
+    public List<WebSocketSession> getRoomSessionList(Long roomId) {
+        List<WebSocketSession> sessionList = new ArrayList<>();
+        List<String> allUsers = gameRoomService.getALLGameRoomUsers(roomId);
+        sessions.values().forEach(s -> {
+            try {
+                for (String allUser : allUsers) {
+                    if (allUser.equals(s.getId())) {
+                        sessionList.add(s);
+                    }
+                }
+            } catch (Exception e) {
+                log.info(">>> 에러 발생 : 본인을 포함한 현재 방의 세션 객체 리스트 생성 실패 {}", e.getMessage());
+            }
+
+        });
+        return sessionList;
     }
 }
