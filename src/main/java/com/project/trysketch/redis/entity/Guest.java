@@ -18,9 +18,12 @@ public class Guest {
 
     private String nickname;        // 유저 닉네임
 
-    public Guest(Long id, String nickname) {
+    private String imgUrl;          // 유저 랜덤 이미지
+
+    public Guest(Long id, String nickname, String imgUrl) {
         this.id = id;
         this.nickname = nickname;
+        this.imgUrl = imgUrl;
     }
 
 }

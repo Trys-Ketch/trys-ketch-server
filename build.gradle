@@ -64,6 +64,11 @@ dependencies {
 
     // Json
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+
+    // Swagger
+    implementation 'io.springfox:springfox-swagger2:3.0.0'
+    implementation 'io.springfox:springfox-swagger-ui:3.0.0'
+    implementation 'io.springfox:springfox-boot-starter:3.0.0'
 }
 
 //tasks.named('test') {

@@ -1,8 +1,11 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.redis.dto.GamerKey;
+import com.project.trysketch.entity.ThumbImg;
+import com.project.trysketch.global.dto.DataMsgResponseDto;
+import com.project.trysketch.redis.dto.GamerEnum;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.repositorty.GuestRepository;
+import com.project.trysketch.repository.ThumbImgRepository;
 import com.project.trysketch.suggest.RandomNick;
 import com.project.trysketch.suggest.RandomNickRepository;
 import com.project.trysketch.global.exception.CustomException;
@@ -37,6 +40,9 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final RandomNickRepository randomNickRepository;
     private final GuestRepository guestRepository;
+    private final ThumbImgRepository thumbImgRepository;
+    private static int IMG_MAXIMUM = 3;
+
 
     // 회원가입
     public void signUp(SignUpRequestDto requestDto) {
@@ -52,7 +58,11 @@ public class UserService {
         String encodePassword = passwordEncoder.encode(requestDto.getPassword());
 
         // 3. 새롭게 만들 빈 User 객체 생성
-        User user = new User(requestDto.getEmail(), requestDto.getNickname(), encodePassword);
+        User user = User.builder()
+                .email(requestDto.getEmail())
+                .nickname(requestDto.getNickname())
+                .password(encodePassword)
+                .imgUrl(getRandomThumbImg()).build();
 
         // 4. DB 에 새로운 유저정보 넣어주기
         userRepository.save(user);
@@ -64,21 +74,13 @@ public class UserService {
         User user = userRepository.findByEmail(requestDto.getEmail()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.EXIST_USER)
         );
-        // 2. 비밀번호호가 일치하는지 검증한다.
+        // 2. 비밀번호가 일치하는지 검증한다.
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             throw new CustomException(StatusMsgCode.INVALID_PASSWORD);
         }
 
         // 3. 로그인 성공 및 토큰을 발급받아서 가져온다.
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getEmail(), user.getNickname()));
-    }
-
-    // 랜덤 닉네임 발급
-    public String RandomNick() {
-        int num = (int) (Math.random() * 1000 +1);
-        RandomNick randomNick = randomNickRepository.findByNum(num).orElse(null);
-
-        return Objects.requireNonNull(randomNick).getNickname();
     }
 
     // 헤더값 추출 및 회원 검증
@@ -98,7 +100,6 @@ public class UserService {
     public HashMap<String, String> gamerInfo(String token) {
         HashMap<String, String> result = new HashMap<>();                           // 결과물을 담기위한 HashMap
 
-        log.info(">>>>>>> 이건 로그야 회원, 비회원 추출에서 나오는 토큰 : {}", token);
         // 1. 회원, 비회원 분기처리 시작
         if (token.contains("@")) {
             // 2. 문자열 안에 @ 가 있으면 request 로 받아온다. 유저가 사용한다고 판단하고 시작
@@ -107,8 +108,9 @@ public class UserService {
             User user = userRepository.findByEmail(token).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
-            result.put(GamerKey.GAMER_NUM.key(), user.getId().toString());          // 회원 Id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerKey.GAMER_NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.ID.key(), user.getId().toString());          // 회원 Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), user.getImgUrl());                 // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
         } else if (token.startsWith("Bearer ")) {
             // 3. 문자열의 시작이 Bearer 이면 문자열 형태로 받아오는 webSession 에서 사용된다고 판단하고 시작
             Claims claims = jwtUtil.authorizeSocketToken(token);                    // 검증 및 정보 가져오기
@@ -117,25 +119,23 @@ public class UserService {
             User user = userRepository.findByEmail(email).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
-            result.put(GamerKey.GAMER_NUM.key(), user.getId().toString());          // 회원 id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerKey.GAMER_NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.ID.key(), user.getId().toString());          // 회원 id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), user.getImgUrl());                 // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
         } else {
             // 4. 위의 분기에 해당하지 않을 경우에는 guest 라고 판단하고 시작
-            log.info(">>>>>>> 게임 Room 서비스의 guest 의 token : {}", token);
             token = URLDecoder.decode(token, StandardCharsets.UTF_8);               // 비회원의 토큰 정보를 얻기 위해서 디코딩
-            log.info(">>>>>>> 게임 Room 서비스의 guest 의 token 디코딩 결과 : {}", token);
 
             // 게스트의 원하는 정보를 뽑아서 사용하기 위해서 배열에다가 하나씩 넣어준다.
             // guestInfo 예시 형태 : "10001,유저닉네임"
             String[] guestInfo = token.split(",");
 
             // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
-            Optional<Guest> guest = guestRepository.findById(Long.valueOf(guestInfo[0]));
-            if (!guestRepository.existsById(guest.get().getId())) {
-                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
-            }
-            result.put(GamerKey.GAMER_NUM.key(), guestInfo[0]);                     // guest Id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerKey.GAMER_NICK.key(), guestInfo[1]);                    // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            Guest guest = guestRepository.findById(Long.valueOf(guestInfo[0])).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN));
+            result.put(GamerEnum.ID.key(), guestInfo[0]);                     // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), guestInfo[1]);                    // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), guestInfo[2]);                     // guest img url 을 key 값으로 value 추출 해서 result 에 주입
         }
         return result;
     }
@@ -144,6 +144,30 @@ public class UserService {
     // 회원탈퇴
     public void deleteUser(User user) {
 
+    }
+
+    // 랜덤 닉네임 발급
+    public String RandomNick() {
+        int num = (int) (Math.random() * 1000 +1);
+        RandomNick randomNick = randomNickRepository.findByNum(num).orElse(null);
+
+        return Objects.requireNonNull(randomNick).getNickname();
+    }
+
+    // 랜덤 이미지 불러오기
+    public String getRandomThumbImg() {
+        int randomNum = (int) (Math.random() * IMG_MAXIMUM + 1);
+        ThumbImg thumbImg = thumbImgRepository.findById(randomNum).orElseThrow(
+                () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
+        );
+        return thumbImg.getImgUrl();
+    }
+
+    // 회원 정보 조회
+    public DataMsgResponseDto getGamerInfo(HttpServletRequest request) {
+        String header = validHeader(request);
+        HashMap<String, String> extInfo = gamerInfo(header);
+        return new DataMsgResponseDto(StatusMsgCode.OK, extInfo);
     }
 
 }

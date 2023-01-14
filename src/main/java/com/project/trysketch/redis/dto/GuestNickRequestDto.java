@@ -7,4 +7,5 @@ import lombok.Getter;
 @Getter
 public class GuestNickRequestDto {
     private String nickname;
+    private String imgUrl;
 }
