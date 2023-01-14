@@ -1,5 +1,6 @@
 package com.project.trysketch.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,8 @@ import javax.persistence.*;
 @Table(name = "USERS")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,24 +28,28 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column
     private Long kakaoId;
 
-    public User(String email, String nickname, String password) {
-        this.email = email;
-        this.nickname = nickname;
-        this.password = password;
-    }
+    @Column(nullable = false)
+    private String imgUrl;
 
+//    public User(String email, String nickname, String password) {
+//        this.email = email;
+//        this.nickname = nickname;
+//        this.password = password;
+//    }
+//
     public User kakaoIdUpdate(Long kakaoId) {
         this.kakaoId = kakaoId;
         return this;
     }
 
-    @Builder
-    public User(String email, String password, Long kakaoId, String kakaoNickname) {
-        this.email = email;
-        this.password = password;
-        this.kakaoId = kakaoId;
-        this.nickname = kakaoNickname;
-    }
+//    @Builder
+//    public User(String email, String password, Long kakaoId, String kakaoNickname) {
+//        this.email = email;
+//        this.password = password;
+//        this.kakaoId = kakaoId;
+//        this.nickname = kakaoNickname;
+//    }
 }

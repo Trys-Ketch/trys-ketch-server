@@ -4,7 +4,8 @@ package com.project.trysketch.redis.dto;
 // 2. 작성자  : 김재영
 public enum GamerKey {
     GAMER_NUM("id"),            // PK 즉, 고유번호
-    GAMER_NICK("nickname")      // 닉네임
+    GAMER_NICK("nickname"),     // 닉네임
+    GAMER_IMG("imgUrl")         // 랜덤 이미지
     ;
 
     private final String key;   // Enum 요소에 특정 값을 매핑하기 위해서 필드값 추가
