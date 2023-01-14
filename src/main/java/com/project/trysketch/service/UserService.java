@@ -131,10 +131,8 @@ public class UserService {
             String[] guestInfo = token.split(",");
 
             // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
-            Optional<Guest> guest = guestRepository.findById(Long.valueOf(guestInfo[0]));
-            if (!guestRepository.existsById(guest.get().getId())) {
-                throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
-            }
+            Guest guest = guestRepository.findById(Long.valueOf(guestInfo[0])).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN));
             result.put(GamerEnum.ID.key(), guestInfo[0]);                     // guest Id 를 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.NICK.key(), guestInfo[1]);                    // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.IMG.key(), guestInfo[2]);                     // guest img url 을 key 값으로 value 추출 해서 result 에 주입
