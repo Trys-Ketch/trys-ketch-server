@@ -1,7 +1,11 @@
 package com.project.trysketch.redis.config;
 
+import com.project.trysketch.redis.entity.CacheKey;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -18,6 +22,7 @@ import java.util.Map;
 // 1. 기능   : Redis Config
 // 2. 작성자 : 서혁수
 @Configuration
+@EnableCaching
 @EnableRedisRepositories
 public class RedisConfig {
 
@@ -84,24 +89,21 @@ public class RedisConfig {
     }
 
     @Bean(name = "CacheManager")
-    public RedisCacheManager DefaultCacheManager(RedisConnectionFactory redisConnectionFactory) {
+    public CacheManager cacheManager() {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()));
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofSeconds(CacheKey.DEFAULT_EXPIRE_SEC)) // default 만료 시간
+                .computePrefixWith(CacheKeyPrefix.simple())
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
 
-        Map<String, RedisCacheConfiguration> cacheConfiguration = new HashMap<>();
+        // 캐시키별 default 유효기간 설정
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put(CacheKey.USER, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofSeconds(CacheKey.USER_EXPIRE_SEC)));
 
-        Duration test = Duration.ofSeconds(180L);
-        cacheConfiguration.put("Default24h", configuration.entryTtl(test));
-
-        return RedisCacheManager
-                .RedisCacheManagerBuilder
-                .fromConnectionFactory(redisConnectionFactory)
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(redisConnectionFactory())
                 .cacheDefaults(configuration)
+                .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
     }
 

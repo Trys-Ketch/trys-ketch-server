@@ -4,7 +4,6 @@ import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class RedisService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final GuestRepository guestRepository;
 
     // 비회원 로그인시 발급되는 자동값증가 메서드
@@ -28,7 +27,6 @@ public class RedisService {
     }
 
     // 비회원 로그인시 헤드 추가 메서드
-    @Cacheable(key = "", value = "Default24h", cacheManager = "CacheManager")
     public void guestLogin(HttpServletResponse response, GuestNickRequestDto requestDto) {
         Long num = guestIncrement("guestCount");     // 자동값 증가 키값 지정 및 시작
         Long guestId = 10000L + num;                     // 10000 번 부터 시작해서 1씩 증가(첫번째 값 10001)

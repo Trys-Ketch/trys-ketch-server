@@ -88,5 +88,16 @@ public class UserController {
         return ResponseEntity.ok(userService.getGamerInfo(request));
     }
 
+    @GetMapping("/test-user/{id}")
+    public ResponseEntity<MsgResponseDto> userInfo(@PathVariable String id) {
+        userService.gamerInfo(id);
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), id));
+    }
+
+    @GetMapping("/test-guest/{id}")
+    public ResponseEntity<MsgResponseDto> guestInfo(@PathVariable String id) {
+        userService.gamerInfo(id);
+        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), id));
+    }
 }
 

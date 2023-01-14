@@ -18,6 +18,7 @@ import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
@@ -108,9 +109,9 @@ public class UserService {
             User user = userRepository.findByEmail(token).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
-            result.put(GamerEnum.ID.key(), user.getId().toString());          // 회원 Id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.IMG.key(), user.getImgUrl());                 // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.ID.key(), user.getId().toString());                // 회원 Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), user.getNickname());                   // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), user.getImgUrl());                      // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
         } else if (token.startsWith("Bearer ")) {
             // 3. 문자열의 시작이 Bearer 이면 문자열 형태로 받아오는 webSession 에서 사용된다고 판단하고 시작
             Claims claims = jwtUtil.authorizeSocketToken(token);                    // 검증 및 정보 가져오기
@@ -119,9 +120,9 @@ public class UserService {
             User user = userRepository.findByEmail(email).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
-            result.put(GamerEnum.ID.key(), user.getId().toString());          // 회원 id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.NICK.key(), user.getNickname());              // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.IMG.key(), user.getImgUrl());                 // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.ID.key(), user.getId().toString());                // 회원 id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), user.getNickname());                   // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), user.getImgUrl());                      // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
         } else {
             // 4. 위의 분기에 해당하지 않을 경우에는 guest 라고 판단하고 시작
             token = URLDecoder.decode(token, StandardCharsets.UTF_8);               // 비회원의 토큰 정보를 얻기 위해서 디코딩
@@ -131,11 +132,12 @@ public class UserService {
             String[] guestInfo = token.split(",");
 
             // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
-            Guest guest = guestRepository.findById(Long.valueOf(guestInfo[0])).orElseThrow(
-                    () -> new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN));
-            result.put(GamerEnum.ID.key(), guestInfo[0]);                     // guest Id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.NICK.key(), guestInfo[1]);                    // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.IMG.key(), guestInfo[2]);                     // guest img url 을 key 값으로 value 추출 해서 result 에 주입
+            Optional<Guest> guest = guestRepository.findById("guest:" + guestInfo[0]);
+//            Guest guest = guestRepository.findById(Long.valueOf(guestInfo[0])).orElseThrow(
+//                    () -> new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN));
+            result.put(GamerEnum.ID.key(), guestInfo[0]);                           // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), guestInfo[1]);                         // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), guestInfo[2]);                          // guest img url 을 key 값으로 value 추출 해서 result 에 주입
         }
         return result;
     }
