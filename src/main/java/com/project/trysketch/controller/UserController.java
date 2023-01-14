@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 
 // 1. 기능    : 유저 컨트롤러
 // 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
