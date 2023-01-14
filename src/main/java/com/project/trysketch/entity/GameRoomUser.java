@@ -37,6 +37,9 @@ public class GameRoomUser {
     @Column(name = "ready_status")
     private boolean readyStatus;
 
+    @Column
+    private String imgUrl;
+
 //    public GameRoomUser(GameRoom gameRoom, User user) {
 //        this.gameRoom = gameRoom;
 //        this.user = user;

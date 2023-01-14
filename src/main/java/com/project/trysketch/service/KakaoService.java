@@ -135,8 +135,9 @@ public class KakaoService {
                 kakaoUser = User.builder()
                         .password(encodedPassword)
                         .kakaoId(kakaoId)
-                        .kakaoNickname(kakaoUserInfo.getNickname())
+                        .nickname(kakaoUserInfo.getNickname())
                         .email(email)
+                        .imgUrl(userService.getRandomThumbImg())
                         .build();
             }
             userRepository.save(kakaoUser);
