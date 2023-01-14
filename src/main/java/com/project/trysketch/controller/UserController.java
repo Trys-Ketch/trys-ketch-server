@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
 
 // 1. 기능    : 유저 컨트롤러
 // 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
@@ -63,7 +62,7 @@ public class UserController {
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
     // 비회원 로그인
     @PostMapping("/guest")
-    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody GuestNickRequestDto requestDto) throws JsonProcessingException {
+    public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody GuestNickRequestDto requestDto) {
         redisService.guestLogin(response, requestDto);
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
     }

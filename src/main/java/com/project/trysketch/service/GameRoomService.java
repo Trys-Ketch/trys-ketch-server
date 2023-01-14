@@ -5,7 +5,7 @@ import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
-import com.project.trysketch.redis.dto.GamerKey;
+import com.project.trysketch.redis.dto.GamerEnum;
 import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -75,23 +75,24 @@ public class GameRoomService {
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
         // 2. 요청을 한 유저가 이미 속한 방이 있으면 생성 불가능
-        if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))) {
+        if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))) {
             throw new CustomException(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
         // 3. 방 정보 생성
         GameRoom gameRoom = GameRoom.builder()
                 .title(gameRoomRequestDto.getTitle())
-                .hostId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
-                .hostNick(extInfo.get(GamerKey.GAMER_NICK.key()))
+                .hostId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))
+                .hostNick(extInfo.get(GamerEnum.NICK.key()))
                 .isPlaying(false)
                 .build();
 
         // 4. 방에 입장한 유저 정보 생성
         GameRoomUser gameRoomUser = GameRoomUser.builder()
                 .gameRoom(gameRoom)
-                .userId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
-                .nickname(extInfo.get(GamerKey.GAMER_NICK.key()))
+                .userId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))
+                .nickname(extInfo.get(GamerEnum.NICK.key()))
+                .imgUrl(extInfo.get(GamerEnum.IMG.key()))
                 .webSessionId(null)
                 .readyStatus(true)
                 .build();
@@ -134,15 +135,16 @@ public class GameRoomService {
         }
 
         // 5. 현재 User 가 다른 방에 들어가 있다면
-        if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))) {
+        if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))) {
             return new MsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
         // 6. 새롭게 게임방에 들어온 유저 생성
         GameRoomUser gameRoomUser = GameRoomUser.builder()
                 .gameRoom(enterGameRoom)
-                .userId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())))
-                .nickname(extInfo.get(GamerKey.GAMER_NICK.key()))
+                .userId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))
+                .nickname(extInfo.get(GamerEnum.NICK.key()))
+                .imgUrl(extInfo.get(GamerEnum.IMG.key()))
                 .webSessionId(null)
                 .readyStatus(false)
                 .build();
@@ -167,8 +169,8 @@ public class GameRoomService {
             // 3. 소켓 연결이 종료됨으로 인해서 게임방에서 나가지는 경우
             // 예) 웹 브라우저 창 닫기, 팅겼을 경우
             GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID);
-            extInfo.put(GamerKey.GAMER_NUM.key(), gameRoomUser.getUserId().toString());
-            extInfo.put(GamerKey.GAMER_NICK.key(), gameRoomUser.getNickname());
+            extInfo.put(GamerEnum.ID.key(), gameRoomUser.getUserId().toString());
+            extInfo.put(GamerEnum.NICK.key(), gameRoomUser.getNickname());
             id = gameRoomUser.getGameRoom().getId();
         }
 
@@ -178,7 +180,7 @@ public class GameRoomService {
         );
 
         // 5. 나가려고 하는 GameRoomUser(유저) 정보 가져오기
-        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserId(Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())));
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())));
 
         // 6. 나가려는 유저가 요청한 방에 존재하지 않으면 잘못된 요청
         if (!gameRoomUserRepository.existsByGameRoomIdAndUserId(id, gameRoomUser.getUserId())) {
@@ -197,7 +199,7 @@ public class GameRoomService {
         }
 
         // 10. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
-        if (Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key())).equals(enterGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
+        if (Long.valueOf(extInfo.get(GamerEnum.ID.key())).equals(enterGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
             Long hostId = null;
             String hostNick = null;
 
@@ -237,7 +239,7 @@ public class GameRoomService {
     public void updateWebSessionId(Long gameRoomId, String token, String userUUID) {
         // 1. 받아온 토큰으로부터 유저 또는 guest 정보를 받아온다.
         HashMap<String, String> extInfo = userService.gamerInfo(token);
-        Long gamerId = Long.valueOf(extInfo.get(GamerKey.GAMER_NUM.key()));
+        Long gamerId = Long.valueOf(extInfo.get(GamerEnum.ID.key()));
         log.info(">>>>>>>> gamerId {}", gamerId);
         log.info(">>>>>>>> gameRoomId {}", gameRoomId);
 
@@ -250,6 +252,7 @@ public class GameRoomService {
                 .gameRoom(gameRoomUser.getGameRoom())
                 .userId(gameRoomUser.getUserId())
                 .nickname(gameRoomUser.getNickname())
+                .imgUrl(gameRoomUser.getImgUrl())
                 .webSessionId(userUUID)
                 .build();
         gameRoomUserRepository.save(updateGameRoomUser);
@@ -315,7 +318,7 @@ public class GameRoomService {
     @Transactional
     public Map<String, Object> getGameReadyStatus(Long gameRoomId) {
 
-        Map<String, Object> gameRaedyStatusAndHost = new HashMap<>();
+        Map<String, Object> gameReadyStatusAndHost = new HashMap<>();
 
         // 현재 gameRoom 방장의 유저 id 추출
         GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
@@ -345,9 +348,9 @@ public class GameRoomService {
             gameRoom.GameRoomStatusUpdate(true);
         }
 
-        gameRaedyStatusAndHost.put("status", flag);
-        gameRaedyStatusAndHost.put("host", webSessionId);
-        return gameRaedyStatusAndHost;
+        gameReadyStatusAndHost.put("status", flag);
+        gameReadyStatusAndHost.put("host", webSessionId);
+        return gameReadyStatusAndHost;
 
     }
 

@@ -83,9 +83,9 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    @Bean(name = "defaultCacheManager")
+    @Bean(name = "CacheManager")
     public RedisCacheManager DefaultCacheManager(RedisConnectionFactory redisConnectionFactory) {
-        RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
+        RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext
                         .SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
@@ -96,12 +96,12 @@ public class RedisConfig {
         Map<String, RedisCacheConfiguration> cacheConfiguration = new HashMap<>();
 
         Duration test = Duration.ofSeconds(180L);
-        cacheConfiguration.put("Default24h", redisCacheConfiguration.entryTtl(test));
+        cacheConfiguration.put("Default24h", configuration.entryTtl(test));
 
         return RedisCacheManager
                 .RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
-                .cacheDefaults(redisCacheConfiguration)
+                .cacheDefaults(configuration)
                 .build();
     }
 
