@@ -7,7 +7,7 @@ import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.image.AmazonS3Service;
-import com.project.trysketch.redis.dto.GamerKey;
+import com.project.trysketch.redis.dto.GamerEnum;
 import com.project.trysketch.repository.GameFlowRepository;
 import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
@@ -57,7 +57,7 @@ public class GameService {
         String token = userService.validHeader(request);
         HashMap<String, String> gamerInfo =userService.gamerInfo(token);
 
-//        gamerInfo.get(GamerKey.GAMER_NICK.key()); // 검증을 통과한 User의 닉네임
+//        gamerInfo.get(GamerKey.NICK.key()); // 검증을 통과한 User의 닉네임
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(roomId).orElseThrow(
@@ -68,7 +68,7 @@ public class GameService {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(gameRoom);
 
         // 방장이 아닐경우
-        if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerKey.GAMER_NICK.key()))) {
+        if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerEnum.NICK.key()))) {
             throw new CustomException(StatusMsgCode.YOUR_NOT_HOST);
         }
 

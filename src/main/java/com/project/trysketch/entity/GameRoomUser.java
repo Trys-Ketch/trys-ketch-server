@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Optional;
 
 // 1. 기능   : 방에 들어가있는 유저 엔티티
 // 2. 작성자 : 김재영, 서혁수
@@ -39,23 +38,6 @@ public class GameRoomUser {
 
     @Column
     private String imgUrl;
-
-//    public GameRoomUser(GameRoom gameRoom, User user) {
-//        this.gameRoom = gameRoom;
-//        this.user = user;
-//    }
-
-    public GameRoomUser(GameRoom gameRoom, Long userId, String nickname, String webSessionId) {
-        this.gameRoom = gameRoom;
-        this.userId = userId;
-        this.nickname = nickname;
-        this.webSessionId = webSessionId;
-    }
-
-    public GameRoomUser(Optional<GameRoom> gameRoom, Long userId){
-        this.gameRoom = gameRoom.get();
-        this.userId = userId;
-    }
 
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
