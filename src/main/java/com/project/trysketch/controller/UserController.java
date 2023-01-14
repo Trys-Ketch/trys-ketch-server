@@ -82,19 +82,7 @@ public class UserController {
         return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), randomImg));
     }
 
-    // 랜덤 이미지, 닉네임 받아오는 부분
-    @GetMapping("/random-set")
-    public ResponseEntity<DataMsgResponseDto> randomTest() {
-        String nickname = userService.RandomNick();
-        String imgUrl = userService.getRandomThumbImg();
-        HashMap<String, String> getInfo = new HashMap<>();
-        getInfo.put("nickname", nickname);
-        getInfo.put("imgUrl", imgUrl);
-        return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK, getInfo));
-    }
-
-
-    // ======================== 여기서 부터는 비회원 관련입니다. ========================
+    // ======================== 회원 & 비회원 정보 조회 ========================
     // 회원 & 비회원 정보 조회
     @GetMapping("/user-info")
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
