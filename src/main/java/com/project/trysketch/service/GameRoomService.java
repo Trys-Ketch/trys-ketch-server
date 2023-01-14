@@ -54,7 +54,7 @@ public class GameRoomService {
                                 .title(gameRoom.getTitle())
                                 .hostNick(gameRoom.getHostNick())
                                 .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .status(gameRoom.isPlaying())
+                                .isPlaying(gameRoom.isPlaying())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
                                 .build();
