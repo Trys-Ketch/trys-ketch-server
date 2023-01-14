@@ -7,6 +7,7 @@ import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.image.AmazonS3Service;
+import com.project.trysketch.redis.dto.GamerKey;
 import com.project.trysketch.repository.GameFlowRepository;
 import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 // 1. 기능   : 프로젝트 메인 로직
@@ -42,6 +44,7 @@ public class GameService {
     private final NounRepository nounRepository;
     private final GameFlowRepository gameFlowRepository;
     private final AmazonS3Service s3Service;
+    private final UserService userService;
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
@@ -50,10 +53,11 @@ public class GameService {
     // 게임 시작
     @Transactional
     public MsgResponseDto startGame(Long roomId, HttpServletRequest request) {
-        Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-        );
+        // 유저 검증부
+        String token = userService.validHeader(request);
+        HashMap<String, String> gamerInfo =userService.gamerInfo(token);
+
+//        gamerInfo.get(GamerKey.GAMER_NICK.key()); // 검증을 통과한 User의 닉네임
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(roomId).orElseThrow(
@@ -64,7 +68,7 @@ public class GameService {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findByGameRoom(gameRoom);
 
         // 방장이 아닐경우
-        if (!gameRoom.getHostNick().equals(user.getNickname())) {
+        if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerKey.GAMER_NICK.key()))) {
             throw new CustomException(StatusMsgCode.YOUR_NOT_HOST);
         }
 
@@ -98,36 +102,6 @@ public class GameService {
         // 게임 종료
         return new MsgResponseDto(StatusMsgCode.END_GAME);
     }
-
-
-//        // 게임을 시작하면 기본으로 제공되는 제시어
-//        HashMap<String, String> keywordMap = new HashMap<>();
-//
-//        // 최초 제시어를 조합해서 GameRoomUser 와 매칭
-//        for (GameRoomUser gameRoomUser : gameRoomUserList) {
-//            // 형용사 리스트중 1개
-//            int adId = (int) (Math.random() * adSize +1);
-//            AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
-//
-//            // 명사 리스트중 1개
-//            int nuId = (int) (Math.random() * nounSize +1);
-//            NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
-//
-//            // 형용사 + 명사
-//            String keyword = adjectiveEntity.getAdjective() + nounEntity.getNoun();
-//
-//            keywordMap.put(gameRoomUser.getNickname(), keyword);
-//        }
-//
-//        // 새로운 게임 생성
-//        GameInfo gameInfo = GameInfo.builder()
-//                .gameRoomId(gameRoom.getId())
-//                .roundTimeout(60)
-//                .build();
-//
-//        GameStartResponseDto gameStartResponseDto = GameStartResponseDto.builder()
-//                .gameRoomId(gameInfo.getGameRoomId())
-//                .roundTimeout(gameInfo.getRoundTimeout())
 
     // 강제 종료( 비정상적인 종료 )
     @Transactional
@@ -189,12 +163,6 @@ public class GameService {
         if (multipartFile != null) {
             s3Service.upload(multipartFile, directoryName, user, round, keywordIndex, roomId);
         }
-//        GameFlow gameFlow = GameFlow.builder()
-//                .roomId(roomId)
-//                .round(round)
-//                .keywordIndex(keywordIndex)
-//                .imagePath(imagePath)
-//                .build();
 
         return new MsgResponseDto(StatusMsgCode.SUBMIT_IMAGE_DONE);
     }
@@ -271,6 +239,35 @@ public class GameService {
 
 }
 
+//                  // 써야 할 기능
+//        // 게임을 시작하면 기본으로 제공되는 제시어
+//        HashMap<String, String> keywordMap = new HashMap<>();
+//
+//        // 최초 제시어를 조합해서 GameRoomUser 와 매칭
+//        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+//            // 형용사 리스트중 1개
+//            int adId = (int) (Math.random() * adSize +1);
+//            AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
+//
+//            // 명사 리스트중 1개
+//            int nuId = (int) (Math.random() * nounSize +1);
+//            NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
+//
+//            // 형용사 + 명사
+//            String keyword = adjectiveEntity.getAdjective() + nounEntity.getNoun();
+//
+//            keywordMap.put(gameRoomUser.getNickname(), keyword);
+//        }
+//
+//        // 새로운 게임 생성
+//        GameInfo gameInfo = GameInfo.builder()
+//                .gameRoomId(gameRoom.getId())
+//                .roundTimeout(60)
+//                .build();
+//
+//        GameStartResponseDto gameStartResponseDto = GameStartResponseDto.builder()
+//                .gameRoomId(gameInfo.getGameRoomId())
+//                .roundTimeout(gameInfo.getRoundTimeout())
 
 //        (키워드인덱스, round)
 //            1,1   1,2    1,3   1,4   1,5
