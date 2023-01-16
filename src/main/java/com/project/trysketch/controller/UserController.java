@@ -5,6 +5,7 @@ import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
+import com.project.trysketch.redis.repositorty.GuestRepository;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
@@ -87,6 +88,5 @@ public class UserController {
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
         return ResponseEntity.ok(userService.getGamerInfo(request));
     }
-
 }
 

@@ -2,7 +2,6 @@ package com.project.trysketch.repository;
 
 import com.project.trysketch.entity.GameFlow;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Optional;
 
