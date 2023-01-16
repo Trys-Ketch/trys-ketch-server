@@ -54,7 +54,7 @@ public class GameRoomService {
                                 .title(gameRoom.getTitle())
                                 .hostNick(gameRoom.getHostNick())
                                 .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .status(gameRoom.isPlaying())
+                                .isPlaying(gameRoom.isPlaying())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
                                 .build();
@@ -97,6 +97,9 @@ public class GameRoomService {
                 .readyStatus(true)
                 .build();
 
+        log.info(">>>>>>>>>> 접속한 유저의 정보를 토대로 gameRoomUser 생성 {}", gameRoomUser);
+        log.info(">>>>>>>>>> true 여야 함 {}", gameRoomUser.isReadyStatus());
+
         // 5. 게임 방 DB에 저장 및 입장중인 유저 정보 저장
         gameRoomRepository.save(gameRoom);
         gameRoomUserRepository.save(gameRoomUser);
@@ -104,7 +107,7 @@ public class GameRoomService {
         HashMap<String, String> roomInfo = new HashMap<>();
 
         // 6. HashMap 형식으로 방 제목과 방 번호를 response 로 반환
-        roomInfo.put("gameRoomtitle",gameRoom.getTitle());
+        roomInfo.put("gameRoomTitle",gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
         return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
@@ -212,7 +215,7 @@ public class GameRoomService {
 
             // 13. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
             if (userHost != null) {
-                hostId = userHost.getId();
+                hostId = userHost.getUserId();
                 hostNick = userHost.getNickname();
             } else if (guestHost != null) {
                 hostId = guestHost.getId();
@@ -254,6 +257,7 @@ public class GameRoomService {
                 .nickname(gameRoomUser.getNickname())
                 .imgUrl(gameRoomUser.getImgUrl())
                 .webSessionId(userUUID)
+                .readyStatus(true)
                 .build();
         gameRoomUserRepository.save(updateGameRoomUser);
     }
@@ -329,27 +333,27 @@ public class GameRoomService {
         // 해당 gameRoom 모든 유저의 ready 상태가 true && 방 인원이 4명 이상이면 flag = true
         // 위에서 가져온 방장의 유저 id로 방장의 webSessionId 추출
         boolean flag = true;
-        String webSessionId = "";
+        String hostWebSessionId = "";
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
+        if (gameRoomUserList.size() < 4) {
+            flag = false;
+        }
         for (GameRoomUser gameRoomUser : gameRoomUserList) {
             if (!gameRoomUser.isReadyStatus()) {
                 flag = false;
             }
             if (hostId.equals(gameRoomUser.getUserId())) {
-                webSessionId = gameRoomUser.getWebSessionId();
+                hostWebSessionId = gameRoomUser.getWebSessionId();
             }
         }
-        if (gameRoomUserList.size() < 4) {
-            flag = false;
-        }
 
-        // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경
-        if (flag) {
-            gameRoom.GameRoomStatusUpdate(true);
-        }
+        // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경 -> 게임 시작 부분으로 이동
+//        if (flag) {
+//            gameRoom.GameRoomStatusUpdate(true);
+//        }
 
         gameReadyStatusAndHost.put("status", flag);
-        gameReadyStatusAndHost.put("host", webSessionId);
+        gameReadyStatusAndHost.put("host", hostWebSessionId);
         return gameReadyStatusAndHost;
 
     }
@@ -366,12 +370,12 @@ public class GameRoomService {
         );
         Long hostId = gameRoom.getHostId();
 
-        String hostSessionId = "";
+        String hostWebSessionId = "";
         boolean amIHost = false;
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
         for (GameRoomUser gameRoomUser : gameRoomUserList) {
             if (gameRoomUser.getUserId().equals(hostId)) {
-                hostSessionId = gameRoomUser.getWebSessionId();
+                hostWebSessionId = gameRoomUser.getWebSessionId();
             }
 
             if (gameRoomUser.getUserId().equals(hostId) && gameRoomUser.getWebSessionId().equals(userUUID)) {
@@ -379,7 +383,7 @@ public class GameRoomService {
             }
         }
         hostMap.put("isHost", amIHost);
-        hostMap.put("hostId", hostSessionId);
+        hostMap.put("hostId", hostWebSessionId);
         return hostMap;
     }
 }
