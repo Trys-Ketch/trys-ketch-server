@@ -18,7 +18,6 @@ import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
@@ -132,9 +131,9 @@ public class UserService {
             String[] guestInfo = token.split(",");
 
             // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
-            Optional<Guest> guest = guestRepository.findById("guest:" + guestInfo[0]);
-//            Guest guest = guestRepository.findById(Long.valueOf(guestInfo[0])).orElseThrow(
-//                    () -> new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN));
+            Optional<Guest> guest = Optional.ofNullable(guestRepository.findById("guest:" + guestInfo[0]).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN)));
+            System.out.println("================guest================>> " + guest);
             result.put(GamerEnum.ID.key(), guestInfo[0]);                           // guest Id 를 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.NICK.key(), guestInfo[1]);                         // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.IMG.key(), guestInfo[2]);                          // guest img url 을 key 값으로 value 추출 해서 result 에 주입

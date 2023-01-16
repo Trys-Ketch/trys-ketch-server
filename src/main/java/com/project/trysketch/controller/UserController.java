@@ -5,6 +5,7 @@ import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
+import com.project.trysketch.redis.repositorty.GuestRepository;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
@@ -86,18 +87,6 @@ public class UserController {
     @GetMapping("/user-info")
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
         return ResponseEntity.ok(userService.getGamerInfo(request));
-    }
-
-    @GetMapping("/test-user/{id}")
-    public ResponseEntity<MsgResponseDto> userInfo(@PathVariable String id) {
-        userService.gamerInfo(id);
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), id));
-    }
-
-    @GetMapping("/test-guest/{id}")
-    public ResponseEntity<MsgResponseDto> guestInfo(@PathVariable String id) {
-        userService.gamerInfo(id);
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), id));
     }
 }
 

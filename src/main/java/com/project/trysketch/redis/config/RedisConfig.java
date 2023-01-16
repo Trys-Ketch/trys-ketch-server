@@ -1,6 +1,9 @@
 package com.project.trysketch.redis.config;
 
 import com.project.trysketch.redis.entity.CacheKey;
+
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +13,8 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisKeyValueAdapter.ShadowCopy;
+import org.springframework.data.redis.core.RedisKeyValueAdapter.EnableKeyspaceEvents;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -23,23 +28,23 @@ import java.util.Map;
 // 2. 작성자 : 서혁수
 @Configuration
 @EnableCaching
-@EnableRedisRepositories
+@EnableRedisRepositories(enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP, shadowCopy = ShadowCopy.OFF)
 public class RedisConfig {
+    // 로컬에서 구동할 때는 반드시 @EnableRedisRepositories 뒤의 괄호를 지우고 실행해 주세요 즉, 위에있는
+    // (enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP, shadowCopy = ShadowCopy.OFF) 를 전부 없애고
+    // @EnableRedisRepositories 만 남겨두고 실행해주시면 됩니드아. 저 부분은 레디스가 연결 되어야만 작동하기 때문에 로컬에 레디스가
+    // 없으면 저 옵션부분을 빼주고 해주시면 됩니다.
 
     // 내가 직접 호스트하고 port 를 지정해서 사용하려면 아래의 것을 사용
     // 자바의 Redis Client 중 더 성능이 좋다는 Lettuce 를 사용
-/*    @Value("${spring.redis.host}")
+    @Value("${spring.redis.host}")
     private String host;
 
     @Value("${spring.redis.port}")
     private int port;
 
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(host, port);
+    public RedisConfig() {
     }
-    */
-
     /*
         Lettuce: Multi-Thread 에서 Thread-Safe 한 Redis 클라이언트로 netty 에 의해 관리된다.
                  Sentinel, Cluster, Redis data model 같은 고급 기능들을 지원하며
@@ -54,7 +59,7 @@ public class RedisConfig {
     // Redis 와 연결
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        return new LettuceConnectionFactory(host, port);
     }
 
     /*
@@ -83,7 +88,7 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
         // 모든 경우
-//         redisTemplate.setDefaultSerializer(new StringRedisSerializer());
+        // redisTemplate.setDefaultSerializer(new StringRedisSerializer());
 
         return redisTemplate;
     }
@@ -96,7 +101,7 @@ public class RedisConfig {
                 .computePrefixWith(CacheKeyPrefix.simple())
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
 
-        // 캐시키별 default 유효기간 설정
+        // 캐시 key 별로 default 유효기간 설정
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put(CacheKey.USER, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofSeconds(CacheKey.USER_EXPIRE_SEC)));
 
