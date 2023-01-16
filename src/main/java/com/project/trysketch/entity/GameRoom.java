@@ -29,6 +29,9 @@ public class GameRoom extends Timestamped {
     @Column
     private String hostNick;
 
+    @Column
+    private String randomCode;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean isPlaying = false;
