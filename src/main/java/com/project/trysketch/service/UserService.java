@@ -72,7 +72,7 @@ public class UserService {
     public void login(SignInRequestDto requestDto, HttpServletResponse response) {
         // 1. 유저 이메일 기준으로 유저 정보 찾아와서
         User user = userRepository.findByEmail(requestDto.getEmail()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.EXIST_USER)
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
         // 2. 비밀번호가 일치하는지 검증한다.
         if (!passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {

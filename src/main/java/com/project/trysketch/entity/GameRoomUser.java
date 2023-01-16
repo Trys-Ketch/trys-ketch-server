@@ -42,4 +42,17 @@ public class GameRoomUser {
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
     }
+
+    @Override
+    public String toString() {
+        return "GameRoomUser{" +
+                "id=" + id +
+                ", gameRoom=" + gameRoom +
+                ", userId=" + userId +
+                ", nickname='" + nickname + '\'' +
+                ", webSessionId='" + webSessionId + '\'' +
+                ", readyStatus=" + readyStatus +
+                ", imgUrl='" + imgUrl + '\'' +
+                '}';
+    }
 }
