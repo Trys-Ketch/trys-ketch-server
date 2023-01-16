@@ -31,6 +31,7 @@ public class GameController {
     // 게임시작
     @MessageMapping("/game/start")
     public ResponseEntity<MsgResponseDto> startGame(GameFlowRequestDto requestDto) {
+        log.info(">>>>>> GameControlloer - startGame 실행");
         log.info(">>> 게임이 시작되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
         return ResponseEntity.ok(gameService.startGame(requestDto));
     }
@@ -38,6 +39,7 @@ public class GameController {
     // 게임 종료
     @MessageMapping("/game/end")
     public ResponseEntity<MsgResponseDto> endGame(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - endGame 실행");
         log.info(">>> 게임이 정상 종료되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
         return ResponseEntity.ok(gameService.endGame(requestDto));
     }
@@ -45,6 +47,7 @@ public class GameController {
     // 단어 제출하는 라운드 끝났을 때 for Test!
     @MessageMapping("/game/finish/voca")
     public MsgResponseDto postVocabulary(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - postVocabulary 실행");
         log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
         log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
@@ -57,6 +60,7 @@ public class GameController {
     public MsgResponseDto postImage(@RequestParam int round, @RequestParam int keywordIndex,
                                     @PathVariable Long roomId, HttpServletRequest request,
                                     @RequestPart(value = "file") MultipartFile multipartFile) throws IOException {
+        log.info(">>>>>>>>>>>> GameControlloer - postImage 실행");
         log.info(">>>>>> {} : 그림 라운드 끝", round);
         log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
         log.info(">>>>>> {} : 게임 방 번호", roomId);
@@ -66,8 +70,8 @@ public class GameController {
 
     // 단어적는 라운드 시작  ← 이전 라운드의 그림 response 로 줘야함! (GepMapping)
     @MessageMapping("/test/start/before/image")
-//    @SendToUser
     public ImageResponseDto getPreviousImage(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - getPreviousImage 실행");
         log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
         log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
@@ -77,10 +81,22 @@ public class GameController {
     // 그림그리는 라운드 시작  ← 이전 라운드의 단어 response 로 줘야함! (GetMapping)
     @MessageMapping("/test/start/before/keyword")
     public KeywordResponseDto getPreviousKeyword(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>> {} : 이번 라운드", requestDto.getRound());
+        log.info(">>>>>>>>>>>> GameControlloer - getPreviousKeyword 실행");
+        log.info(">>>>>> {} : 이번 라운드", requestDto.getRound());
         log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
         return gameService.getPreviousKeyword(requestDto);
+    }
+
+    // 최초 랜덤 제시어 하나 가져오기
+//      @MessageMapping("/test/random") // 너무 길어서 줄임
+//      @GetMapping("/test/random") // 이거는 가능 한 걸까...테스트 해봤는데 안됩니다
+    @MessageMapping("/test/start/before/random")
+    public void getRandomKeyword(GameFlowRequestDto requestDto){
+        log.info(">>>>>>>>>>>> GameControlloer - getRandomKeyword 실행");
+        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+        log.info(">>>>>> {} : 내가 누구냐",requestDto.getToken());
+        gameService.getRandomKeyword(requestDto);
     }
 
 
