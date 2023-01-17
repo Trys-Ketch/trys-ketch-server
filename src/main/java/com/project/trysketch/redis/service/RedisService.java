@@ -33,6 +33,7 @@ public class RedisService {
         Long guestId = 10000L + num;                    // 10000 번 부터 시작해서 1씩 증가(첫번째 값 10001)
 
         Guest guest = new Guest(guestId
+                , guestId.toString()
                 , requestDto.getNickname()
                 , requestDto.getImgUrl());              // 새로운 guest 객체에 필요한 정보를 담아서 생성
         guestRepository.save(guest);                    // DB 에 저장

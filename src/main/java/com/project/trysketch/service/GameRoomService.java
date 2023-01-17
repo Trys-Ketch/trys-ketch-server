@@ -211,14 +211,14 @@ public class GameRoomService {
 
             // 12. UserId 를 들고 GameRoomUser 정보 가져오기
             GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
-            Guest guestHost = guestRepository.findById(newHostId).orElse(null);
+            Guest guestHost = guestRepository.findById(String.valueOf(newHostId)).orElse(null);
 
             // 13. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
             if (userHost != null) {
                 hostId = userHost.getUserId();
                 hostNick = userHost.getNickname();
             } else if (guestHost != null) {
-                hostId = guestHost.getId();
+                hostId = Long.valueOf(guestHost.getGuestId());
                 hostNick = guestHost.getNickname();
             }
 

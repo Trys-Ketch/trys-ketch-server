@@ -72,6 +72,8 @@ public class RedisConfig {
         GenericJackson2JsonRedisSerializer: 객체를 json 타입으로 직렬화/역직렬화를 수행한다.
      */
 
+    // Redis 서버와 상호작용을 위한 RedisTemplate 관련 설정을 해준다. Redis 서버에는 bytes 코드만이 저장된다.
+    // 그러므로 key 와 value 에 직렬화(Serializer)를 설정해준다. 나는 String 형식으로 설정
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();

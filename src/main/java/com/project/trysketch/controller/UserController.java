@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
 
 // 1. 기능    : 유저 컨트롤러
 // 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
@@ -87,6 +88,12 @@ public class UserController {
     @GetMapping("/user-info")
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
         return ResponseEntity.ok(userService.getGamerInfo(request));
+    }
+
+    @GetMapping("/test/{id}")
+    public HashMap<?, ?> test(@PathVariable String id) {
+        HashMap<String, String> test = userService.gamerInfo(id);
+        return test;
     }
 }
 
