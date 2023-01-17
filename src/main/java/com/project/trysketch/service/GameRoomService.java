@@ -443,6 +443,7 @@ public class GameRoomService {
                     .isPlaying(room.isPlaying())
                     .createdAt(room.getCreatedAt())
                     .modifiedAt(room.getModifiedAt())
+                    .randomCode(room.getRandomCode())
                     .build();
             gameRoomList.add(gameRoomResponseDto);
         }
