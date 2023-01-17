@@ -19,4 +19,9 @@ public class DataMsgResponseDto {
         this.statusMsg = statusMsgCode.getDetail();
         this.data = data;
     }
+
+    public DataMsgResponseDto(StatusMsgCode statusMsgCode) {
+        this.httpStatus = statusMsgCode.getHttpStatus();
+        this.statusMsg = statusMsgCode.getDetail();
+    }
 }

@@ -19,6 +19,7 @@ public class GameRoomResponseDto {
     private int GameRoomUserCount;
     private String hostNick;
     private boolean isPlaying;
+    private String randomCode;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss", timezone = "Asia/Seoul")
     private LocalDateTime createdAt;
