@@ -13,6 +13,7 @@ import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.repositorty.GuestRepository;
+import com.project.trysketch.sse.SseEmitters;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,7 @@ public class GameRoomService {
     private final GameRoomUserRepository gameRoomUserRepository;
     private final GuestRepository guestRepository;
     private final UserService userService;
+    private final SseEmitters sseEmitters;
 
     // ============================== 게임방 조회 ==============================
     @Transactional
@@ -133,6 +135,9 @@ public class GameRoomService {
         roomInfo.put("gameRoomTitle",gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
         roomInfo.put("randomCode", randomCode);
+
+        // 8. SSE event 생성
+        sseEmitters.changeRoom(getrooms());
 
         return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
     };
@@ -258,6 +263,9 @@ public class GameRoomService {
 
             // 15. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
             gameRoomRepository.save(updateGameRoom);
+
+            // 16. SSE event 생성
+            sseEmitters.changeRoom(getrooms());
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
@@ -410,5 +418,30 @@ public class GameRoomService {
         hostMap.put("isHost", amIHost);
         hostMap.put("hostId", hostWebSessionId);
         return hostMap;
+    }
+
+
+
+    // ===================== 모든 gameRoom 호출하는 메서드 ===============================
+    public List<GameRoomResponseDto> getrooms(){
+        // gameRoomResponseDto list 생성
+        List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
+
+        // 모든 gameRoom 불러와서 dto에 담기 -> list에 저장
+        List<GameRoom> gameRooms = gameRoomRepository.findAll();
+        for (GameRoom room : gameRooms){
+
+            GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
+                    .id(room.getId())
+                    .title(room.getTitle())
+                    .hostNick(room.getHostNick())
+                    .GameRoomUserCount(room.getGameRoomUserList().size())
+                    .isPlaying(room.isPlaying())
+                    .createdAt(room.getCreatedAt())
+                    .modifiedAt(room.getModifiedAt())
+                    .build();
+            gameRoomList.add(gameRoomResponseDto);
+        }
+        return gameRoomList;
     }
 }

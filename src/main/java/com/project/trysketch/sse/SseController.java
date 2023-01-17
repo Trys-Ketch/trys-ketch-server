@@ -1,26 +1,31 @@
 package com.project.trysketch.sse;
 
-import java.io.IOException;
-import com.project.trysketch.dto.request.GameRoomRequestDto;
-import lombok.extern.slf4j.Slf4j;
+import com.project.trysketch.service.GameRoomService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+
+// 1. 기능   : SSE 연결을 위한 controller
+// 2. 작성자 : 황미경
 
 @RestController
-@Slf4j
 public class SseController {
     private final SseEmitters sseEmitters;
+
+    @Autowired
+    private GameRoomService gameRoomService;
 
     public SseController(SseEmitters sseEmitters) {
         this.sseEmitters = sseEmitters;
     }
 
 
-    // Emitter 생성 및 SSE 연결
-    @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    // Emitter 생성 및 SSE 최초 연결
+    @GetMapping(value = "/api/sse/rooms", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> connect() {
 
         // Emitter 객체 생성. 1분으로 설정
@@ -30,34 +35,12 @@ public class SseController {
         // SSE 연결 및 데이터 전송
         try {
             emitter.send(SseEmitter.event()
-                    .name("connect")               // 이벤트의 이름
-                    .data("connected!"));              // 만료시간 전 데이터 받을수 있도록 SSE 연결시 데이터 전달
+                    .name("connect")              // event의 이름
+                    .data(gameRoomService.getrooms()));      // event에 담을 data
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         return ResponseEntity.ok(emitter);
     }
-
-
-
-    // 게임 방 생성 (생성한 게임방에 대해서만 SSE 커넥션이 열려있는 모든 클라이언트에게 전달)
-    @PostMapping("/create/room")
-    public ResponseEntity<Void> createGameRoom(@RequestBody GameRoomRequestDto gameRoomRequestDto,
-                                                             HttpServletRequest request) {
-        log.info(">>> 메인페이지 이동 - 방 이름 : {},", gameRoomRequestDto.getTitle());
-        sseEmitters.createRoom(gameRoomRequestDto, request);
-        return ResponseEntity.ok().build();
-    }
-
-
-//    // 게임 방 생성 (생성된 게임방 포함 모든 게임방 정보 SSE 커넥션이 열려있는 모든 클라이언트에게 전달)
-//    @PostMapping("/create/room")
-//    public ResponseEntity<Void> createGameRoom(@RequestBody GameRoomRequestDto gameRoomRequestDto,
-//                                               HttpServletRequest request,@PageableDefault(size = 10, sort = "createdAt" , direction = Sort.Direction.DESC) Pageable pageable) {
-//        log.info(">>> 메인페이지 이동 - 방 이름 : {},", gameRoomRequestDto.getTitle());
-//        sseEmitters.createRoom(gameRoomRequestDto, request, pageable);
-//        return ResponseEntity.ok().build();
-//    }
-
 }

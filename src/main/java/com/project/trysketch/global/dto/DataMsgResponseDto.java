@@ -10,12 +10,12 @@ import org.springframework.http.HttpStatus;
 @Getter
 @NoArgsConstructor
 public class DataMsgResponseDto {
-    private HttpStatus httpStatus;
+    private int statusCode;
     private String statusMsg;
     private Object data;
 
     public DataMsgResponseDto(StatusMsgCode statusMsgCode, Object data) {
-        this.httpStatus = statusMsgCode.getHttpStatus();
+        this.statusCode = statusMsgCode.getHttpStatus().value();
         this.statusMsg = statusMsgCode.getDetail();
         this.data = data;
     }
