@@ -54,7 +54,7 @@ public class GameRoomService {
                                 .title(gameRoom.getTitle())
                                 .hostNick(gameRoom.getHostNick())
                                 .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .status(gameRoom.isPlaying())
+                                .isPlaying(gameRoom.isPlaying())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
                                 .build();
@@ -79,12 +79,35 @@ public class GameRoomService {
             throw new CustomException(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
-        // 3. 방 정보 생성
+        // 3. 초대 코드를 위한 랜덤코드 생성
+        String randomCode = "";
+        StringBuffer key = new StringBuffer();
+        Random rnd = new Random();
+
+        // 소문자와 숫자 8자리 조합 만들기
+        for (int i = 0; i < 8; i++) {
+            int index = rnd.nextInt(2); // 0~1 중 랜덤
+
+            switch (index) {
+                case 0:
+                    //  a~z  (ex. 1+97=98 => (char)98 = 'b')
+                    key.append((char) ((rnd.nextInt(26)) + 97));
+                    break;
+                case 1:
+                    // 0~9
+                    key.append((rnd.nextInt(10)));
+                    break;
+            }
+        }
+        randomCode = key.toString();
+
+        // 4. 방 정보 생성
         GameRoom gameRoom = GameRoom.builder()
                 .title(gameRoomRequestDto.getTitle())
                 .hostId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))
                 .hostNick(extInfo.get(GamerEnum.NICK.key()))
                 .isPlaying(false)
+                .randomCode(randomCode)
                 .build();
 
         // 4. 방에 입장한 유저 정보 생성
@@ -97,29 +120,34 @@ public class GameRoomService {
                 .readyStatus(true)
                 .build();
 
+        log.info(">>>>>>>>>> 접속한 유저의 정보를 토대로 gameRoomUser 생성 {}", gameRoomUser);
+        log.info(">>>>>>>>>> true 여야 함 {}", gameRoomUser.isReadyStatus());
+
         // 5. 게임 방 DB에 저장 및 입장중인 유저 정보 저장
         gameRoomRepository.save(gameRoom);
         gameRoomUserRepository.save(gameRoomUser);
 
         HashMap<String, String> roomInfo = new HashMap<>();
 
-        // 6. HashMap 형식으로 방 제목과 방 번호를 response 로 반환
-        roomInfo.put("gameRoomtitle",gameRoom.getTitle());
+        // 7. HashMap 형식으로 방 제목, 방 번호, 방 랜덤코드를 response 로 반환
+        roomInfo.put("gameRoomTitle",gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
+        roomInfo.put("randomCode", randomCode);
 
         return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
     };
 
+
     // ============================== 게임방 입장 ==============================
     @Transactional
-    public MsgResponseDto enterGameRoom(Long id, HttpServletRequest request) {
+    public MsgResponseDto enterGameRoom(String randomeCode, HttpServletRequest request) {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
         String header = userService.validHeader(request);
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
         // 2. id로 DB 에서 현재 들어갈 게임방 데이터 찾기
 //        Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
-        GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
+        GameRoom enterGameRoom = gameRoomRepository.findByRandomCode(randomeCode).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
 
@@ -208,14 +236,14 @@ public class GameRoomService {
 
             // 12. UserId 를 들고 GameRoomUser 정보 가져오기
             GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
-            Guest guestHost = guestRepository.findById(newHostId).orElse(null);
+            Guest guestHost = guestRepository.findById(String.valueOf(newHostId)).orElse(null);
 
             // 13. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
             if (userHost != null) {
-                hostId = userHost.getId();
+                hostId = userHost.getUserId();
                 hostNick = userHost.getNickname();
             } else if (guestHost != null) {
-                hostId = guestHost.getId();
+                hostId = Long.valueOf(guestHost.getGuestId());
                 hostNick = guestHost.getNickname();
             }
 
@@ -254,6 +282,7 @@ public class GameRoomService {
                 .nickname(gameRoomUser.getNickname())
                 .imgUrl(gameRoomUser.getImgUrl())
                 .webSessionId(userUUID)
+                .readyStatus(true)
                 .build();
         gameRoomUserRepository.save(updateGameRoomUser);
     }
@@ -329,27 +358,27 @@ public class GameRoomService {
         // 해당 gameRoom 모든 유저의 ready 상태가 true && 방 인원이 4명 이상이면 flag = true
         // 위에서 가져온 방장의 유저 id로 방장의 webSessionId 추출
         boolean flag = true;
-        String webSessionId = "";
+        String hostWebSessionId = "";
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
+        if (gameRoomUserList.size() < 4) {
+            flag = false;
+        }
         for (GameRoomUser gameRoomUser : gameRoomUserList) {
             if (!gameRoomUser.isReadyStatus()) {
                 flag = false;
             }
             if (hostId.equals(gameRoomUser.getUserId())) {
-                webSessionId = gameRoomUser.getWebSessionId();
+                hostWebSessionId = gameRoomUser.getWebSessionId();
             }
         }
-        if (gameRoomUserList.size() < 4) {
-            flag = false;
-        }
 
-        // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경
-        if (flag) {
-            gameRoom.GameRoomStatusUpdate(true);
-        }
+        // 모든 유저의 ready 상태가 true 라면 gameRoom status true 로 변경 -> 게임 시작 부분으로 이동
+//        if (flag) {
+//            gameRoom.GameRoomStatusUpdate(true);
+//        }
 
         gameReadyStatusAndHost.put("status", flag);
-        gameReadyStatusAndHost.put("host", webSessionId);
+        gameReadyStatusAndHost.put("host", hostWebSessionId);
         return gameReadyStatusAndHost;
 
     }
@@ -366,12 +395,12 @@ public class GameRoomService {
         );
         Long hostId = gameRoom.getHostId();
 
-        String hostSessionId = "";
+        String hostWebSessionId = "";
         boolean amIHost = false;
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
         for (GameRoomUser gameRoomUser : gameRoomUserList) {
             if (gameRoomUser.getUserId().equals(hostId)) {
-                hostSessionId = gameRoomUser.getWebSessionId();
+                hostWebSessionId = gameRoomUser.getWebSessionId();
             }
 
             if (gameRoomUser.getUserId().equals(hostId) && gameRoomUser.getWebSessionId().equals(userUUID)) {
@@ -379,7 +408,7 @@ public class GameRoomService {
             }
         }
         hostMap.put("isHost", amIHost);
-        hostMap.put("hostId", hostSessionId);
+        hostMap.put("hostId", hostWebSessionId);
         return hostMap;
     }
 }

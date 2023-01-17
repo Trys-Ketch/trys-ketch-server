@@ -1,11 +1,20 @@
 package com.project.trysketch.redis.config;
 
+import com.project.trysketch.redis.entity.CacheKey;
+
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisKeyValueAdapter.ShadowCopy;
+import org.springframework.data.redis.core.RedisKeyValueAdapter.EnableKeyspaceEvents;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -18,23 +27,24 @@ import java.util.Map;
 // 1. 기능   : Redis Config
 // 2. 작성자 : 서혁수
 @Configuration
-@EnableRedisRepositories
+@EnableCaching
+@EnableRedisRepositories(enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP, shadowCopy = ShadowCopy.OFF)
 public class RedisConfig {
+    // 로컬에서 구동할 때는 반드시 @EnableRedisRepositories 뒤의 괄호를 지우고 실행해 주세요 즉, 위에있는
+    // (enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP, shadowCopy = ShadowCopy.OFF) 를 전부 없애고
+    // @EnableRedisRepositories 만 남겨두고 실행해주시면 됩니드아. 저 부분은 레디스가 연결 되어야만 작동하기 때문에 로컬에 레디스가
+    // 없으면 저 옵션부분을 빼주고 해주시면 됩니다.
 
     // 내가 직접 호스트하고 port 를 지정해서 사용하려면 아래의 것을 사용
     // 자바의 Redis Client 중 더 성능이 좋다는 Lettuce 를 사용
-/*    @Value("${spring.redis.host}")
+    @Value("${spring.redis.host}")
     private String host;
 
     @Value("${spring.redis.port}")
     private int port;
 
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(host, port);
+    public RedisConfig() {
     }
-    */
-
     /*
         Lettuce: Multi-Thread 에서 Thread-Safe 한 Redis 클라이언트로 netty 에 의해 관리된다.
                  Sentinel, Cluster, Redis data model 같은 고급 기능들을 지원하며
@@ -49,7 +59,7 @@ public class RedisConfig {
     // Redis 와 연결
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        return new LettuceConnectionFactory(host, port);
     }
 
     /*
@@ -62,6 +72,8 @@ public class RedisConfig {
         GenericJackson2JsonRedisSerializer: 객체를 json 타입으로 직렬화/역직렬화를 수행한다.
      */
 
+    // Redis 서버와 상호작용을 위한 RedisTemplate 관련 설정을 해준다. Redis 서버에는 bytes 코드만이 저장된다.
+    // 그러므로 key 와 value 에 직렬화(Serializer)를 설정해준다. 나는 String 형식으로 설정
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
@@ -78,30 +90,27 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
         // 모든 경우
-//         redisTemplate.setDefaultSerializer(new StringRedisSerializer());
+        // redisTemplate.setDefaultSerializer(new StringRedisSerializer());
 
         return redisTemplate;
     }
 
     @Bean(name = "CacheManager")
-    public RedisCacheManager DefaultCacheManager(RedisConnectionFactory redisConnectionFactory) {
+    public CacheManager cacheManager() {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
-                .serializeKeysWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext
-                        .SerializationPair
-                        .fromSerializer(new StringRedisSerializer()));
+                .disableCachingNullValues()
+                .entryTtl(Duration.ofSeconds(CacheKey.DEFAULT_EXPIRE_SEC)) // default 만료 시간
+                .computePrefixWith(CacheKeyPrefix.simple())
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
 
-        Map<String, RedisCacheConfiguration> cacheConfiguration = new HashMap<>();
+        // 캐시 key 별로 default 유효기간 설정
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put(CacheKey.USER, RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofSeconds(CacheKey.USER_EXPIRE_SEC)));
 
-        Duration test = Duration.ofSeconds(180L);
-        cacheConfiguration.put("Default24h", configuration.entryTtl(test));
-
-        return RedisCacheManager
-                .RedisCacheManagerBuilder
-                .fromConnectionFactory(redisConnectionFactory)
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(redisConnectionFactory())
                 .cacheDefaults(configuration)
+                .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
     }
 

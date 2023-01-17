@@ -226,6 +226,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 
         // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
         sessions.remove(userUUID);
+        log.info(">>> [ws] {}를 제외한 남은 세션 객체 {}", userUUID, sessions);
 //        userInfo.remove(userUUID);
 
         // roomInfo = { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], 방번호 : [ { id : userUUID3 }, { id: userUUID4 }, …], ... }
@@ -276,7 +277,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 //        sessions.values().forEach(s -> {
 //            try {
 //                for (Map<String, String> roomUser : originRoomUser) {
-//                    if (roomUser.get("id").equals(s.getId())) {
+//                    if (roomUser.get("id").equals(s.getGuestId())) {
 //                        sessionList.add(s);
 //                    }
 //                }

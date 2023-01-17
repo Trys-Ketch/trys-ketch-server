@@ -4,7 +4,6 @@ import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 // 1. 기능   : Redis 비즈니스 로직
 // 2. 작성자 : 서혁수
@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class RedisService {
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private final GuestRepository guestRepository;
 
     // 비회원 로그인시 발급되는 자동값증가 메서드
@@ -28,12 +28,12 @@ public class RedisService {
     }
 
     // 비회원 로그인시 헤드 추가 메서드
-    @Cacheable(key = "", value = "Default24h", cacheManager = "CacheManager")
     public void guestLogin(HttpServletResponse response, GuestNickRequestDto requestDto) {
-        Long num = guestIncrement("guestCount");     // 자동값 증가 키값 지정 및 시작
-        Long guestId = 10000L + num;                     // 10000 번 부터 시작해서 1씩 증가(첫번째 값 10001)
+        Long num = guestIncrement("guestCount");    // 자동값 증가 키값 지정 및 시작
+        Long guestId = 10000L + num;                    // 10000 번 부터 시작해서 1씩 증가(첫번째 값 10001)
 
         Guest guest = new Guest(guestId
+                , guestId.toString()
                 , requestDto.getNickname()
                 , requestDto.getImgUrl());              // 새로운 guest 객체에 필요한 정보를 담아서 생성
         guestRepository.save(guest);                    // DB 에 저장

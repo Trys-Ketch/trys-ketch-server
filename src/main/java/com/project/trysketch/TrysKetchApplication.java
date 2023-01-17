@@ -8,7 +8,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableScheduling
 @EnableJpaAuditing
-@EnableCaching
 @SpringBootApplication
 public class TrysKetchApplication {
 

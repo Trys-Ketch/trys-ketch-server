@@ -1,5 +1,6 @@
 package com.project.trysketch.controller;
 
+import com.project.trysketch.dto.request.GameFlowRequestDto;
 import com.project.trysketch.dto.response.ImageResponseDto;
 import com.project.trysketch.dto.response.KeywordResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -8,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
@@ -18,35 +20,39 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api")
+//@RequestMapping("/api")
 public class GameController {
 
     private final GameService gameService;
 
-    //  게임시작
-    @PostMapping("/game/{roomId}/start")
-    public ResponseEntity<MsgResponseDto> startGame(@PathVariable Long roomId, HttpServletRequest request) {
-        log.info(">>> 게임이 시작되었습니다 - 게임 방 번호 : {},", roomId);
-        return ResponseEntity.ok(gameService.startGame(roomId, request));
+    // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
+    // 이때 클라이언트에서는 /app/game/** 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
+    // 처리가 완료되면 /topic/game/room/{roomId} 로 메시지가 전송된다.
+    // 게임시작
+    @MessageMapping("/game/start")
+    public ResponseEntity<MsgResponseDto> startGame(GameFlowRequestDto requestDto) {
+        log.info(">>>>>> GameControlloer - startGame 실행");
+        log.info(">>> 게임이 시작되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
+        return ResponseEntity.ok(gameService.startGame(requestDto));
     }
 
     // 게임 종료
-    @PostMapping("/game/{roomId}/end")
-    public ResponseEntity<MsgResponseDto> endGame(@PathVariable Long roomId) {
-        log.info(">>> 게임이 정상 종료되었습니다 - 게임 방 번호 : {},", roomId);
-        return ResponseEntity.ok(gameService.endGame(roomId));
+    @MessageMapping("/game/end")
+    public ResponseEntity<MsgResponseDto> endGame(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - endGame 실행");
+        log.info(">>> 게임이 정상 종료되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
+        return ResponseEntity.ok(gameService.endGame(requestDto));
     }
 
-
     // 단어 제출하는 라운드 끝났을 때 for Test!
-    @PostMapping("/game/finish/{roomId}/voca")
-    public MsgResponseDto postVocabulary(@RequestParam int round, @RequestParam int keywordIndex, @RequestParam String keyword,
-                                         @PathVariable Long roomId, HttpServletRequest request) {
-        log.info(">>>>>> {} : 라운드 시작", round);
-        log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
-        log.info(">>>>>> {} : 게임 방 번호", roomId);
-        log.info(">>>>>> {} : 받을 제시어", keyword);
-        return gameService.postVocabulary(round, keywordIndex, keyword, roomId, request);
+    @MessageMapping("/game/finish/voca")
+    public MsgResponseDto postVocabulary(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - postVocabulary 실행");
+        log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
+        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
+        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+        log.info(">>>>>> {} : 받을 제시어", requestDto.getKeyword());
+        return gameService.postVocabulary(requestDto);
     }
 
     // 그림 제출하는 라운드 끝났을 때 for Test!
@@ -54,6 +60,7 @@ public class GameController {
     public MsgResponseDto postImage(@RequestParam int round, @RequestParam int keywordIndex,
                                     @PathVariable Long roomId, HttpServletRequest request,
                                     @RequestPart(value = "file") MultipartFile multipartFile) throws IOException {
+        log.info(">>>>>>>>>>>> GameControlloer - postImage 실행");
         log.info(">>>>>> {} : 그림 라운드 끝", round);
         log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
         log.info(">>>>>> {} : 게임 방 번호", roomId);
@@ -62,29 +69,40 @@ public class GameController {
 
 
     // 단어적는 라운드 시작  ← 이전 라운드의 그림 response 로 줘야함! (GepMapping)
-    @GetMapping("/test/start/{roomId}/before/image")
-    public ImageResponseDto getPreviousImage(@RequestParam int round, @RequestParam int keywordIndex,
-                                             @PathVariable Long roomId) {
-        log.info(">>>>>> {} : 라운드 시작", round);
-        log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
-        log.info(">>>>>> {} : 게임 방 번호", roomId);
-        return gameService.getPreviousImage(round, keywordIndex, roomId);
+    @MessageMapping("/test/start/before/image")
+    public ImageResponseDto getPreviousImage(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - getPreviousImage 실행");
+        log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
+        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
+        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+        return gameService.getPreviousImage(requestDto);
     }
 
     // 그림그리는 라운드 시작  ← 이전 라운드의 단어 response 로 줘야함! (GetMapping)
-    @GetMapping("/test/start/{roomId}/before/keyword")
-    public KeywordResponseDto getPreviousKeyword(@RequestParam int round, @RequestParam int keywordIndex,
-                                                 @PathVariable Long roomId) {
-        log.info(">>>>>>> {} : 이번 라운드", round);
-        log.info(">>>>>> {} : 받을 제시어 순번", keywordIndex);
-        log.info(">>>>>> {} : 게임 방 번호", roomId);
-        return gameService.getPreviousKeyword(round, keywordIndex, roomId);
+    @MessageMapping("/test/start/before/keyword")
+    public KeywordResponseDto getPreviousKeyword(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameControlloer - getPreviousKeyword 실행");
+        log.info(">>>>>> {} : 이번 라운드", requestDto.getRound());
+        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
+        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+        return gameService.getPreviousKeyword(requestDto);
+    }
+
+    // 최초 랜덤 제시어 하나 가져오기
+//      @MessageMapping("/test/random") // 너무 길어서 줄임
+//      @GetMapping("/test/random") // 이거는 가능 한 걸까...테스트 해봤는데 안됩니다
+    @MessageMapping("/test/start/before/random")
+    public void getRandomKeyword(GameFlowRequestDto requestDto){
+        log.info(">>>>>>>>>>>> GameControlloer - getRandomKeyword 실행");
+        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+        log.info(">>>>>> {} : 내가 누구냐",requestDto.getToken());
+        gameService.getRandomKeyword(requestDto);
     }
 
 
     // 결과 페이지
-    @GetMapping("/test/result/{roomId}")
-    public String[][] getGameFlow(@PathVariable Long roomId) {
-        return gameService.getGameFlow(roomId);
+    @MessageMapping("/test/result/{roomId}")
+    public String[][] getGameFlow(GameFlowRequestDto requestDto) {
+        return gameService.getGameFlow(requestDto.getRoomId());
     }
 }

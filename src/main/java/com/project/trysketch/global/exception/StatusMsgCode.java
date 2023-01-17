@@ -15,7 +15,7 @@ public enum StatusMsgCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     EXIST_USER(HttpStatus.BAD_REQUEST, "중복된 이메일입니다."),
     EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
-    BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "아이디나 비밀번호 패턴이 맞지 않습니다."),
+    BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "형식이 맞지 않습니다."),
     INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
 
 
