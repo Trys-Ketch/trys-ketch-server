@@ -1,7 +1,6 @@
 package com.project.trysketch.service;
 
 import com.project.trysketch.dto.request.GameRoomRequestDto;
-import com.project.trysketch.dto.response.GameRoomEnterResponseDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.entity.GameRoom;
