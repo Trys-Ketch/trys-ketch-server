@@ -277,7 +277,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 //        sessions.values().forEach(s -> {
 //            try {
 //                for (Map<String, String> roomUser : originRoomUser) {
-//                    if (roomUser.get("id").equals(s.getId())) {
+//                    if (roomUser.get("id").equals(s.getGuestId())) {
 //                        sessionList.add(s);
 //                    }
 //                }

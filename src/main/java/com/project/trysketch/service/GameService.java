@@ -353,7 +353,7 @@ public class GameService {
 //
 //        // 새로운 게임 생성
 //        GameInfo gameInfo = GameInfo.builder()
-//                .gameRoomId(gameRoom.getId())
+//                .gameRoomId(gameRoom.getGuestId())
 //                .roundTimeout(60)
 //                .build();
 //
