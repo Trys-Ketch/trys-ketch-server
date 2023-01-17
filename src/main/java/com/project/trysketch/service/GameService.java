@@ -134,8 +134,31 @@ public class GameService {
 
     // 강제 종료( 비정상적인 종료 )
     @Transactional
-    public MsgResponseDto shutDownGame(Long roomId) {
+    public MsgResponseDto shutDownGame(GameFlowRequestDto requestDto) {
 
+        // 현재 방 정보 가져오기
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        log.info(">>>>>>> [GameService]-shutDownGame roomId {}", requestDto.getRoomId());
+
+        // 현재 GameRoom 이 시작되지 않았다면
+        if (!gameRoom.isPlaying()) {
+            throw new CustomException(StatusMsgCode.NOT_STARTED_YET);
+        }
+
+        // GameRoom 에서 진행된 모든 GameFlow 삭제
+        gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
+        log.info(">>>>>>> [GameService]-shutDownGame gameRoom 의 id : {}", gameRoom.getId());
+
+        // GameRoom 의 상태를 false 로 변경
+        gameRoom.GameRoomStatusUpdate(false);
+
+        // 구독하고 있는 User 에게 start 메세지 전송
+        sendingOperations.convertAndSend("/topic/game/room/" + requestDto.getRoomId(),"shutDown");
+        log.info(">>>>>>> [GameService]-shutDownGame 의 roomId : {}", requestDto.getRoomId());
+
+        // 게임 강제 종료
         return new MsgResponseDto(StatusMsgCode.SHUTDOWN_GAME);
     }
 

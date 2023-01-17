@@ -1,5 +1,7 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.chatting.ChatRoom;
+import com.project.trysketch.chatting.ChatRoomRepository;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -33,6 +35,7 @@ public class GameRoomService {
     private final GameRoomUserRepository gameRoomUserRepository;
     private final GuestRepository guestRepository;
     private final UserService userService;
+    private final ChatRoomRepository chatRoomRepository;
 
     // ============================== 게임방 조회 ==============================
     @Transactional
@@ -79,12 +82,35 @@ public class GameRoomService {
             throw new CustomException(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
-        // 3. 방 정보 생성
+        // 3. 초대 코드를 위한 랜덤코드 생성
+        String randomCode = "";
+        StringBuffer key = new StringBuffer();
+        Random rnd = new Random();
+
+        // 소문자와 숫자 8자리 조합 만들기
+        for (int i = 0; i < 8; i++) {
+            int index = rnd.nextInt(2); // 0~1 중 랜덤
+
+            switch (index) {
+                case 0:
+                    //  a~z  (ex. 1+97=98 => (char)98 = 'b')
+                    key.append((char) ((rnd.nextInt(26)) + 97));
+                    break;
+                case 1:
+                    // 0~9
+                    key.append((rnd.nextInt(10)));
+                    break;
+            }
+        }
+        randomCode = key.toString();
+
+        // 4. 방 정보 생성
         GameRoom gameRoom = GameRoom.builder()
                 .title(gameRoomRequestDto.getTitle())
                 .hostId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))
                 .hostNick(extInfo.get(GamerEnum.NICK.key()))
                 .isPlaying(false)
+                .randomCode(randomCode)
                 .build();
 
         // 4. 방에 입장한 유저 정보 생성
@@ -103,26 +129,36 @@ public class GameRoomService {
         // 5. 게임 방 DB에 저장 및 입장중인 유저 정보 저장
         gameRoomRepository.save(gameRoom);
         gameRoomUserRepository.save(gameRoomUser);
+        
+        
+
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.create(gameRoom.getTitle(), gameRoom.getId().toString());
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom의 title : {}", gameRoom.getTitle());
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom의 id : {}", gameRoom.getId().toString());
+        chatRoomRepository.saveRoom(chatRoom);
 
         HashMap<String, String> roomInfo = new HashMap<>();
 
-        // 6. HashMap 형식으로 방 제목과 방 번호를 response 로 반환
+        // 7. HashMap 형식으로 방 제목, 방 번호, 방 랜덤코드를 response 로 반환
         roomInfo.put("gameRoomTitle",gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
+        roomInfo.put("randomCode", randomCode);
 
         return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
     };
 
+
     // ============================== 게임방 입장 ==============================
     @Transactional
-    public MsgResponseDto enterGameRoom(Long id, HttpServletRequest request) {
+    public MsgResponseDto enterGameRoom(String randomeCode, HttpServletRequest request) {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
         String header = userService.validHeader(request);
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
         // 2. id로 DB 에서 현재 들어갈 게임방 데이터 찾기
 //        Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
-        GameRoom enterGameRoom = gameRoomRepository.findById(id).orElseThrow(
+        GameRoom enterGameRoom = gameRoomRepository.findByRandomCode(randomeCode).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
 

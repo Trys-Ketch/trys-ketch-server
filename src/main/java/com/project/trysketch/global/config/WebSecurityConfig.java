@@ -54,7 +54,7 @@ public class WebSecurityConfig {
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET).permitAll()
                 .antMatchers("/api/users/**", "/api/**").permitAll()
-                .antMatchers("/signal/**", "/ws/chat/**").permitAll()
+                .antMatchers("/signal/**", "/ws/**").permitAll()
                 .anyRequest().authenticated()
 
                 // corsConfigurationSource 적용
