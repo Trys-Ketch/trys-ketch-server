@@ -52,7 +52,8 @@ public enum StatusMsgCode {
     SHUTDOWN_GAME(HttpStatus.OK," 게임이 비정상 종료되었습니다"),
     START_GAME(HttpStatus.OK, "게임이 시작되었습니다"),
     SUBMIT_IMAGE_DONE(HttpStatus.OK, "이미지 제출이 되었습니다"),
-    SUBMIT_KEYWORD_DONE(HttpStatus.OK, "단어 제출이 되었습니다");
+    SUBMIT_KEYWORD_DONE(HttpStatus.OK, "단어 제출이 되었습니다"),
+    CREATE_ROOM(HttpStatus.OK, "방을 만들었습니다");
 
 
 

@@ -1,5 +1,7 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.chatting.ChatRoom;
+import com.project.trysketch.chatting.ChatRoomRepository;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -33,6 +35,7 @@ public class GameRoomService {
     private final GameRoomUserRepository gameRoomUserRepository;
     private final GuestRepository guestRepository;
     private final UserService userService;
+    private final ChatRoomRepository chatRoomRepository;
 
     // ============================== 게임방 조회 ==============================
     @Transactional
@@ -126,6 +129,14 @@ public class GameRoomService {
         // 5. 게임 방 DB에 저장 및 입장중인 유저 정보 저장
         gameRoomRepository.save(gameRoom);
         gameRoomUserRepository.save(gameRoomUser);
+        
+        
+
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.create(gameRoom.getTitle(), gameRoom.getId().toString());
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom의 title : {}", gameRoom.getTitle());
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom의 id : {}", gameRoom.getId().toString());
+        chatRoomRepository.saveRoom(chatRoom);
 
         HashMap<String, String> roomInfo = new HashMap<>();
 
@@ -236,7 +247,7 @@ public class GameRoomService {
 
             // 12. UserId 를 들고 GameRoomUser 정보 가져오기
             GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
-            Guest guestHost = guestRepository.findById(newHostId).orElse(null);
+            Guest guestHost = guestRepository.findById(String.valueOf(newHostId)).orElse(null);
 
             // 13. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
             if (userHost != null) {

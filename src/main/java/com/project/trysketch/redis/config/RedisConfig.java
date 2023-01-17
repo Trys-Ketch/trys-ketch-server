@@ -1,5 +1,6 @@
 package com.project.trysketch.redis.config;
 
+import com.project.trysketch.chatting.RedisSubscriber;
 import com.project.trysketch.redis.entity.CacheKey;
 
 
@@ -16,7 +17,11 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisKeyValueAdapter.ShadowCopy;
 import org.springframework.data.redis.core.RedisKeyValueAdapter.EnableKeyspaceEvents;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.ChannelTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -30,11 +35,6 @@ import java.util.Map;
 @EnableCaching
 @EnableRedisRepositories(enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP, shadowCopy = ShadowCopy.OFF)
 public class RedisConfig {
-    // 로컬에서 구동할 때는 반드시 @EnableRedisRepositories 뒤의 괄호를 지우고 실행해 주세요 즉, 위에있는
-    // (enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP, shadowCopy = ShadowCopy.OFF) 를 전부 없애고
-    // @EnableRedisRepositories 만 남겨두고 실행해주시면 됩니드아. 저 부분은 레디스가 연결 되어야만 작동하기 때문에 로컬에 레디스가
-    // 없으면 저 옵션부분을 빼주고 해주시면 됩니다.
-
     // 내가 직접 호스트하고 port 를 지정해서 사용하려면 아래의 것을 사용
     // 자바의 Redis Client 중 더 성능이 좋다는 Lettuce 를 사용
     @Value("${spring.redis.host}")
@@ -43,8 +43,34 @@ public class RedisConfig {
     @Value("${spring.redis.port}")
     private int port;
 
-    public RedisConfig() {
+    // 단일 Topic 사용을 위한 Bean 설정
+    @Bean
+        public ChannelTopic channelTopic() {
+        return new ChannelTopic("chatroom");
     }
+
+    /**
+     * redis에 발행(publish)된 메시지 처리를 위한 리스너 설정
+     */
+    @Bean
+    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory,
+                                                              MessageListenerAdapter listenerAdapter,
+                                                              ChannelTopic channelTopic) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.addMessageListener(listenerAdapter, channelTopic);
+        return container;
+    }
+
+    /**
+     * 실제 메시지를 처리하는 subscriber 설정 추가
+     */
+    @Bean
+    public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
+        return new MessageListenerAdapter(subscriber, "sendMessage");
+    }
+
+
     /*
         Lettuce: Multi-Thread 에서 Thread-Safe 한 Redis 클라이언트로 netty 에 의해 관리된다.
                  Sentinel, Cluster, Redis data model 같은 고급 기능들을 지원하며
@@ -55,7 +81,6 @@ public class RedisConfig {
                  Jedis 인스턴스와 연결할 때마다 Connection pool 을 불러오고 스레드 갯수가
                  늘어난다면 시간이 상당히 소요될 수 있다.
      */
-
     // Redis 와 연결
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -81,7 +106,7 @@ public class RedisConfig {
         // Serializer(직렬화) Spring 과 Redis 간 데이터 직, 역직렬화시 사용하는 방식이 JDK 직렬화 방식이다
         // redis-cli 를 통해 직접 데이터를 보려고 할 때 알아볼 수 있는 형태로 출력하기 위해서
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
 
         // Hash 를 사용할 경우 시리얼라이저
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
