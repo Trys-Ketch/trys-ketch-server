@@ -155,10 +155,9 @@ public class SignalingHandler extends TextWebSocketHandler {
                 case MSG_TYPE_TOGGLE_READY:
                     // TODO
                     // 1. 접속한 유저의 roomId와 userUUID 를 service 에 넘겨서 status 변경
-                    // 2. 나를 제외한 현재 방의 전체 유저 session 객체에게 접속한 유저의 변경된 status 메시지 보내기
+                    // 2. 나를 포함한 현재 방의 전체 유저 session 객체에게 접속한 유저의 변경된 status 메시지 보내기
                     // 3. 해당 방에 있는 모든 유저의 ready 상태가 true 이고,
-                    //    방 인원이 4명 이상 이면 gameRoom 의 ready status true 로 변경
-                    // 4. host 에게 gameRoom status 메시지 보내기
+                    //    방 인원이 4명 이상 이면 host 에게 게임 시작 가능 메시지 보내기
 
                     log.info(">>> [ws] #{}번 방 유저, {} 타입으로 들어옴", roomId, message.getType());
 
@@ -220,29 +219,12 @@ public class SignalingHandler extends TextWebSocketHandler {
 
         // 유저 uuid 와 roomID 를 저장
         String userUUID = session.getId(); // 유저 uuid
-//        String roomId = userInfo.get(userUUID); // roomId
 
         gameRoomService.exitGameRoom(null, null, userUUID);
 
         // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
         sessions.remove(userUUID);
         log.info(">>> [ws] {}를 제외한 남은 세션 객체 {}", userUUID, sessions);
-//        userInfo.remove(userUUID);
-
-        // roomInfo = { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], 방번호 : [ { id : userUUID3 }, { id: userUUID4 }, …], ... }
-        // 해당하는 방의 value 인 user list 의 element 의 value 가 현재 userUUID 와 같다면 roomInfo 에서 remove
-//        List<Map<String, String>> removed = new ArrayList<>();
-//        roomInfo.get(roomId).forEach(s -> {
-//            try {
-//                if(s.containsValue(userUUID)) {
-//                    removed.add(s);
-//                }
-//            }
-//            catch (Exception e) {
-//                log.info(">>> 에러 발생 : if문 생성 실패 {}", e.getMessage());
-//            }
-//        });
-//        roomInfo.get(roomId).removeAll(removed);
 
         // 본인을 제외한 모든 유저에게 user_exit 라는 타입으로 메시지 전달
         sessions.values().forEach(s -> {
@@ -259,9 +241,6 @@ public class SignalingHandler extends TextWebSocketHandler {
             }
 
         });
-
-//        log.info(">>> [ws] #{}번 방에서 {} 삭제 완료", roomId, userUUID);
-//        log.info(">>> [ws] #{}번 방에 남은 유저 {}", roomId, roomInfo.get(roomId));
     }
 
     // 소켓 통신 에러
@@ -269,24 +248,6 @@ public class SignalingHandler extends TextWebSocketHandler {
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.info(">>> 에러 발생 : 소켓 통신 에러 {}", exception.getMessage());
     }
-
-    // 본인을 제외한 현재 방의 세션 객체 리스트 반환
-//    public List<WebSocketSession> getRoomSessionListExceptMe(Long roomId, String userUUID) {
-//        List<WebSocketSession> sessionList = new ArrayList<>();
-//        List<Map<String, String>> originRoomUser = gameRoomService.getAllGameRoomUsersExceptMe(roomId, userUUID);
-//        sessions.values().forEach(s -> {
-//            try {
-//                for (Map<String, String> roomUser : originRoomUser) {
-//                    if (roomUser.get("id").equals(s.getGuestId())) {
-//                        sessionList.add(s);
-//                    }
-//                }
-//            } catch (Exception e) {
-//                log.info(">>> 에러 발생 : 본인을 제외한 현재 방의 세션 객체 리스트 생성 실패 {}", e.getMessage());
-//            }
-//        });
-//        return sessionList;
-//    }
 
     // 본인을 포함한 현재 방의 세션 객체 리스트 반환
     public List<WebSocketSession> getRoomSessionList(Long roomId) {
