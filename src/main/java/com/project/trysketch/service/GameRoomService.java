@@ -1,6 +1,7 @@
 package com.project.trysketch.service;
 
 import com.project.trysketch.dto.request.GameRoomRequestDto;
+import com.project.trysketch.dto.response.GameRoomEnterResponseDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.entity.GameRoom;
@@ -57,6 +58,7 @@ public class GameRoomService {
                                 .isPlaying(gameRoom.isPlaying())
                                 .createdAt(gameRoom.getCreatedAt())
                                 .modifiedAt(gameRoom.getModifiedAt())
+                                .randomCode(gameRoom.getRandomCode())
                                 .build();
             gameRoomList.add(gameRoomResponseDto);
         }
@@ -140,7 +142,7 @@ public class GameRoomService {
 
     // ============================== 게임방 입장 ==============================
     @Transactional
-    public MsgResponseDto enterGameRoom(String randomeCode, HttpServletRequest request) {
+    public DataMsgResponseDto enterGameRoom(String randomeCode, HttpServletRequest request) {
         // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
         String header = userService.validHeader(request);
         HashMap<String, String> extInfo = userService.gamerInfo(header);
@@ -153,18 +155,18 @@ public class GameRoomService {
 
         // 3. 게임 방의 상태가 true 이면 게임이 시작중이니 입장 불가능
         if (enterGameRoom.isPlaying()){
-            return new MsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
+            return new DataMsgResponseDto(StatusMsgCode.ALREADY_PLAYING);
         }
 
         // 4. 현재 방의 인원이 8명 이상이면 풀방임~
         Long checkUsers = gameRoomUserRepository.countByGameRoomIdOrderByUserId(enterGameRoom.getId());
         if (checkUsers >= 8) {
-            return new MsgResponseDto(StatusMsgCode.FULL_BANG);
+            return new DataMsgResponseDto(StatusMsgCode.FULL_BANG);
         }
 
         // 5. 현재 User 가 다른 방에 들어가 있다면
         if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))) {
-            return new MsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
+            return new DataMsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
         // 6. 새롭게 게임방에 들어온 유저 생성
@@ -180,7 +182,10 @@ public class GameRoomService {
         // 7. 게임방에 들어온 유저를 DB에 저장
         gameRoomUserRepository.save(gameRoomUser);
 
-        return new MsgResponseDto(StatusMsgCode.SUCCESS_ENTER_GAME);
+
+        HashMap<String, Long> roomIdInfo = new HashMap<>();
+        roomIdInfo.put("roomId", enterGameRoom.getId());
+        return new DataMsgResponseDto(StatusMsgCode.OK, roomIdInfo);
     }
 
     // ============================= 게임방 나가기 =============================

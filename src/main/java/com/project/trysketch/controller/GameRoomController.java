@@ -41,7 +41,7 @@ public class GameRoomController {
 
     // 게임 방 입장
     @PostMapping("/room/enter/{randomCode}")
-    public ResponseEntity<MsgResponseDto> enterGameRoom(@PathVariable String randomCode,
+    public ResponseEntity<DataMsgResponseDto> enterGameRoom(@PathVariable String randomCode,
                                                         HttpServletRequest request) {
         log.info(">>> 방 입장 - 방 randomCode : {}, 유저 id : {}", randomCode, request);
         return ResponseEntity.ok(gameRoomService.enterGameRoom(randomCode, request));
