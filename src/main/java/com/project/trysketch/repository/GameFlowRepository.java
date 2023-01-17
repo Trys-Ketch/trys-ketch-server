@@ -12,4 +12,7 @@ public interface GameFlowRepository extends JpaRepository<GameFlow, Long> {
     List<GameFlow> findAllByRoomId(Long roomId);
 
     void deleteAllByRoomId(Long roomId);
+
+    List<GameFlow> findAllByRoomIdAndRound(Long roomId, int round);
+
 }

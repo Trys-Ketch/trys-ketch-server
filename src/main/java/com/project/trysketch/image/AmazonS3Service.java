@@ -5,18 +5,14 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.project.trysketch.entity.GameFlow;
-import com.project.trysketch.entity.User;
 import com.project.trysketch.repository.GameFlowRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
 
 
@@ -36,18 +32,20 @@ public class AmazonS3Service {
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
-    public void upload(MultipartFile multipartFile, String dirName, User user, int round, int keywordIndex, Long roomId) throws IOException {
-        if (multipartFile != null) {
-            File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
+    public void upload(File file, String dirName, String nickname, int round, int keywordIndex, Long roomId, String webSessionId) throws IOException {
+        if (file != null) {
+//            File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
 
-            Image image = new Image(upload(uploadFile, dirName), user.getNickname());
+            Image image = new Image(upload(file, dirName), nickname);
+//            img = new Image(upload(img,dirName),nickname);
 
             GameFlow gameFlow = GameFlow.builder()
                     .roomId(roomId)
                     .round(round)
                     .keywordIndex(keywordIndex)
                     .imagePath(image.getPath())
-                    .nickname(user.getNickname())
+                    .nickname(nickname)
+                    .webSessionId(webSessionId)
                     .build();
 
             imageRepository.save(image);
@@ -70,7 +68,7 @@ public class AmazonS3Service {
     }
 
     // S3 이미지 삭제
-    public void delete(String fileName){
+    public void delete(String fileName) {
         DeleteObjectRequest request = new DeleteObjectRequest(bucket, fileName);
         amazonS3Client.deleteObject(request);
     }
@@ -84,14 +82,14 @@ public class AmazonS3Service {
         log.info("File delete fail");
     }
 
-    private Optional<File> convert(MultipartFile multipartFile) throws IOException {
-        File convertFile = new File(multipartFile.getOriginalFilename());
-        if (convertFile.createNewFile()) {
-            try (FileOutputStream fos = new FileOutputStream(convertFile)) { // FileOutputStream 데이터를 파일에 바이트 스트림으로 저장하기 위함
-                fos.write(multipartFile.getBytes());
-            }
-            return Optional.of(convertFile);
-        }
-        return Optional.empty();
-    }
+//    private Optional<File> convert(BufferedImage img) throws IOException {
+//        File convertFile = new File(multipartFile.getOriginalFilename());
+//        if (convertFile.createNewFile()) {
+//            try (FileOutputStream fos = new FileOutputStream(convertFile)) { // FileOutputStream 데이터를 파일에 바이트 스트림으로 저장하기 위함
+//                fos.write(multipartFile.getBytes());
+//            }
+//            return Optional.of(convertFile);
+//        }
+//        return Optional.empty();
+//    }
 }
