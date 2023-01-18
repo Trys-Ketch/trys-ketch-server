@@ -43,6 +43,11 @@ public class GameRoomUser {
         this.readyStatus = readyStatus;
     }
 
+    public void update(boolean readyStatus, String userUUID) {
+        this.readyStatus = readyStatus;
+        this.webSessionId = userUUID;
+    }
+
     @Override
     public String toString() {
         return "GameRoomUser{" +

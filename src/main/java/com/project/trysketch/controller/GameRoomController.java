@@ -27,7 +27,7 @@ public class GameRoomController {
 
     // 게임 방 전체 조회 페이징 처리
     @GetMapping("/rooms")
-    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 10, sort = "createdAt" , direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 5, sort = "createdAt" , direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(gameRoomService.getAllGameRoom(pageable));
     }
 
