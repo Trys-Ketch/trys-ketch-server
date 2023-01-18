@@ -3,11 +3,11 @@ package com.project.trysketch.chatting;
 import lombok.Getter;
 import lombok.Setter;
 
+// 1. 기능    : 채팅 메세지 구성요소
+// 2. 작성자  : 황미경, 서혁수, 안은솔
 @Getter
 @Setter
 public class ChatMessage {
-
-    // 메시지 타입 : 입장, 채팅
     public enum MessageType {
         ENTER, TALK
     }

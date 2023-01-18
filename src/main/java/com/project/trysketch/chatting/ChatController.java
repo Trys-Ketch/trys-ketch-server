@@ -2,15 +2,15 @@ package com.project.trysketch.chatting;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 
+// 1. 기능    : 채팅 컨트롤러
+// 2. 작성자  : 황미경, 서혁수, 안은솔
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
-
     private final RedisPublisher RedisPublisher;
 
     @MessageMapping("/chat/message")
