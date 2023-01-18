@@ -5,7 +5,6 @@ import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
-import com.project.trysketch.redis.repositorty.GuestRepository;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
@@ -17,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
 
 // 1. 기능    : 유저 컨트롤러
 // 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
@@ -66,7 +64,7 @@ public class UserController {
     @PostMapping("/guest")
     public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody GuestNickRequestDto requestDto) {
         redisService.guestLogin(response, requestDto);
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
+        return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
     }
 
     // 랜덤 닉네임 받아오는 부분
@@ -88,12 +86,6 @@ public class UserController {
     @GetMapping("/user-info")
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
         return ResponseEntity.ok(userService.getGamerInfo(request));
-    }
-
-    @GetMapping("/test/{id}")
-    public HashMap<?, ?> test(@PathVariable String id) {
-        HashMap<String, String> test = userService.gamerInfo(id);
-        return test;
     }
 }
 

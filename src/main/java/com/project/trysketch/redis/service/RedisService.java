@@ -6,12 +6,10 @@ import com.project.trysketch.redis.repositorty.GuestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
 
 // 1. 기능   : Redis 비즈니스 로직
 // 2. 작성자 : 서혁수
