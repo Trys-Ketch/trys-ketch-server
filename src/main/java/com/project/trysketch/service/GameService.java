@@ -243,7 +243,7 @@ public class GameService {
 //                log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
 //                log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
 //                getPreviousKeyword(gameFlowRequestDto);
-//            } // 주석처리 1.18 13:35 리팩토링 김재영
+//            } // 중복 코드 분리 1.18 리팩토링 김재영
         }
     }
 
@@ -262,7 +262,7 @@ public class GameService {
             throw new CustomException(StatusMsgCode.GAME_NOT_ONLINE);
         }
 
-        // 현재 GameRoom의 UserList 가져오기
+        // 현재 GameRoom 의 UserList 가져오기
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
         // 다음순번인 키워드의 index
@@ -276,7 +276,7 @@ public class GameService {
 //            nextKeywordIndex = requestDto.getKeywordIndex() + 1;
 //            log.info("else 를 통과한 requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
 //            log.info("else 를 통과한 nextKeywordIndex : {}",nextKeywordIndex);
-//        }
+//        } // 중복 코드 분리 1.18 리팩토링 김재영
         
         GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(
                 requestDto.getRoomId(),
@@ -313,9 +313,9 @@ public class GameService {
     public void postImage(GameFlowRequestDto requestDto, String image) throws IOException {
 
         // 해당 roomId, round, 그리고 인원수
-        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
-
-        gameRoomUserList.clear();
+//        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
+//
+//        gameRoomUserList.clear(); // 필요없음 1.18 리팩토링 김재영
 
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService] - postImage >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> 이미지 파일 있니? : {}", !image.isEmpty());
@@ -340,12 +340,11 @@ public class GameService {
         byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
         String path = "/home/ubuntu/projects/image/image." + extension;
         File file = new File(path);
-//        byte[] imageBytes = Base64.getDecoder().decode(base64Image);
 
         // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
 
-        // 이미지를 jpg 포맷으로 file에? 저장
+        // 이미지를 해당 포맷으로 path 위치에 저장
         ImageIO.write(img, "png", file);
 
 
@@ -365,7 +364,7 @@ public class GameService {
         log.info(">>>>>>>>>>>>> request 으로 부터 나온 getWebSessionId : {}", requestDto.getWebSessionId());
 
         List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(requestDto.getRoomId(), requestDto.getRound());
-        gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
         if (gameFlowList.size() == gameRoomUserList.size()) {
             log.info("<<<<<<<<<<< 모두가 제출했을 때, if문 통과함 : {}", gameFlowList.size() == gameRoomUserList.size());
@@ -376,7 +375,6 @@ public class GameService {
             // 라운드를 계속 체크해서 라운드가 인원수가 크다면 [결과페이지 이동]
             if (requestDto.getRound()  == gameRoomUserList.size()){
                 log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
-//            getGameFlow(requestDto);
                 Map<String, Object> beforeMessage = new HashMap<>();
                 beforeMessage.put("isResult",true);
                 sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
@@ -398,11 +396,9 @@ public class GameService {
 //                log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
 //
 //                getPreviousImage(gameFlowRequestDto);
-//            }
+//            } // 중복 코드 분리 1.18 리팩토링 김재영
 
         }
-
-//        return new MsgResponseDto(StatusMsgCode.SUBMIT_IMAGE_DONE);
     }
 
 
@@ -422,12 +418,11 @@ public class GameService {
         // 다음순번인 키워드의 index
         int nextKeywordIndex = calculateKeywordIndex(requestDto.getKeywordIndex(), gameRoomUserList.size());
 
-
 //        if (requestDto.getKeywordIndex() == gameRoomUserList.size()){
 //            nextKeywordIndex = requestDto.getKeywordIndex() % gameRoomUserList.size() + 1;
 //        }else {
 //            nextKeywordIndex = requestDto.getKeywordIndex() + 1;
-//        }
+//        } // 중복 코드 분리 1.18 리팩토링 김재영
 
 
         //  이전 라운드에 어떤 그림 이었는 지 알려줘야 함
@@ -500,18 +495,14 @@ public class GameService {
                 resultList.add(gameFlow.getNickname());
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 불러와야 함
-
                     resultList.add(gameFlow.getImagePath());
 
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기!
-
                     resultList.add(gameFlow.getKeyword());
 
                 }
-//                listlist[i - 1][j - 1] = resultList.toString();
                 listlist[i - 1][j - 1] = resultList;
-                // [ 배열 ] -> "[ 배열 ]"
             }
         }
         log.info(">>>>>>>>>>>>> 대망의 마지막 2차원 배열 : {} ", Arrays.deepToString(listlist));
@@ -521,8 +512,6 @@ public class GameService {
         message.put("isHost", isHost);
 
         sendingOperations.convertAndSend("/queue/game/result/" + requestDto.getWebSessionId(), message);
-//        sendingOperations.convertAndSend("/topic/game/result/" + requestDto.getRoomId(), message);
-
         return listlist;
     }
 
@@ -531,16 +520,16 @@ public class GameService {
     // roomId, ,token
     @Transactional
     public void getRandomKeyword(GameFlowRequestDto requestDto) {
-        // 유저 인증부
 
+        // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
         log.info(">>>>>>> [GameService] - getRandomKeyword 의 유저 해쉬맵 : {}", gamerInfo);
 
+        // 찾은 User로 GameRoomUser 정보 가져오기
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(
                 Long.valueOf(gamerInfo.get(GamerEnum.ID.key())), requestDto.getRoomId());
         log.info(">>>>>>> [GameService] - getRandomKeyword 의 GameRoomUser -> 방 번호 : {}", gameRoomUser.getGameRoom());
         log.info(">>>>>>> [GameService] - getRandomKeyword 의 GameRoomUser -> 플레이 상태 : {}", gameRoomUser.isReadyStatus());
-
 
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
@@ -564,28 +553,7 @@ public class GameService {
             sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
         }
 
-//        // 형용사 리스트중 1개
-//        int adId = (int) (Math.random() * adSize + 1);
-//        AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
-//
-//        // 명사 리스트중 1개
-//        int nuId = (int) (Math.random() * nounSize + 1);
-//        NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
-
-        // JSON 형태로 가공
-//        Map<String, String> message = new HashMap<>();
-//        message.put("keyword", adjectiveEntity.getAdjective() + nounEntity.getNoun());
-
-
         log.info(">>>>>>> [GameService] - getRandomKeyword 의 webSessionId -> : {}", gameRoomUser.getWebSessionId());
-//        log.info(">>>>>>> [GameService] - getRandomKeyword 의 keyword -> : {}", message);
-
-//        sendingOperations.convertAndSendToUser(gameRoomUser.getWebSessionId(), "/queue/game", message);
-
-//        sendingOperations.convertAndSend("/topic/game/" + requestDto.getRoomId(), message);
-
-        // 형용사 + 명사 만들어서 리턴
-//        return adjectiveEntity.getAdjective() + nounEntity.getNoun();
     }
 
     public void createGameFlowRequestDto(int gameFlowListSize,  List<GameFlow> gameFlowList){
@@ -620,37 +588,6 @@ public class GameService {
         return  nextKeywordIndex;
     }
 }
-
-//                  // 써야 할 기능
-//        // 게임을 시작하면 기본으로 제공되는 제시어
-//        HashMap<String, String> keywordMap = new HashMap<>();
-//
-//        // 최초 제시어를 조합해서 GameRoomUser 와 매칭
-//        for (GameRoomUser gameRoomUser : gameRoomUserList) {
-//            // 형용사 리스트중 1개
-//            int adId = (int) (Math.random() * adSize +1);
-//            AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
-//
-//            // 명사 리스트중 1개
-//            int nuId = (int) (Math.random() * nounSize +1);
-//            NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
-//
-//            // 형용사 + 명사
-//            String keyword = adjectiveEntity.getAdjective() + nounEntity.getNoun();
-//
-//            keywordMap.put(gameRoomUser.getNickname(), keyword);
-//        }
-//
-//        // 새로운 게임 생성
-//        GameInfo gameInfo = GameInfo.builder()
-//                .gameRoomId(gameRoom.getId())
-//                .roundTimeout(60)
-//                .build();
-//
-//        GameStartResponseDto gameStartResponseDto = GameStartResponseDto.builder()
-//                .gameRoomId(gameInfo.getGameRoomId())
-//                .roundTimeout(gameInfo.getRoundTimeout())
-
 //        (키워드인덱스, round)
 //            1,1   1,2    1,3   1,4   1,5
 //         [제시어, 그림, 제시어, 그림, 제시어],
