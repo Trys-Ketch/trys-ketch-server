@@ -14,12 +14,10 @@ import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.suggest.AdjectiveEntity;
 import com.project.trysketch.suggest.AdjectiveRepository;
 import com.project.trysketch.suggest.NounEntity;
 import com.project.trysketch.suggest.NounRepository;
-import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -70,8 +68,6 @@ public class GameService {
         log.info(">>>>>>> [GameService] RoomId : {}", requestDto.getRoomId());
         log.info(">>>>>>> [GameService] gamerInfo : {}", gamerInfo.toString());
 
-//        gamerInfo.get(GamerKey.NICK.key()); // 검증을 통과한 User 의 닉네임
-
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
@@ -88,17 +84,14 @@ public class GameService {
         gameRoom.GameRoomStatusUpdate(true);
         log.info(">>>>>>> [GameService] gameRoom 변경 후 : {}", gameRoom);
 
-        // isIngaeme으로 보내주기
+        // isIngaeme 으로 보내주기
         Map<String, Boolean> message = new HashMap<>();
         message.put("isIngame", true);
 
         // 구독하고 있는 User 에게 start 메세지 전송
         sendingOperations.convertAndSend("/topic/game/start/" + requestDto.getRoomId(), message);
 
-//        sendingOperations.convertAndSendToUser("/queue/game/room/" + );
-
         log.info(">>>>>>> [GameService] requestDto : {}", requestDto);
-
 
         // 게임 시작
         return new MsgResponseDto(StatusMsgCode.START_GAME);
@@ -147,10 +140,7 @@ public class GameService {
         log.info(">>>>>>> [GameService]-endgame gameRoom 의 id : {}", gameRoom.getId());
 
         // GameRoom 의 상태를 false 로 변경
-        log.info(">>>>>>> [GameService]-endgame gameRoom 의 상태 비포 : {}", gameRoom.isPlaying());
         gameRoom.GameRoomStatusUpdate(false);
-        log.info(">>>>>>> [GameService]-endgame gameRoom 의 상태 애프터 : {}", gameRoom.isPlaying());
-
 
         Map<String, Boolean> message = new HashMap<>();
         message.put("end", true);
@@ -200,12 +190,6 @@ public class GameService {
     @Transactional
     public void postVocabulary(GameFlowRequestDto requestDto) {
 
-        // 해당 roomId, round, 그리고 인원수
-        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
-
-
-        gameRoomUserList.clear();
-
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService] - postVocabulary >>>>>>>>>>>>>>>>>>>>>>>>");
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
@@ -221,9 +205,6 @@ public class GameService {
                 .nickname(gamerInfo.get(GamerEnum.NICK.key()))
                 .build();
         gameFlowRepository.saveAndFlush(gameFlow);
-        log.info("<<<<<<<<<<<<<<< 리퀘스트디티오 2 한 후 save 한 후 : {}", requestDto.getKeywordIndex());
-        log.info(">>>>>>>>>>>>>>> 게임플로우 2 한 후 save 한 후 : {}", gameFlow.getKeywordIndex());
-
 
         log.info(">>>>>>> [GameService] - postVocabulary 의 GameFlow -> 방 번호 : {}", gameFlow.getRound());
         log.info(">>>>>>> [GameService] - postVocabulary 의 GameFlow -> 라운드 : {}", gameFlow.getRound());
@@ -233,10 +214,9 @@ public class GameService {
         log.info(">>>>>>> [GameService] - postVocabulary 의 GameFlow -> 보내는 사람 세션Id : {}", gameFlow.getWebSessionId());
 
         List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(requestDto.getRoomId(), requestDto.getRound());
-        gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
+        List<GameRoomUser> gameRoomUserList  = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
         if (gameFlowList.size() == gameRoomUserList.size()) {
-            log.info("<<<<<<<<<<< 모두가 제출했을 때, if문 통과함 : {}", gameFlowList.size() == gameRoomUserList.size());
             Map<String, Object> message = new HashMap<>();
             message.put("completeSubmit", true);
             sendingOperations.convertAndSend("/topic/game/submit-word/" + requestDto.getRoomId(), message);
@@ -244,35 +224,27 @@ public class GameService {
             // 라운드를 계속 체크해서 라운드가 인원수가 크다면 [결과페이지 이동]
             if (requestDto.getRound()  == gameRoomUserList.size()){
                 log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
-//            getGameFlow(requestDto);
                 Map<String, Object> beforeMessage = new HashMap<>();
                 beforeMessage.put("isResult",true);
                 sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
             }
 
-            // 전체 유저에게 보내줌 뭐를? requestDto
-
-            for (int i = 0; i < gameFlowList.size(); i++) {
-                GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
-                        .roomId(gameFlowList.get(i).getRoomId())
-                        .round(gameFlowList.get(i).getRound())
-                        .keyword(gameFlowList.get(i).getKeyword())
-                        .keywordIndex(gameFlowList.get(i).getKeywordIndex())
-                        .webSessionId(gameFlowList.get(i).getWebSessionId())
-                        .build();
-
-            log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
-            log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
-            log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
-            getPreviousKeyword(gameFlowRequestDto);
-            }
+            createGameFlowRequestDto(gameFlowList.size(),gameFlowList);
+//            for (int i = 0; i < gameFlowList.size(); i++) {
+//                GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
+//                        .roomId(gameFlowList.get(i).getRoomId())
+//                        .round(gameFlowList.get(i).getRound())
+//                        .keyword(gameFlowList.get(i).getKeyword())
+//                        .keywordIndex(gameFlowList.get(i).getKeywordIndex())
+//                        .webSessionId(gameFlowList.get(i).getWebSessionId())
+//                        .build();
+//
+//                log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
+//                log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
+//                log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
+//                getPreviousKeyword(gameFlowRequestDto);
+//            } // 주석처리 1.18 13:35 리팩토링 김재영
         }
-//            sendingOperations.convertAndSend("/queue/game/before-word/" + gameRoomUserList.getWebSessionId(), message);
-
-
-//        return new MsgResponseDto(StatusMsgCode.SUBMIT_KEYWORD_DONE);
-
-
     }
 
 
@@ -294,39 +266,22 @@ public class GameService {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
         // 다음순번인 키워드의 index
-        int nextKeywordIndex;
-        if (requestDto.getKeywordIndex() == gameRoomUserList.size()){
-            log.info("requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
-            log.info("gameRoomUserList.size() : {}",gameRoomUserList.size());
-            nextKeywordIndex = requestDto.getKeywordIndex() % gameRoomUserList.size() + 1;
-            log.info("nextKeywordIndex : {}",nextKeywordIndex);
-        }else {
-            nextKeywordIndex = requestDto.getKeywordIndex() + 1;
-            log.info("else 를 통과한 requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
-            log.info("else 를 통과한 nextKeywordIndex : {}",nextKeywordIndex);
-        }
-
-//        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-//        log.info(">>>>>>> [GameService] - getPreviousKeyword 접속한 유저 정보 : {}", gamerInfo);
-//
-//        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(
-//                Long.valueOf(gamerInfo.get(GamerEnum.ID.key())), requestDto.getRoomId());
-//        log.info("gameRoomUser : {}", gameRoomUser.toString());
-//        log.info("gameRoomId : {}", requestDto.getRoomId());
-//        log.info("gameRoomUserId : {}", gamerInfo.get(GamerEnum.ID.key()));
-
-//        int previousRound;
-//        // 이전 라운드의 단어 어떤 것이었는 지 알려줘야 함
-//        if ((requestDto.getRound() - 1) == 0){
-//            previousRound = 1;
+        int nextKeywordIndex = calculateKeywordIndex(requestDto.getKeywordIndex(), gameRoomUserList.size());
+//        if (requestDto.getKeywordIndex() == gameRoomUserList.size()){
+//            log.info("requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
+//            log.info("gameRoomUserList.size() : {}",gameRoomUserList.size());
+//            nextKeywordIndex = requestDto.getKeywordIndex() % gameRoomUserList.size() + 1;
+//            log.info("nextKeywordIndex : {}",nextKeywordIndex);
 //        }else {
-//            previousRound = requestDto.getRound() - 1;
+//            nextKeywordIndex = requestDto.getKeywordIndex() + 1;
+//            log.info("else 를 통과한 requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
+//            log.info("else 를 통과한 nextKeywordIndex : {}",nextKeywordIndex);
 //        }
-//        int previousRound = requestDto.getRound() - 1;
+        
         GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(
-                        requestDto.getRoomId(),
-                        requestDto.getRound(),
-                        nextKeywordIndex).orElseThrow(
+                requestDto.getRoomId(),
+                requestDto.getRound(),
+                nextKeywordIndex).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_NOT_ONLINE)
         );
         log.info(">>>>>>> [GameService] - getPreviousKeyword 의 GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
@@ -428,22 +383,22 @@ public class GameService {
             }
 
             // 전체 유저에게 보내줌 뭐를? requestDto
-
-            for (int i = 0; i < gameFlowList.size(); i++) {
-                GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
-                        .roomId(gameFlowList.get(i).getRoomId())
-                        .round(gameFlowList.get(i).getRound())
-                        .keyword(gameFlowList.get(i).getKeyword())
-                        .keywordIndex(gameFlowList.get(i).getKeywordIndex())
-                        .webSessionId(gameFlowList.get(i).getWebSessionId())
-                        .build();
-
-                log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
-                log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
-                log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
-
-                getPreviousImage(gameFlowRequestDto);
-            }
+            createGameFlowRequestDto(gameFlowList.size(),gameFlowList);
+//            for (int i = 0; i < gameFlowList.size(); i++) {
+//                GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
+//                        .roomId(gameFlowList.get(i).getRoomId())
+//                        .round(gameFlowList.get(i).getRound())
+//                        .keyword(gameFlowList.get(i).getKeyword())
+//                        .keywordIndex(gameFlowList.get(i).getKeywordIndex())
+//                        .webSessionId(gameFlowList.get(i).getWebSessionId())
+//                        .build();
+//
+//                log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
+//                log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
+//                log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
+//
+//                getPreviousImage(gameFlowRequestDto);
+//            }
 
         }
 
@@ -461,38 +416,27 @@ public class GameService {
             throw new CustomException(StatusMsgCode.GAME_NOT_ONLINE);
         }
 
-//        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-//        log.info(">>>>>>> [GameService] - getPreviousImage 의 유저 해쉬맵 : {}", gamerInfo);
-//
-//        GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserIdAndGameRoomId(
-//                Long.valueOf(gamerInfo.get(GamerEnum.ID.key())), requestDto.getRoomId());
-//        log.info(">>>>>>> [GameService] - getPreviousImage 의 GameRoomUser -> 방 번호 : {}", gameRoomUser.getGameRoom());
-//        log.info(">>>>>>> [GameService] - getPreviousImage 의 GameRoomUser -> 플레이 상태 : {}", gameRoomUser.isReadyStatus());
-
         // 현재 GameRoom 의 UserList 가져오기
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
         // 다음순번인 키워드의 index
-        int nextKeywordIndex;
-        if (requestDto.getKeywordIndex() == gameRoomUserList.size()){
-            log.info("requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
-            log.info("gameRoomUserList.size() : {}",gameRoomUserList.size());
-            nextKeywordIndex = requestDto.getKeywordIndex() % gameRoomUserList.size() + 1;
-            log.info("nextKeywordIndex : {}",nextKeywordIndex);
-        }else {
-            nextKeywordIndex = requestDto.getKeywordIndex() + 1;
-            log.info("else 를 통과한 requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
-            log.info("else 를 통과한 nextKeywordIndex : {}",nextKeywordIndex);
-        }
+        int nextKeywordIndex = calculateKeywordIndex(requestDto.getKeywordIndex(), gameRoomUserList.size());
+
+
+//        if (requestDto.getKeywordIndex() == gameRoomUserList.size()){
+//            nextKeywordIndex = requestDto.getKeywordIndex() % gameRoomUserList.size() + 1;
+//        }else {
+//            nextKeywordIndex = requestDto.getKeywordIndex() + 1;
+//        }
 
 
         //  이전 라운드에 어떤 그림 이었는 지 알려줘야 함
 //        int previousRound = requestDto.getRound() - 1;
 //        log.info(">>>>>>> [GameService] - getPreviousImage 의 previousRound -> 이전 라운드 : {}", previousRound);
         GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(
-                            requestDto.getRoomId(),
-                            requestDto.getRound(),
-                            nextKeywordIndex).orElseThrow(
+                requestDto.getRoomId(),
+                requestDto.getRound(),
+                nextKeywordIndex).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_NOT_ONLINE)
         );
         log.info(">>>>>>> [GameService] - getPreviousImage 의 GameFlow 번호 : {}", gameFlow.getId());
@@ -644,8 +588,37 @@ public class GameService {
 //        return adjectiveEntity.getAdjective() + nounEntity.getNoun();
     }
 
+    public void createGameFlowRequestDto(int gameFlowListSize,  List<GameFlow> gameFlowList){
+        for (int i = 0; i < gameFlowListSize; i++) {
+            GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
+                    .roomId(gameFlowList.get(i).getRoomId())
+                    .round(gameFlowList.get(i).getRound())
+                    .keyword(gameFlowList.get(i).getKeyword())
+                    .keywordIndex(gameFlowList.get(i).getKeywordIndex())
+                    .webSessionId(gameFlowList.get(i).getWebSessionId())
+                    .build();
 
+            log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
+            log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
+            log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
 
+            getPreviousKeyword(gameFlowRequestDto);
+        }
+    }
+
+    public int calculateKeywordIndex(int nowKeywordIndex, int maxUserSize){
+
+        // 반환될 다음순번인 키워드의 index
+        int nextKeywordIndex;
+
+        if (nowKeywordIndex == maxUserSize){
+            nextKeywordIndex = nowKeywordIndex % maxUserSize + 1;
+        }else {
+            nextKeywordIndex = nowKeywordIndex + 1;
+        }
+
+        return  nextKeywordIndex;
+    }
 }
 
 //                  // 써야 할 기능
