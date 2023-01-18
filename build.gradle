@@ -60,7 +60,8 @@ dependencies {
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.data:spring-data-redis'
+//    implementation group: 'it.ozimov', name: 'embedded-redis', version: '0.7.2'
+//    implementation 'org.springframework.data:spring-data-redis'
 
     // Json
     implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'

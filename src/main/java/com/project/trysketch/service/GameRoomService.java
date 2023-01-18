@@ -1,5 +1,7 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.chatting.ChatRoom;
+import com.project.trysketch.chatting.ChatRoomRepository;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -35,6 +37,7 @@ public class GameRoomService {
     private final GuestRepository guestRepository;
     private final UserService userService;
     private final SseEmitters sseEmitters;
+    private final ChatRoomRepository chatRoomRepository;
 
     // ============================== 게임방 조회 ==============================
     @Transactional
@@ -52,15 +55,15 @@ public class GameRoomService {
         for (GameRoom gameRoom : rooms){
 
             GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
-                                .id(gameRoom.getId())
-                                .title(gameRoom.getTitle())
-                                .hostNick(gameRoom.getHostNick())
-                                .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
-                                .isPlaying(gameRoom.isPlaying())
-                                .createdAt(gameRoom.getCreatedAt())
-                                .modifiedAt(gameRoom.getModifiedAt())
-                                .randomCode(gameRoom.getRandomCode())
-                                .build();
+                    .id(gameRoom.getId())
+                    .title(gameRoom.getTitle())
+                    .hostNick(gameRoom.getHostNick())
+                    .GameRoomUserCount(gameRoom.getGameRoomUserList().size())
+                    .isPlaying(gameRoom.isPlaying())
+                    .createdAt(gameRoom.getCreatedAt())
+                    .modifiedAt(gameRoom.getModifiedAt())
+                    .randomCode(gameRoom.getRandomCode())
+                    .build();
             gameRoomList.add(gameRoomResponseDto);
         }
 
@@ -129,6 +132,18 @@ public class GameRoomService {
         // 5. 게임 방 DB에 저장 및 입장중인 유저 정보 저장
         gameRoomRepository.save(gameRoom);
         gameRoomUserRepository.save(gameRoomUser);
+
+
+        // 1. 채팅방 객체 생성
+        // 2. 채팅방 서비스를 통해 DB 에 생성
+//        ChatRoom chatRoom = chatRoomService.createChatRoom(gameRoom.getId().toString(), gameRoom.getTitle());
+
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 title : {}", gameRoom.getTitle());
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 id : {}", gameRoom.getId().toString());
+        ChatRoom chatRoom = new ChatRoom();
+        chatRoom.setRoomId(gameRoom.getId().toString());
+        chatRoom.setName(gameRoom.getTitle());
+        chatRoomRepository.saveRoom(chatRoom);
 
         HashMap<String, String> roomInfo = new HashMap<>();
 
@@ -230,9 +245,10 @@ public class GameRoomService {
         // 8. 유저가 나간 방의 UserList 정보 가져오기
         List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findAllByGameRoom(enterGameRoom);
 
-        // 9. 게임 방의 남은 인원이 0명이면 게임 방도 삭제
+        // 9. 게임 방의 남은 인원이 0명이면 게임 방 및 채팅 Room 도 삭제
         if (leftGameRoomUserList.size() == 0){
             gameRoomRepository.delete(enterGameRoom);
+            chatRoomRepository.deleteRoom(enterGameRoom.getId().toString());
         }
 
         // 10. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우

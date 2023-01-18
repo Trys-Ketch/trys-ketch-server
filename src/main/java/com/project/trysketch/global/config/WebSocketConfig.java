@@ -1,5 +1,6 @@
 package com.project.trysketch.global.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -11,9 +12,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 // 2. 작성자 : 안은솔
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 @EnableWebSocketMessageBroker // 문자 채팅용
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-
     // 웹 소켓 연결을 위한 엔드포인트 설정 및 stomp sub/pub 엔드포인트 설정
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -34,4 +35,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setApplicationDestinationPrefixes("/app");
         log.info(">>>>>>>[ws] 메시지 브로커 : {}", registry);
     }
+
 }
