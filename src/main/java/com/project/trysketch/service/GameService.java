@@ -222,14 +222,15 @@ public class GameService {
             sendingOperations.convertAndSend("/topic/game/submit-word/" + requestDto.getRoomId(), message);
 
             // 라운드를 계속 체크해서 라운드가 인원수가 크다면 [결과페이지 이동]
-            if (requestDto.getRound()  == gameRoomUserList.size()){
-                log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
-                Map<String, Object> beforeMessage = new HashMap<>();
-                beforeMessage.put("isResult",true);
-                sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
-            }
+            checkRoundSendMsg(requestDto.getRound(), gameRoomUserList.size(), requestDto);
+//            if (requestDto.getRound()  == gameRoomUserList.size()){
+//                log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
+//                Map<String, Object> beforeMessage = new HashMap<>();
+//                beforeMessage.put("isResult",true);
+//                sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
+//            } // 중복 코드 분리 1.18 리팩토링 김재영
 
-            createGameFlowRequestDto(gameFlowList.size(),gameFlowList);
+            createDtoCallPreviousKeyword(gameFlowList.size(),gameFlowList);
 //            for (int i = 0; i < gameFlowList.size(); i++) {
 //                GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
 //                        .roomId(gameFlowList.get(i).getRoomId())
@@ -367,21 +368,21 @@ public class GameService {
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
         if (gameFlowList.size() == gameRoomUserList.size()) {
-            log.info("<<<<<<<<<<< 모두가 제출했을 때, if문 통과함 : {}", gameFlowList.size() == gameRoomUserList.size());
             Map<String, Object> message = new HashMap<>();
             message.put("completeSubmit", true);
             sendingOperations.convertAndSend("/topic/game/submit-word/" + requestDto.getRoomId(), message);
 
             // 라운드를 계속 체크해서 라운드가 인원수가 크다면 [결과페이지 이동]
-            if (requestDto.getRound()  == gameRoomUserList.size()){
-                log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
-                Map<String, Object> beforeMessage = new HashMap<>();
-                beforeMessage.put("isResult",true);
-                sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
-            }
+            checkRoundSendMsg(requestDto.getRound(), gameRoomUserList.size(), requestDto);
+//            if (requestDto.getRound()  == gameRoomUserList.size()){
+//                log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
+//                Map<String, Object> beforeMessage = new HashMap<>();
+//                beforeMessage.put("isResult",true);
+//                sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
+//            } // 중복 코드 분리 1.18 리팩토링 김재영
 
             // 전체 유저에게 보내줌 뭐를? requestDto
-            createGameFlowRequestDto(gameFlowList.size(),gameFlowList);
+            createDtoCallPreviousKeyword(gameFlowList.size(),gameFlowList);
 //            for (int i = 0; i < gameFlowList.size(); i++) {
 //                GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
 //                        .roomId(gameFlowList.get(i).getRoomId())
@@ -556,7 +557,7 @@ public class GameService {
         log.info(">>>>>>> [GameService] - getRandomKeyword 의 webSessionId -> : {}", gameRoomUser.getWebSessionId());
     }
 
-    public void createGameFlowRequestDto(int gameFlowListSize,  List<GameFlow> gameFlowList){
+    public void createDtoCallPreviousKeyword(int gameFlowListSize,  List<GameFlow> gameFlowList){
         for (int i = 0; i < gameFlowListSize; i++) {
             GameFlowRequestDto gameFlowRequestDto = GameFlowRequestDto.builder()
                     .roomId(gameFlowList.get(i).getRoomId())
@@ -586,6 +587,15 @@ public class GameService {
         }
 
         return  nextKeywordIndex;
+    }
+
+    public void checkRoundSendMsg(int nowRound, int maxUserSize, GameFlowRequestDto requestDto){
+        if (nowRound == maxUserSize) {
+            log.info(">>>>>>>> 마지막 라운드 : {}", requestDto.getRound());
+            Map<String, Object> beforeMessage = new HashMap<>();
+            beforeMessage.put("isResult", true);
+            sendingOperations.convertAndSend("/topic/game/before-result/" + requestDto.getRoomId(), beforeMessage);
+        }
     }
 }
 //        (키워드인덱스, round)
