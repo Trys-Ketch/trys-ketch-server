@@ -42,6 +42,7 @@ public class UserService {
     private final GuestRepository guestRepository;
     private final ThumbImgRepository thumbImgRepository;
     private static int IMG_MAXIMUM = 3;
+    private static int IMG_NUM = 0;
 
 
     // 회원가입
@@ -158,8 +159,8 @@ public class UserService {
 
     // 랜덤 이미지 불러오기
     public String getRandomThumbImg() {
-        int randomNum = (int) (Math.random() * IMG_MAXIMUM + 1);
-        ThumbImg thumbImg = thumbImgRepository.findById(randomNum).orElseThrow(
+        IMG_NUM = (IMG_NUM == IMG_MAXIMUM) ? 1 : IMG_NUM + 1;
+        ThumbImg thumbImg = thumbImgRepository.findById(IMG_NUM).orElseThrow(
                 () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
         );
         return thumbImg.getImgUrl();
