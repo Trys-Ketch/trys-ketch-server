@@ -55,8 +55,7 @@ public class UserController {
 
 
         // code: 카카오 서버로부터 받은 인가 코드
-        kakaoService.kakaoLogin(code, response);
-        return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
+        return ResponseEntity.ok(kakaoService.kakaoLogin(code, response));
     }
 
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
