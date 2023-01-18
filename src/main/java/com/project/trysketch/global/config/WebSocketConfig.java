@@ -24,9 +24,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // stomp 접속 주소 url => /ws/chat
-        registry.addEndpoint("/ws")  // 연결될 Endpoint
-                .setAllowedOriginPatterns("*");  // CORS 설정
-//                .withSockJS();                  // SockJS 설정
+        registry.addEndpoint("/ws")      // 연결될 Endpoint
+                .setAllowedOriginPatterns("*")  // CORS 설정
+                .withSockJS()                   // SockJS 설정
+                .setHeartbeatTime(1000);        // 연결상태 확인 주기
         log.info(">>>>>>>[ws] 웹소켓 연결 : {}", registry);
     }
 

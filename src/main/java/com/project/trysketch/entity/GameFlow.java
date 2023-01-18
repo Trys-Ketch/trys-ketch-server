@@ -38,4 +38,7 @@ public class GameFlow {
 
     @Column(nullable = false)
     private Long roomId;
+
+    @Column
+    private String webSessionId;
 }

@@ -12,6 +12,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.Map;
 
 // 1. 기능    : 게임 방 컨트롤러
@@ -26,13 +27,13 @@ public class GameRoomController {
 
     // 게임 방 전체 조회 페이징 처리
     @GetMapping("/rooms")
-    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 10, sort = "createdAt" , direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Map<String, Object>> getAllGameRoom(@PageableDefault(size = 5, sort = "createdAt" , direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(gameRoomService.getAllGameRoom(pageable));
     }
 
     // 게임 방 생성
     @PostMapping("/room")
-    public ResponseEntity<DataMsgResponseDto> createGameRoom(@RequestBody GameRoomRequestDto gameRoomRequestDto,
+    public ResponseEntity<DataMsgResponseDto> createGameRoom(@RequestBody @Valid GameRoomRequestDto gameRoomRequestDto,
                                                              HttpServletRequest request) {
         log.info(">>> 메인페이지 이동 - 방 이름 : {},", gameRoomRequestDto.getTitle());
         return ResponseEntity.ok(gameRoomService.createGameRoom(gameRoomRequestDto, request));
@@ -40,7 +41,7 @@ public class GameRoomController {
 
     // 게임 방 입장
     @PostMapping("/room/enter/{randomCode}")
-    public ResponseEntity<MsgResponseDto> enterGameRoom(@PathVariable String randomCode,
+    public ResponseEntity<DataMsgResponseDto> enterGameRoom(@PathVariable String randomCode,
                                                         HttpServletRequest request) {
         log.info(">>> 방 입장 - 방 randomCode : {}, 유저 id : {}", randomCode, request);
         return ResponseEntity.ok(gameRoomService.enterGameRoom(randomCode, request));
