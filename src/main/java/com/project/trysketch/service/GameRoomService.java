@@ -239,7 +239,7 @@ public class GameRoomService {
             return new MsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
-        // 7. 해당 유저 를 GameRoomUser 에서 삭제
+        // 7. 해당 유저를 GameRoomUser 에서 삭제
         gameRoomUserRepository.delete(gameRoomUser);
 
         // 8. 유저가 나간 방의 UserList 정보 가져오기
@@ -253,36 +253,38 @@ public class GameRoomService {
 
         // 10. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
         if (Long.valueOf(extInfo.get(GamerEnum.ID.key())).equals(enterGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
-            Long hostId = null;
-            String hostNick = null;
 
             // 11. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
             Long newHostId = leftGameRoomUserList.get(0).getUserId();
 
             // 12. UserId 를 들고 GameRoomUser 정보 가져오기
             GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
-            Guest guestHost = guestRepository.findById(String.valueOf(newHostId)).orElse(null);
+//            Guest guestHost = guestRepository.findById(String.valueOf(newHostId)).orElse(null);
 
-            // 13. null 값 여부로 회원, 비회원 판단후 host 에 닉네임 넣기
-            if (userHost != null) {
-                hostId = userHost.getUserId();
-                hostNick = userHost.getNickname();
-            } else if (guestHost != null) {
-                hostId = Long.valueOf(guestHost.getGuestId());
-                hostNick = guestHost.getNickname();
-            }
+            // 13. gameRoomUser 정보로 새로운 Host 의 id 와 nickname 가져오기
+//            if (userHost != null) {
+                Long hostId = userHost.getUserId();
+                String hostNick = userHost.getNickname();
+//            } else if (guestHost != null) {
+//                hostId = Long.valueOf(guestHost.getGuestId());
+//                hostNick = guestHost.getNickname();
+//            }
 
-            // 14. 새로운 Host 가 선정되어 GameRoom 정보 빌드
-            GameRoom updateGameRoom = GameRoom.builder()
-                    .id(enterGameRoom.getId())
-                    .hostId(hostId)
-                    .hostNick(hostNick)
-                    .title(enterGameRoom.getTitle())
-                    .isPlaying(false)
-                    .build();
+            // 14. 새로운 Host 가 선정되어 id 와 nickname 을 업데이트 해주고
+            //     게임 방의 isPlaying 을 false 로 변경
+            //     새로운 Host 의 readyStatus 를 true 로 변경
+//            GameRoom updateGameRoom = GameRoom.builder()
+//                    .id(enterGameRoom.getId())
+//                    .hostId(hostId)
+//                    .hostNick(hostNick)
+//                    .title(enterGameRoom.getTitle())
+//                    .isPlaying(false)
+//                    .build();
+            enterGameRoom.GameRoomUpdate(hostId, hostNick, false);
+            userHost.update(true);
 
             // 15. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
-            gameRoomRepository.save(updateGameRoom);
+//            gameRoomRepository.save(updateGameRoom);
 
             // 16. SSE event 생성
             sseEmitters.changeRoom(getrooms());
