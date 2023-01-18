@@ -16,20 +16,21 @@ public class RedisSubscriber {
     private final SimpMessageSendingOperations messagingTemplate;
 
 
-    // Redis에서 메시지가 발행(publish)되면 대기하고 있던 Redis Subscriber 가 해당 메시지를 받아 처리.
-    // 리스너가 대기하고 있다가 메세지 오면 RedisSubscriber.sendMessage가 수행됨
+    // Redis 에서 메시지가 발행(publish)되면 대기하고 있던 Redis Subscriber 가 해당 메시지를 받아 처리.
+    // 리스너가 대기하고 있다가 메세지 오면 RedisSubscriber.sendMessage 가 수행됨
 
     public void sendMessage(String publishMessage) {
         try {
             log.info(">>>>>>> 위치 : RedisSubscriber 의 sendMessage 메서드 / publishMessage : {}", publishMessage);
 
-            // JSON 파일을 객체로 deserialization하기 위해 ObjectMapper의 readValue() 메서드 사용
+            // JSON 파일을 객체로 deserialization 하기 위해 ObjectMapper 의 readValue() 메서드 사용
             ChatMessage chatMessage = objectMapper.readValue(publishMessage, ChatMessage.class);
-            log.info(">>>>>>> 위치 : RedisSubscriber 의 chatMessage 메서드 / chatMessage : {}", chatMessage);
+            log.info(">>>>>>> 위치 : RedisSubscriber 의 sendMessage 메서드 / chatMessage : {}", chatMessage);
 
             // 채팅방을 구독한 클라이언트에게 메시지 발송
             messagingTemplate.convertAndSend("/sub/chat/room/" + chatMessage.getRoomId(), chatMessage);
-                                                        // topic
+            log.info(">>>>>>> 위치 : RedisSubscriber 의 sendMessage 메서드 / 주소 : /sub/chat/room/{}", chatMessage.getRoomId());
+
         } catch (Exception e) {
             log.error("Exception {}", e);
         }

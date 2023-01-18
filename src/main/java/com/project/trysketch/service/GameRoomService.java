@@ -2,6 +2,7 @@ package com.project.trysketch.service;
 
 import com.project.trysketch.chatting.ChatRoom;
 import com.project.trysketch.chatting.ChatRoomRepository;
+//import com.project.trysketch.chatting.ChatRoomService;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -36,6 +37,7 @@ public class GameRoomService {
     private final GuestRepository guestRepository;
     private final UserService userService;
     private final ChatRoomRepository chatRoomRepository;
+//    private final ChatRoomService chatRoomService;
 
     // ============================== 게임방 조회 ==============================
     @Transactional
@@ -131,11 +133,15 @@ public class GameRoomService {
         gameRoomUserRepository.save(gameRoomUser);
         
         
+        // 1. 채팅방 객체 생성
+        // 2. 채팅방 서비스를 통해 DB 에 생성
+//        ChatRoom chatRoom = chatRoomService.createChatRoom(gameRoom.getId().toString(), gameRoom.getTitle());
 
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 title : {}", gameRoom.getTitle());
+        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 id : {}", gameRoom.getId().toString());
         ChatRoom chatRoom = new ChatRoom();
-        chatRoom.create(gameRoom.getTitle(), gameRoom.getId().toString());
-        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom의 title : {}", gameRoom.getTitle());
-        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom의 id : {}", gameRoom.getId().toString());
+        chatRoom.setRoomId(gameRoom.getId().toString());
+        chatRoom.setName(gameRoom.getTitle());
         chatRoomRepository.saveRoom(chatRoom);
 
         HashMap<String, String> roomInfo = new HashMap<>();

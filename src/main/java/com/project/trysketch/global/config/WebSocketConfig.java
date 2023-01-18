@@ -18,7 +18,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker // 문자 채팅용
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    private final StompHandler stompHandler;
+//    private final StompHandler stompHandler;
 
     // 웹 소켓 연결을 위한 엔드포인트 설정 및 stomp sub/pub 엔드포인트 설정
     @Override
@@ -40,8 +40,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         log.info(">>>>>>>[ws] 메시지 브로커 : {}", registry);
     }
 
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(stompHandler);
-    }
+//    @Override
+//    public void configureClientInboundChannel(ChannelRegistration registration) {
+//        registration.interceptors(stompHandler);
+//    }
 }

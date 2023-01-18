@@ -1,5 +1,6 @@
 package com.project.trysketch.chatting;
 
+import com.project.trysketch.chatting.ChatRoom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.HashOperations;
@@ -35,11 +36,13 @@ public class ChatRoomRepository {
 
     // 채팅룸 생성
     public ChatRoom saveRoom(ChatRoom chatRoom){
-        log.info(">>>>>>> 위치 : ChatRoomRepository 의 saveRoom 메서드 / chatRoom.getRoomId : {}", chatRoom.getRoomId());
-        log.info(">>>>>>> 위치 : ChatRoomRepository 의 saveRoom 메서드 / chatRoom.getName : {}", chatRoom.getName());
+        log.info(">>>>>>> 위치 : ChatRoomRepository 의 saveRoom 메서드 / 만들어진 채팅방 ID : {}", chatRoom.getRoomId());
+        log.info(">>>>>>> 위치 : ChatRoomRepository 의 saveRoom 메서드 / 만들어진 채팅방 NAME : {}", chatRoom.getName());
+
         opsHashChatRoom.put(CHAT_ROOMS, chatRoom.getRoomId(), chatRoom);
         return chatRoom;
     }
+
     // 채팅룸 삭제
     public void deleteRoom(String chatRoomId){
         opsHashChatRoom.delete(CHAT_ROOMS, chatRoomId);

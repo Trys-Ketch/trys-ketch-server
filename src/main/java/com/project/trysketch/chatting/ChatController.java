@@ -2,6 +2,7 @@ package com.project.trysketch.chatting;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 
@@ -9,13 +10,17 @@ import org.springframework.stereotype.Controller;
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
-    private final ChatService ChatService;
 
+    private final RedisPublisher RedisPublisher;
 
     @MessageMapping("/chat/message")
     public void message(ChatMessage message) {
-        log.info(">>>>>>> 위치 : ChatController 의 message 메서드 / message : {}", message);
-        ChatService.message(message);
-    }
+        RedisPublisher.message(message);
 
+        log.info(">>>>>>> 위치 : ChatController 의 message API / 메시지 타입 : {}", message.getType());
+        log.info(">>>>>>> 위치 : ChatController 의 message API / 방 번호 : {}", message.getRoomId());
+        log.info(">>>>>>> 위치 : ChatController 의 message API / GAMER ID : {}", message.getGamerId());
+        log.info(">>>>>>> 위치 : ChatController 의 message API / GAMER NICK : {}", message.getGamerNick());
+        log.info(">>>>>>> 위치 : ChatController 의 message API / 메시지 내용 : {}", message.getMessage());
+    }
 }

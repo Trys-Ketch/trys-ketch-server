@@ -13,7 +13,6 @@ import org.springframework.data.redis.cache.CacheKeyPrefix;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisKeyValueAdapter.ShadowCopy;
@@ -48,10 +47,9 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String password;
 
-    public RedisConfig() {
     // 단일 Topic 사용을 위한 Bean 설정
     @Bean
-        public ChannelTopic channelTopic() {
+    public ChannelTopic channelTopic() {
         return new ChannelTopic("chatroom");
     }
 
@@ -75,7 +73,6 @@ public class RedisConfig {
     public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "sendMessage");
     }
-
 
     /*
         Lettuce: Multi-Thread 에서 Thread-Safe 한 Redis 클라이언트로 netty 에 의해 관리된다.
@@ -123,8 +120,8 @@ public class RedisConfig {
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
 
         // Hash 를 사용할 경우 시리얼라이저
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
+//        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
         // 모든 경우
         // redisTemplate.setDefaultSerializer(new StringRedisSerializer());

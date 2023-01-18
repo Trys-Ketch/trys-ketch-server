@@ -91,13 +91,13 @@ public class GameController {
     // 최초 랜덤 제시어 하나 가져오기
 //      @MessageMapping("/test/random") // 너무 길어서 줄임
 //      @GetMapping("/test/random") // 이거는 가능 한 걸까...테스트 해봤는데 안됩니다
-    @MessageMapping("/test/start/before/random")
-    public void getRandomKeyword(GameFlowRequestDto requestDto){
-        log.info(">>>>>>>>>>>> GameControlloer - getRandomKeyword 실행");
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
-        log.info(">>>>>> {} : 내가 누구냐",requestDto.getToken());
-        gameService.getRandomKeyword(requestDto);
-    }
+//    @MessageMapping("/test/start/before/random")
+//    public void getRandomKeyword(GameFlowRequestDto requestDto){
+//        log.info(">>>>>>>>>>>> GameControlloer - getRandomKeyword 실행");
+//        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+//        log.info(">>>>>> {} : 내가 누구냐",requestDto.getToken());
+//        gameService.getRandomKeyword(requestDto);
+//    }
 
 
     // 결과 페이지
