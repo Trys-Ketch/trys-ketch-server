@@ -3,6 +3,8 @@ package com.project.trysketch.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.trysketch.global.dto.MsgResponseDto;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.dto.request.KakaoUserRequstDto;
 import com.project.trysketch.entity.User;
@@ -33,7 +35,7 @@ public class KakaoService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
-    public void kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+    public MsgResponseDto kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         String randomNickname = userService.RandomNick();
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
@@ -48,6 +50,8 @@ public class KakaoService {
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), randomNickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+
+        return new MsgResponseDto(StatusMsgCode.LOG_IN);
     }
 
     // 1. "인가 코드"로 "액세스 토큰" 요청
