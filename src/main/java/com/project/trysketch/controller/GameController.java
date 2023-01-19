@@ -2,17 +2,13 @@ package com.project.trysketch.controller;
 
 import com.project.trysketch.dto.request.GameFlowRequestDto;
 import com.project.trysketch.dto.response.ImageResponseDto;
-import com.project.trysketch.dto.response.KeywordResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.service.GameService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
 // 1. 기능    : 게임 컨트롤러
@@ -20,7 +16,6 @@ import java.io.IOException;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-//@RequestMapping("/api")
 public class GameController {
 
     private final GameService gameService;
@@ -31,7 +26,7 @@ public class GameController {
     // 1.게임시작
     @MessageMapping("/game/start")
     public ResponseEntity<MsgResponseDto> startGame(GameFlowRequestDto requestDto) {
-        log.info(">>>>>> GameController - startGame 실행");
+        log.info(">>>>>>>>>>>> GameController - startGame 실행");
         log.info(">>> 게임이 시작되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
         return ResponseEntity.ok(gameService.startGame(requestDto));
     }
@@ -57,14 +52,14 @@ public class GameController {
     }
 
     // 4. 그림그리는 라운드 시작  ← 이전 라운드의 단어 response 로 줘야함! (GetMapping)
-    @MessageMapping("/game/before-word")
-    public void getPreviousKeyword(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - getPreviousKeyword 실행");
-        log.info(">>>>>> {} : 이번 라운드", requestDto.getRound());
-        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
-//        return gameService.getPreviousKeyword(requestDto);
-    }
+//    @MessageMapping("/game/before-word")
+//    public void getPreviousKeyword(GameFlowRequestDto requestDto) {
+//        log.info(">>>>>>>>>>>> GameController - getPreviousKeyword 실행");
+//        log.info(">>>>>> {} : 이번 라운드", requestDto.getRound());
+//        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
+//        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+////        return gameService.getPreviousKeyword(requestDto);
+//    } // 사용안함 1.18 리팩토링
 
     // 5. 그림 제출하는 라운드 끝났을 때 for Test!
 //    @PostMapping(value = "/test/finish/{roomId}/image", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
@@ -77,14 +72,14 @@ public class GameController {
     }
 
     // 6. 단어적는 라운드 시작  ← 이전 라운드의 그림 response 로 줘야함! (GepMapping) → 3번으로 돌아감
-    @MessageMapping("/game/before-image")
-    public ImageResponseDto getPreviousImage(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - getPreviousImage 실행");
-        log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
-        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
-        return gameService.getPreviousImage(requestDto);
-    }
+//    @MessageMapping("/game/before-image")
+//    public ImageResponseDto getPreviousImage(GameFlowRequestDto requestDto) {
+//        log.info(">>>>>>>>>>>> GameController - getPreviousImage 실행");
+//        log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
+//        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
+//        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
+//        return gameService.getPreviousImage(requestDto);
+//    } // 사용안함 1.18 리팩토링
 
     // 7. 결과 페이지
     @MessageMapping("/game/result")

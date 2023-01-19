@@ -43,4 +43,10 @@ public class GameRoom extends Timestamped {
     public void GameRoomStatusUpdate(boolean isPlaying) {
         this.isPlaying = isPlaying;
     }
+
+    public void GameRoomUpdate(Long hostId, String hostNick, boolean isPlaying) {
+        this.hostId = hostId;
+        this.hostNick = hostNick;
+        this.isPlaying = isPlaying;
+    }
 }
