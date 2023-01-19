@@ -1,6 +1,6 @@
 package com.project.trysketch.redis.config;
 
-import com.project.trysketch.chatting.RedisSubscriber;
+import com.project.trysketch.chatting.ChatSubscriber;
 import com.project.trysketch.redis.entity.CacheKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
@@ -63,7 +63,7 @@ public class RedisConfig {
 
     // 실제 메시지를 처리하는 subscriber 설정 추가
     @Bean
-    public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
+    public MessageListenerAdapter listenerAdapter(ChatSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "sendMessage");
     }
 

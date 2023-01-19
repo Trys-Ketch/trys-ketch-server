@@ -1,5 +1,6 @@
 package com.project.trysketch.chatting;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,12 +10,21 @@ import lombok.Setter;
 @Setter
 public class ChatMessage {
     public enum MessageType {
-        ENTER, TALK
+        ENTER, TALK, LEAVE
     }
 
     private MessageType type;   // 메시지 타입
     private String roomId;      // 방번호
-    private String gamerId;     // 메시지 보낸 사람 ID
-    private String gamerNick;   // 메시지 보낸 사람 닉네임
-    private String message;     // 메시지
+    private String userId;      // 메시지 보낸 사람 ID
+    private String nickname;    // 메시지 보낸 사람 닉네임
+    private String content;     // 메시지
+
+    @Builder
+    public ChatMessage(MessageType type, String roomId, String userId, String nickname, String content) {
+        this.type = type;
+        this.roomId = roomId;
+        this.userId = userId;
+        this.nickname = nickname;
+        this.content = content;
+    }
 }

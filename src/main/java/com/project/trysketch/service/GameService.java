@@ -147,7 +147,7 @@ public class GameService {
         message.put("end", true);
 
         // 구독하고 있는 User 에게 start 메세지 전송
-        log.info(">>>>>>> [GameService]-endgame 의 message : {}", message);
+        log.info(">>>>>>> [GameService]-endgame 의 content : {}", message);
         sendingOperations.convertAndSend("/topic/game/end/" + requestDto.getRoomId(), message);
 
         // 게임 종료
@@ -279,7 +279,7 @@ public class GameService {
 //            log.info("else 를 통과한 requestDto.getKeywordIndex() : {}",requestDto.getKeywordIndex());
 //            log.info("else 를 통과한 nextKeywordIndex : {}",nextKeywordIndex);
 //        } // 중복 코드 분리 1.18 리팩토링 김재영
-        
+
         GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(
                 requestDto.getRoomId(),
                 requestDto.getRound(),
@@ -424,6 +424,7 @@ public class GameService {
 //                getPreviousImage(gameFlowRequestDto);
 //            } // 중복 코드 분리 1.18 리팩토링 김재영
 
+            }
         }
     }
 

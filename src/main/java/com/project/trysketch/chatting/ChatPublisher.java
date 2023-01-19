@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class RedisPublisher {
+public class ChatPublisher {
     private final RedisTemplate<String, Object> redisTemplate;
     private final ChannelTopic channelTopic;
 
@@ -20,11 +20,11 @@ public class RedisPublisher {
         redisTemplate.convertAndSend(channelTopic.getTopic(), message);
 
         log.info(">>>>>>> 위치 : RedisPublisher 의 channelTopic 메서드 / getTopic() : {}", channelTopic.getTopic());
-        log.info(">>>>>>> 위치 : RedisPublisher 의 message 메서드 / 메시지 타입 : {}", message.getType());
-        log.info(">>>>>>> 위치 : RedisPublisher 의 message 메서드 / 방 번호 : {}", message.getRoomId());
-        log.info(">>>>>>> 위치 : RedisPublisher 의 message 메서드 / GAMER ID : {}", message.getGamerId());
-        log.info(">>>>>>> 위치 : RedisPublisher 의 message 메서드 / GAMER NICK : {}", message.getGamerNick());
-        log.info(">>>>>>> 위치 : RedisPublisher 의 message 메서드 / 메시지 내용 : {}", message.getMessage());
+        log.info(">>>>>>> 위치 : RedisPublisher 의 content 메서드 / 메시지 타입 : {}", message.getType());
+        log.info(">>>>>>> 위치 : RedisPublisher 의 content 메서드 / 방 번호 : {}", message.getRoomId());
+        log.info(">>>>>>> 위치 : RedisPublisher 의 content 메서드 / GAMER ID : {}", message.getUserId());
+        log.info(">>>>>>> 위치 : RedisPublisher 의 content 메서드 / GAMER NICK : {}", message.getNickname());
+        log.info(">>>>>>> 위치 : RedisPublisher 의 content 메서드 / 메시지 내용 : {}", message.getContent());
     }
 }
 

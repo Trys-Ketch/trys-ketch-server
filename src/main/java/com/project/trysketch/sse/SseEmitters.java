@@ -20,13 +20,13 @@ public class SseEmitters {
     // SSE emitter 등록 메서드
     SseEmitter add(SseEmitter emitter) {
         this.emitters.add(emitter);
-        log.info("new emitter added: {}", emitter);
-        log.info("emitter list size: {}", emitters.size());
-        log.info("emitter list: {}", emitters);
+//        log.info("new emitter added: {}", emitter);
+//        log.info("emitter list size: {}", emitters.size());
+//        log.info("emitter list: {}", emitters);
 
         // 비동기요청 완료시 콜백 등록
         emitter.onCompletion(() -> {
-            log.info("onCompletion callback");
+//            log.info("onCompletion callback");
 
             // 타임아웃 발생시 브라우저에 재요청 연결 보내는데, 이때 새로운 객체 다시 생성하므로 기존의 Emitter객체 리스트에서 삭제
             this.emitters.remove(emitter);
@@ -34,7 +34,7 @@ public class SseEmitters {
 
         // 타임아웃 발생시 콜백 등록
         emitter.onTimeout(() -> {
-            log.info("onTimeout callback");
+//            log.info("onTimeout callback");
             emitter.complete();
         });
 

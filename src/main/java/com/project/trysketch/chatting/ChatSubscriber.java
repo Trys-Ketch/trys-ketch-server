@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class RedisSubscriber {
-    // redis에 메세지 발행이 될 때까지 대기하다가 메세지가 발행되면 해당 메세지를 읽어 처리하는 리스너
+public class ChatSubscriber {
+    // redis 에 메세지 발행이 될 때까지 대기하다가 메세지가 발행되면 해당 메세지를 읽어 처리하는 리스너
 
     private final ObjectMapper objectMapper;
     private final SimpMessageSendingOperations messagingTemplate;
