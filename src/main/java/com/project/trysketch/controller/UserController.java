@@ -3,7 +3,6 @@ package com.project.trysketch.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.dto.request.SignInRequestDto;
@@ -62,22 +61,19 @@ public class UserController {
     // 비회원 로그인
     @PostMapping("/guest")
     public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody GuestNickRequestDto requestDto) {
-        redisService.guestLogin(response, requestDto);
-        return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
+        return ResponseEntity.ok(redisService.guestLogin(response, requestDto));
     }
 
     // 랜덤 닉네임 받아오는 부분
     @GetMapping("/random-nick")
     public ResponseEntity<MsgResponseDto> guestNick() {
-        String nickname = userService.RandomNick();
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), nickname));
+        return ResponseEntity.ok(userService.RandomNick());
     }
 
     // 랜덤 이미지 받아오는 부분
     @GetMapping("/random-img")
     public ResponseEntity<MsgResponseDto> randomImg() {
-        String randomImg = userService.getRandomThumbImg();
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), randomImg));
+        return ResponseEntity.ok(userService.getRandomThumbImg());
     }
 
     // ======================== 회원 & 비회원 정보 조회 ========================
