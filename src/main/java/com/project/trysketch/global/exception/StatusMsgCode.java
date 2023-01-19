@@ -10,13 +10,14 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum StatusMsgCode {
 
-    /* 400 BAD_REQUEST : 잘못된 요청 */
+    /* 회원, 비회원 관련 Status 메시지 코드 */
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "회원을 찾을 수 없습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     EXIST_USER(HttpStatus.BAD_REQUEST, "중복된 이메일입니다."),
     EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
     BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "형식이 맞지 않습니다."),
     INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
+    NOT_FOUND_NICK(HttpStatus.BAD_REQUEST, "닉네임을 찾을 수 없습니다"),
 
 
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
@@ -33,13 +34,13 @@ public enum StatusMsgCode {
     NOT_STARTED_YET(HttpStatus.BAD_REQUEST,"아직 게임이 시작되지 않았습니다"),
 
 
-    /* 409 CONFLICT : Resource의 현재 상태와 충돌, 보통 중복된 데이터 존재 */
+    /* Resource 의 현재 상태와 충돌 관련 Status 메시지 코드*/
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "데이터가 이미 존재합니다."),
     DUPLICATE_USER(HttpStatus.CONFLICT, "유저가 이미 존재합니다."),
     ONE_MAN_ONE_ROOM(HttpStatus.CONFLICT, "이미 접속중인 방이 있습니다"),
 
 
-    /* 200 SUCCESS */
+    /* 정상 처리 관련 Status 메시지 코드 */
     OK(HttpStatus.OK,"요청이 정상적으로 처리되었습니다"),
     SUCCESS_ENTER_GAME(HttpStatus.OK,"성공적으로 방에 입장하셨습니다"),
     SUCCESS_EXIT_GAME(HttpStatus.OK,"성공적으로 방에서 퇴장하셨습니다"),
