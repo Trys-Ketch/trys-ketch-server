@@ -156,7 +156,7 @@ public class GameService {
         message.put("end", true);
 
         // 구독하고 있는 User 에게 start 메세지 전송
-        log.info(">>>>>>> [GameService]-endgame 의 message : {}", message);
+        log.info(">>>>>>> [GameService]-endgame 의 content : {}", message);
         sendingOperations.convertAndSend("/topic/game/end/" + requestDto.getRoomId(), message);
 
         // 게임 종료
@@ -261,13 +261,13 @@ public class GameService {
                         .webSessionId(gameFlowList.get(i).getWebSessionId())
                         .build();
 
-            log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
-            log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
-            log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
-            getPreviousKeyword(gameFlowRequestDto);
+                log.info(">>>>>>> 여기가 진짜 이전 키워드 : {}", gameFlowRequestDto.getKeyword());
+                log.info(">>>>>>> 여기가 진짜 이전 키워드 번호 : {}", gameFlowRequestDto.getKeywordIndex());
+                log.info(">>>>>>> 제시어 보낸 webSessionId : {}", gameFlowRequestDto.getWebSessionId());
+                getPreviousKeyword(gameFlowRequestDto);
             }
         }
-//            sendingOperations.convertAndSend("/queue/game/before-word/" + gameRoomUserList.getWebSessionId(), message);
+//            sendingOperations.convertAndSend("/queue/game/before-word/" + gameRoomUserList.getWebSessionId(), content);
 
 
 //        return new MsgResponseDto(StatusMsgCode.SUBMIT_KEYWORD_DONE);
@@ -324,9 +324,9 @@ public class GameService {
 //        }
 //        int previousRound = requestDto.getRound() - 1;
         GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(
-                        requestDto.getRoomId(),
-                        requestDto.getRound(),
-                        nextKeywordIndex).orElseThrow(
+                requestDto.getRoomId(),
+                requestDto.getRound(),
+                nextKeywordIndex).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_NOT_ONLINE)
         );
         log.info(">>>>>>> [GameService] - getPreviousKeyword 의 GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
@@ -343,7 +343,7 @@ public class GameService {
         message.put("keyword", gameFlow.getKeyword());
         // 요청한 유저가 받을 다음 순번의 키워드의 index
         message.put("keywordIndex", nextKeywordIndex);
-//        message.put("nowRound", requestDto.getRound());
+//        content.put("nowRound", requestDto.getRound());
 
 
         sendingOperations.convertAndSend("/queue/game/before-word/" + requestDto.getWebSessionId(), message);
@@ -490,9 +490,9 @@ public class GameService {
 //        int previousRound = requestDto.getRound() - 1;
 //        log.info(">>>>>>> [GameService] - getPreviousImage 의 previousRound -> 이전 라운드 : {}", previousRound);
         GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(
-                            requestDto.getRoomId(),
-                            requestDto.getRound(),
-                            nextKeywordIndex).orElseThrow(
+                requestDto.getRoomId(),
+                requestDto.getRound(),
+                nextKeywordIndex).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_NOT_ONLINE)
         );
         log.info(">>>>>>> [GameService] - getPreviousImage 의 GameFlow 번호 : {}", gameFlow.getId());
@@ -577,7 +577,7 @@ public class GameService {
         message.put("isHost", isHost);
 
         sendingOperations.convertAndSend("/queue/game/result/" + requestDto.getWebSessionId(), message);
-//        sendingOperations.convertAndSend("/topic/game/result/" + requestDto.getRoomId(), message);
+//        sendingOperations.convertAndSend("/topic/game/result/" + requestDto.getRoomId(), content);
 
         return listlist;
     }
@@ -629,16 +629,16 @@ public class GameService {
 //        NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
 
         // JSON 형태로 가공
-//        Map<String, String> message = new HashMap<>();
-//        message.put("keyword", adjectiveEntity.getAdjective() + nounEntity.getNoun());
+//        Map<String, String> content = new HashMap<>();
+//        content.put("keyword", adjectiveEntity.getAdjective() + nounEntity.getNoun());
 
 
         log.info(">>>>>>> [GameService] - getRandomKeyword 의 webSessionId -> : {}", gameRoomUser.getWebSessionId());
-//        log.info(">>>>>>> [GameService] - getRandomKeyword 의 keyword -> : {}", message);
+//        log.info(">>>>>>> [GameService] - getRandomKeyword 의 keyword -> : {}", content);
 
-//        sendingOperations.convertAndSendToUser(gameRoomUser.getWebSessionId(), "/queue/game", message);
+//        sendingOperations.convertAndSendToUser(gameRoomUser.getWebSessionId(), "/queue/game", content);
 
-//        sendingOperations.convertAndSend("/topic/game/" + requestDto.getRoomId(), message);
+//        sendingOperations.convertAndSend("/topic/game/" + requestDto.getRoomId(), content);
 
         // 형용사 + 명사 만들어서 리턴
 //        return adjectiveEntity.getAdjective() + nounEntity.getNoun();

@@ -1,5 +1,6 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.chatting.ChatMessage;
 import com.project.trysketch.chatting.ChatRoom;
 import com.project.trysketch.chatting.ChatRoomRepository;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +40,7 @@ public class GameRoomService {
     private final UserService userService;
     private final SseEmitters sseEmitters;
     private final ChatRoomRepository chatRoomRepository;
+    private final SimpMessageSendingOperations msgOperations;
 
     // ============================== 게임방 조회 ==============================
     @Transactional
@@ -239,6 +242,24 @@ public class GameRoomService {
             return new MsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
         }
 
+
+        ChatMessage chatMessage = ChatMessage.builder()
+                .type(ChatMessage.MessageType.LEAVE)
+                .roomId(enterGameRoom.getId().toString())
+                .userId(gameRoomUser.getUserId().toString())
+                .nickname(gameRoomUser.getNickname())
+                .content(String.format("%s 님이 퇴장하셨습니다.", gameRoomUser.getNickname()))
+                .build();
+
+        log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 타입 : {}", chatMessage.getType());
+        log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 내용 : {}", chatMessage.getContent());
+        log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 나가려는 방 : {}", enterGameRoom.getId());
+
+        msgOperations.convertAndSend("/topic/chat/room/" + enterGameRoom.getId(), chatMessage);
+
+        log.info(">>>>>>>>>>>>>>>>>>>>> 채팅방 나가기 다음 로그 <<<<<<<<<<<<<<<<<<<<<");
+
+
         // 7. 해당 유저 를 GameRoomUser 에서 삭제
         gameRoomUserRepository.delete(gameRoomUser);
 
@@ -296,7 +317,7 @@ public class GameRoomService {
         // 1. 받아온 토큰으로부터 유저 또는 guest 정보를 받아온다.
         HashMap<String, String> extInfo = userService.gamerInfo(token);
         Long gamerId = Long.valueOf(extInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>>> gamerId {}", gamerId);
+        log.info(">>>>>>>> userId {}", gamerId);
         log.info(">>>>>>>> gameRoomId {}", gameRoomId);
 
         // 2. 해당 User 데이터로 GameRoomUser 데이터 가져오기

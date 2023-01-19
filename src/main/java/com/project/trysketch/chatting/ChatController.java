@@ -11,16 +11,16 @@ import org.springframework.stereotype.Controller;
 @Controller
 @RequiredArgsConstructor
 public class ChatController {
-    private final RedisPublisher RedisPublisher;
+    private final ChatPublisher ChatPublisher;
 
-    @MessageMapping("/chat/message")
+    @MessageMapping("/chat/content")
     public void message(ChatMessage message) {
-        RedisPublisher.message(message);
+        ChatPublisher.message(message);
 
-        log.info(">>>>>>> 위치 : ChatController 의 message API / 메시지 타입 : {}", message.getType());
-        log.info(">>>>>>> 위치 : ChatController 의 message API / 방 번호 : {}", message.getRoomId());
-        log.info(">>>>>>> 위치 : ChatController 의 message API / GAMER ID : {}", message.getGamerId());
-        log.info(">>>>>>> 위치 : ChatController 의 message API / GAMER NICK : {}", message.getGamerNick());
-        log.info(">>>>>>> 위치 : ChatController 의 message API / 메시지 내용 : {}", message.getMessage());
+        log.info(">>>>>>> 위치 : ChatController 의 content API / 메시지 타입 : {}", message.getType());
+        log.info(">>>>>>> 위치 : ChatController 의 content API / 방 번호 : {}", message.getRoomId());
+        log.info(">>>>>>> 위치 : ChatController 의 content API / GAMER ID : {}", message.getUserId());
+        log.info(">>>>>>> 위치 : ChatController 의 content API / GAMER NICK : {}", message.getNickname());
+        log.info(">>>>>>> 위치 : ChatController 의 content API / 메시지 내용 : {}", message.getContent());
     }
 }
