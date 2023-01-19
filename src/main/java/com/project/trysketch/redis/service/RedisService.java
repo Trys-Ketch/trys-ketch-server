@@ -1,17 +1,17 @@
 package com.project.trysketch.redis.service;
 
+import com.project.trysketch.global.dto.MsgResponseDto;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
 import com.project.trysketch.redis.repositorty.GuestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
 
 // 1. 기능   : Redis 비즈니스 로직
 // 2. 작성자 : 서혁수
@@ -28,7 +28,7 @@ public class RedisService {
     }
 
     // 비회원 로그인시 헤드 추가 메서드
-    public void guestLogin(HttpServletResponse response, GuestNickRequestDto requestDto) {
+    public MsgResponseDto guestLogin(HttpServletResponse response, GuestNickRequestDto requestDto) {
         Long num = guestIncrement("guestCount");    // 자동값 증가 키값 지정 및 시작
         Long guestId = 10000L + num;                    // 10000 번 부터 시작해서 1씩 증가(첫번째 값 10001)
 
@@ -50,6 +50,7 @@ public class RedisService {
         // 디코딩 확인용 코드입니다. 최종적으로는 삭제하면 됩니다.
         System.out.println("디코딩 결과 : " + URLDecoder.decode(guestStr, StandardCharsets.UTF_8));
 
+        return new MsgResponseDto(StatusMsgCode.LOG_IN);
     }
 
 }

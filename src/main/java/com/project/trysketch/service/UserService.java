@@ -2,6 +2,7 @@ package com.project.trysketch.service;
 
 import com.project.trysketch.entity.ThumbImg;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
+import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.redis.dto.GamerEnum;
 import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.repositorty.GuestRepository;
@@ -18,6 +19,7 @@ import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.Optional;
 
 // 1. 기능   : 유저 비즈니스 로직
@@ -63,7 +64,8 @@ public class UserService {
                 .email(requestDto.getEmail())
                 .nickname(requestDto.getNickname())
                 .password(encodePassword)
-                .imgUrl(getRandomThumbImg()).build();
+                .imgUrl(null)
+                .build();
 
         // 4. DB 에 새로운 유저정보 넣어주기
         userRepository.save(user);
@@ -150,20 +152,23 @@ public class UserService {
     }
 
     // 랜덤 닉네임 발급
-    public String RandomNick() {
+    public MsgResponseDto RandomNick() {
         int num = (int) (Math.random() * 1000 +1);
-        RandomNick randomNick = randomNickRepository.findByNum(num).orElse(null);
+        RandomNick randomNick = randomNickRepository.findByNum(num).orElseThrow(
+                () -> new CustomException(StatusMsgCode.NOT_FOUND_NICK));
+        String nickname = randomNick.getNickname();
 
-        return Objects.requireNonNull(randomNick).getNickname();
+        return new MsgResponseDto(HttpStatus.OK.value(), nickname);
     }
 
     // 랜덤 이미지 불러오기
-    public String getRandomThumbImg() {
+    public MsgResponseDto getRandomThumbImg() {
         IMG_NUM = (IMG_NUM == IMG_MAXIMUM) ? 1 : IMG_NUM + 1;
         ThumbImg thumbImg = thumbImgRepository.findById(IMG_NUM).orElseThrow(
-                () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
-        );
-        return thumbImg.getImgUrl();
+                () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
+        String thumbImgResult = thumbImg.getImgUrl();
+
+        return new MsgResponseDto(HttpStatus.OK.value(), thumbImgResult);
     }
 
     // 회원 정보 조회

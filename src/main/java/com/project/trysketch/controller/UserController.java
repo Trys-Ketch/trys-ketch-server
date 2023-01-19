@@ -3,9 +3,7 @@ package com.project.trysketch.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.redis.dto.GuestNickRequestDto;
-import com.project.trysketch.redis.repositorty.GuestRepository;
 import com.project.trysketch.redis.service.RedisService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
@@ -17,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
 
 // 1. 기능    : 유저 컨트롤러
 // 2. 작성자  : 서혁수, 황미경 (OAuth2.0 카카오톡 로그인 부분)
@@ -57,30 +54,26 @@ public class UserController {
 
 
         // code: 카카오 서버로부터 받은 인가 코드
-        kakaoService.kakaoLogin(code, response);
-        return ResponseEntity.ok(new MsgResponseDto(StatusMsgCode.LOG_IN));
+        return ResponseEntity.ok(kakaoService.kakaoLogin(code, response));
     }
 
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
     // 비회원 로그인
     @PostMapping("/guest")
     public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody GuestNickRequestDto requestDto) {
-        redisService.guestLogin(response, requestDto);
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), "비회원 로그인 성공!"));
+        return ResponseEntity.ok(redisService.guestLogin(response, requestDto));
     }
 
     // 랜덤 닉네임 받아오는 부분
     @GetMapping("/random-nick")
     public ResponseEntity<MsgResponseDto> guestNick() {
-        String nickname = userService.RandomNick();
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), nickname));
+        return ResponseEntity.ok(userService.RandomNick());
     }
 
     // 랜덤 이미지 받아오는 부분
     @GetMapping("/random-img")
     public ResponseEntity<MsgResponseDto> randomImg() {
-        String randomImg = userService.getRandomThumbImg();
-        return ResponseEntity.ok(new MsgResponseDto(HttpStatus.OK.value(), randomImg));
+        return ResponseEntity.ok(userService.getRandomThumbImg());
     }
 
     // ======================== 회원 & 비회원 정보 조회 ========================
@@ -88,12 +81,6 @@ public class UserController {
     @GetMapping("/user-info")
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
         return ResponseEntity.ok(userService.getGamerInfo(request));
-    }
-
-    @GetMapping("/test/{id}")
-    public HashMap<?, ?> test(@PathVariable String id) {
-        HashMap<String, String> test = userService.gamerInfo(id);
-        return test;
     }
 }
 

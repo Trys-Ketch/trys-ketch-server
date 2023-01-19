@@ -2,8 +2,6 @@ package com.project.trysketch.redis.config;
 
 import com.project.trysketch.chatting.RedisSubscriber;
 import com.project.trysketch.redis.entity.CacheKey;
-
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -25,7 +23,6 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,13 +36,13 @@ public class RedisConfig {
     // 내가 직접 호스트하고 port 를 지정해서 사용하려면 아래의 것을 사용
     // 자바의 Redis Client 중 더 성능이 좋다는 Lettuce 를 사용
     @Value("${spring.redis.host}")
-    private String host;
+    private String host;                        // Host 설정
 
     @Value("${spring.redis.port}")
-    private int port;
+    private int port;                           // Port 설정
 
     @Value("${spring.redis.password}")
-    private String password;
+    private String password;                    // Password 설정
 
     // 단일 Topic 사용을 위한 Bean 설정
     @Bean
@@ -53,9 +50,7 @@ public class RedisConfig {
         return new ChannelTopic("chatroom");
     }
 
-    /**
-     * redis에 발행(publish)된 메시지 처리를 위한 리스너 설정
-     */
+    // Redis 에 발행(publish)된 메시지 처리를 위한 리스너 설정
     @Bean
     public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory,
                                                               MessageListenerAdapter listenerAdapter,
@@ -66,24 +61,11 @@ public class RedisConfig {
         return container;
     }
 
-    /**
-     * 실제 메시지를 처리하는 subscriber 설정 추가
-     */
+    // 실제 메시지를 처리하는 subscriber 설정 추가
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisSubscriber subscriber) {
         return new MessageListenerAdapter(subscriber, "sendMessage");
     }
-
-    /*
-        Lettuce: Multi-Thread 에서 Thread-Safe 한 Redis 클라이언트로 netty 에 의해 관리된다.
-                 Sentinel, Cluster, Redis data model 같은 고급 기능들을 지원하며
-                 비동기 방식으로 요청하기에 TPS/CPU/Connection 개수와 응답속도 등 전 분야에서 Jedis 보다 뛰어나다.
-                 스프링 부트의 기본 의존성은 현재 Lettuce 로 되어있다.
-
-        Jedis  : Multi-Thread 에서 Thread-unsafe 하며 Connection pool 을 이용해 멀티쓰레드 환경을 구성한다.
-                 Jedis 인스턴스와 연결할 때마다 Connection pool 을 불러오고 스레드 갯수가
-                 늘어난다면 시간이 상당히 소요될 수 있다.
-     */
 
     // Redis 와 연결
     @Bean
@@ -95,16 +77,6 @@ public class RedisConfig {
 
         return new LettuceConnectionFactory(configuration);
     }
-
-    /*
-        RedisTemplate: Redis data access code 를 간소화 하기 위해 제공되는 클래스이다.
-                       주어진 객체들을 자동으로 직렬화/역직렬화 하며 binary 데이터를 Redis 에 저장한다.
-                       기본설정은 JdkSerializationRedisSerializer 이다.
-
-        StringRedisSerializer: binary 데이터로 저장되기 때문에 이를 String 으로 변환시켜주며(반대로도 가능) UTF-8 인코딩 방식을 사용한다.
-
-        GenericJackson2JsonRedisSerializer: 객체를 json 타입으로 직렬화/역직렬화를 수행한다.
-     */
 
     // Redis 서버와 상호작용을 위한 RedisTemplate 관련 설정을 해준다. Redis 서버에는 bytes 코드만이 저장된다.
     // 그러므로 key 와 value 에 직렬화(Serializer)를 설정해준다. 나는 String 형식으로 설정
@@ -129,6 +101,7 @@ public class RedisConfig {
         return redisTemplate;
     }
 
+    // 캐시관련 설정
     @Bean(name = "CacheManager")
     public CacheManager cacheManager() {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig()
