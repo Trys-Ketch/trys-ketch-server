@@ -36,7 +36,7 @@ public class KakaoService {
     private final UserService userService;
 
     public MsgResponseDto kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
-        String randomNickname = userService.RandomNick();
+        String randomNickname = userService.RandomNick().getMessage();
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
         String accessToken = getToken(code);                                                        // 포스트맨 확인위해 주석처리 필요
@@ -141,7 +141,7 @@ public class KakaoService {
                         .kakaoId(kakaoId)
                         .nickname(kakaoUserInfo.getNickname())
                         .email(email)
-                        .imgUrl(userService.getRandomThumbImg())
+                        .imgUrl(userService.getRandomThumbImg().getMessage())
                         .build();
             }
             userRepository.save(kakaoUser);
