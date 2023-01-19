@@ -1,7 +1,6 @@
 package com.project.trysketch.service;
 
 import com.project.trysketch.dto.request.GameFlowRequestDto;
-import com.project.trysketch.dto.response.ImageResponseDto;
 import com.project.trysketch.entity.GameFlow;
 import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
@@ -424,7 +423,6 @@ public class GameService {
 //                getPreviousImage(gameFlowRequestDto);
 //            } // 중복 코드 분리 1.18 리팩토링 김재영
 
-            }
         }
     }
 
