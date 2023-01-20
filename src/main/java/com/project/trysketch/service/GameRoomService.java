@@ -247,7 +247,7 @@ public class GameRoomService {
         try{
             gameRoomUserRepository.deleteByWebSessionId(userUUID);
         } catch(Exception e) {
-            return new MsgResponseDto(StatusMsgCode.DO_NOT_EXIST_GAME_ROOM);
+            return new MsgResponseDto(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND);
         }
 
         // 3. 구독된 같은 방 사람들에게 퇴장 메세지 보내기
