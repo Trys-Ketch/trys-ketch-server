@@ -172,17 +172,14 @@ public class GameRoomService {
         chatRoom.setName(gameRoom.getTitle());
         chatRoomRepository.saveRoom(chatRoom);
 
-        HashMap<String, String> roomInfo = new HashMap<>();
-
-        // 7. HashMap 형식으로 방 제목, 방 번호, 방 랜덤코드를 response 로 반환
-        roomInfo.put("title",gameRoom.getTitle());
-        roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
-        roomInfo.put("randomCode", randomCode);
+        // 7. HashMap 형식으로 방 번호를 response 로 반환
+        HashMap<String, String> roomIdInfo = new HashMap<>();
+        roomIdInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
         // 8. SSE event 생성
         sseEmitters.changeRoom(getrooms());
 
-        return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
+        return new DataMsgResponseDto(StatusMsgCode.OK,roomIdInfo);
     };
 
 
@@ -228,11 +225,10 @@ public class GameRoomService {
         // 7. 게임방에 들어온 유저를 DB에 저장
         gameRoomUserRepository.save(gameRoomUser);
 
-
+        // 8. HashMap 형식으로 방 번호를 response 로 반환
         HashMap<String, Object> roomIdInfo = new HashMap<>();
-        roomIdInfo.put("title", enterGameRoom.getTitle());
         roomIdInfo.put("roomId", enterGameRoom.getId());
-        roomIdInfo.put("randomCode", randomCode);
+
         return new DataMsgResponseDto(StatusMsgCode.OK, roomIdInfo);
     }
 
