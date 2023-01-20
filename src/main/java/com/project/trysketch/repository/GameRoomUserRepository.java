@@ -31,5 +31,4 @@ public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long
     GameRoomUser findByGameRoomIdAndWebSessionId(Long gameRoomId, String userUUID);
 
     void deleteByWebSessionId(String userUUID);
-
 }

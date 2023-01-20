@@ -31,6 +31,14 @@ public class GameRoomController {
         return ResponseEntity.ok(gameRoomService.getAllGameRoom(pageable));
     }
 
+    // 게임 방 상세 조회
+    @GetMapping("/room/{id}")
+    public ResponseEntity<DataMsgResponseDto> getGameRoom(@PathVariable Long id,
+                                                          HttpServletRequest request) {
+        log.info(">>> 방 상세조회 - 방 id : {}, 유저 id : {}", id, request);
+        return ResponseEntity.ok(gameRoomService.getGameRoom(id, request));
+    }
+
     // 게임 방 생성
     @PostMapping("/room")
     public ResponseEntity<DataMsgResponseDto> createGameRoom(@RequestBody @Valid GameRoomRequestDto gameRoomRequestDto,
