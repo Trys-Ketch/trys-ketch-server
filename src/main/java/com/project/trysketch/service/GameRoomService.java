@@ -75,10 +75,35 @@ public class GameRoomService {
         return getAllGameRoom;
     }
 
+    // ============================ 게임방 상세 조회 ============================
+    @Transactional(readOnly = true)
+    public DataMsgResponseDto getGameRoom(Long id, HttpServletRequest request) {
+        // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다
+        String header = userService.validHeader(request);
+        HashMap<String, String> extInfo = userService.gamerInfo(header);
+
+        // 2. 요청을 한 유저가 이미 속한 방이 있으면 조회 불가능
+        if (gameRoomUserRepository.countByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key()))) > 1) {
+            throw new CustomException(StatusMsgCode.ONE_MAN_ONE_ROOM);
+        }
+
+        // 3. 받아온 roomId 로 gameRoom 정보를 받아온다
+        GameRoom gameRoom = gameRoomRepository.findById(id).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        // 4. Dto 형태로 반환
+        GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
+                .title(gameRoom.getTitle())
+                .randomCode(gameRoom.getRandomCode()).build();
+
+        return new DataMsgResponseDto(StatusMsgCode.OK, gameRoomResponseDto);
+    }
+
     // ============================== 게임방 생성 ==============================
     @Transactional
     public DataMsgResponseDto createGameRoom(GameRoomRequestDto gameRoomRequestDto, HttpServletRequest request) {
-        // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다.
+        // 1. 받아온 헤더로부터 유저 또는 guest 정보를 받아온다
         String header = userService.validHeader(request);
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
@@ -147,17 +172,14 @@ public class GameRoomService {
         chatRoom.setName(gameRoom.getTitle());
         chatRoomRepository.saveRoom(chatRoom);
 
-        HashMap<String, String> roomInfo = new HashMap<>();
-
-        // 7. HashMap 형식으로 방 제목, 방 번호, 방 랜덤코드를 response 로 반환
-        roomInfo.put("title",gameRoom.getTitle());
-        roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
-        roomInfo.put("randomCode", randomCode);
+        // 7. HashMap 형식으로 방 번호를 response 로 반환
+        HashMap<String, String> roomIdInfo = new HashMap<>();
+        roomIdInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
         // 8. SSE event 생성
         sseEmitters.changeRoom(getrooms());
 
-        return new DataMsgResponseDto(StatusMsgCode.OK,roomInfo);
+        return new DataMsgResponseDto(StatusMsgCode.OK,roomIdInfo);
     };
 
 
@@ -203,11 +225,10 @@ public class GameRoomService {
         // 7. 게임방에 들어온 유저를 DB에 저장
         gameRoomUserRepository.save(gameRoomUser);
 
-
+        // 8. HashMap 형식으로 방 번호를 response 로 반환
         HashMap<String, Object> roomIdInfo = new HashMap<>();
-        roomIdInfo.put("title", enterGameRoom.getTitle());
         roomIdInfo.put("roomId", enterGameRoom.getId());
-        roomIdInfo.put("randomCode", randomCode);
+
         return new DataMsgResponseDto(StatusMsgCode.OK, roomIdInfo);
     }
 
@@ -543,4 +564,5 @@ public class GameRoomService {
 
         return gameRoomUser.getGameRoom().getId();
     }
+
 }
