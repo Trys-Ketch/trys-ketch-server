@@ -1,8 +1,5 @@
 package com.project.trysketch.global.rtc;
 
-import com.project.trysketch.entity.GameRoomUser;
-import com.project.trysketch.global.exception.CustomException;
-import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.service.GameRoomService;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +9,6 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,8 +23,6 @@ public class SignalingHandler extends TextWebSocketHandler {
     // service 주입
     @Autowired
     private GameRoomService gameRoomService;
-    @Autowired
-    private GameRoomUserRepository gameRoomUserRepository;
 
     // 어떤 방에 어떤 유저가 들어있는지 저장 -> { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], ... }
     private final Map<String, List<Map<String, String>>> roomInfo = new HashMap<>();
@@ -250,10 +244,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 
         // 유저 uuid 와 roomID 를 저장
         String userUUID = session.getId(); // 유저 uuid
-           GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
-                   () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-           );
-           Long gameRoomId = gameRoomUser.getGameRoom().getId();
+        Long gameRoomId = gameRoomService.getRoomId(userUUID);
 
         gameRoomService.exitGameRoom(userUUID);
 

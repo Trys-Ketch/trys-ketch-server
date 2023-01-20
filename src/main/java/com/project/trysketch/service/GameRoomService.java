@@ -275,7 +275,7 @@ public class GameRoomService {
         }
 
         // 5. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
-        if (Objects.equals(gameRoomUser.getUserId(), currentGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
+        if (gameRoomUser.getUserId().equals(currentGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
 
             // 6. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
             Long newHostId = leftGameRoomUserList.get(0).getUserId();
