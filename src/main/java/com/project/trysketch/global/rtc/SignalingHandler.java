@@ -1,5 +1,9 @@
 package com.project.trysketch.global.rtc;
 
+import com.project.trysketch.entity.GameRoomUser;
+import com.project.trysketch.global.exception.CustomException;
+import com.project.trysketch.global.exception.StatusMsgCode;
+import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.service.GameRoomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +27,8 @@ public class SignalingHandler extends TextWebSocketHandler {
     // service 주입
     @Autowired
     private GameRoomService gameRoomService;
+    @Autowired
+    private GameRoomUserRepository gameRoomUserRepository;
 
     // 어떤 방에 어떤 유저가 들어있는지 저장 -> { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], ... }
     private final Map<String, List<Map<String, String>>> roomInfo = new HashMap<>();
@@ -244,12 +250,16 @@ public class SignalingHandler extends TextWebSocketHandler {
 
         // 유저 uuid 와 roomID 를 저장
         String userUUID = session.getId(); // 유저 uuid
-        Long roomId = gameRoomService.getRoomId(userUUID);
+           GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
+                   () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+           );
+           Long gameRoomId = gameRoomUser.getGameRoom().getId();
 
-        gameRoomService.exitGameRoom(null, null, userUUID);
+        gameRoomService.exitGameRoom(userUUID);
 
         // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
         sessions.remove(userUUID);
+
         log.info(">>> [ws] {}를 제외한 남은 세션 객체 {}", userUUID, sessions);
 
         // 본인을 제외한 모든 유저에게 user_exit 라는 타입으로 메시지 전달
@@ -258,11 +268,11 @@ public class SignalingHandler extends TextWebSocketHandler {
 
         // 본인을 포함한 현재 방의 전체 유저 객체를 가져와서 user_exit, attendee 메시지 전달
         try {
-            for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
-                log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
+            for (WebSocketSession webSocketSession : getRoomSessionList(gameRoomId)) {
+                log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", gameRoomId, webSocketSession);
                 webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                         .type(MSG_TYPE_ATTENDEE)
-                        .attendee(gameRoomService.getAllGameRoomUsers(roomId))
+                        .attendee(gameRoomService.getAllGameRoomUsers(gameRoomId))
                         .sender(userUUID).build())));
                 log.info(">>> [ws] user_exit 메시지 받고 있는 userUUID 리스트 {}", webSocketSession.getId());
                 webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()

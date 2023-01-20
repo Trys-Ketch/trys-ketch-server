@@ -48,11 +48,11 @@ public class GameRoomController {
     }
 
     // 게임 방 나가기
-    @DeleteMapping("/room/exit/{id}")
-    public ResponseEntity<MsgResponseDto> exitGameRoom(@PathVariable Long id,
-                                                       HttpServletRequest request) {
-        log.info(">>> 방 퇴장 - 방 id : {}, 유저 id : {}", id, request);
-        return ResponseEntity.ok(gameRoomService.exitGameRoom(id, request, null));
-    }
-
+//    @DeleteMapping("/room/exit/{id}")
+//    public ResponseEntity<MsgResponseDto> exitGameRoom(@PathVariable Long id,
+//                                                       HttpServletRequest request) {
+//        log.info(">>> 방 퇴장 - 방 id : {}, 유저 id : {}", id, request);
+////        return ResponseEntity.ok(gameRoomService.exitGameRoom(id, request, null));
+//        return ResponseEntity.ok(gameRoomService.exitGameRoom(null));
+//    }
 }
