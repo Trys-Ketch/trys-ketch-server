@@ -17,6 +17,7 @@ public enum StatusMsgCode {
     EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
     BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "형식이 맞지 않습니다."),
     INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
+    NECESSARY_LOG_IN(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
     NOT_FOUND_NICK(HttpStatus.BAD_REQUEST, "닉네임을 찾을 수 없습니다"),
 
 

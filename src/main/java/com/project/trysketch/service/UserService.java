@@ -173,9 +173,13 @@ public class UserService {
 
     // 회원 정보 조회
     public DataMsgResponseDto getGamerInfo(HttpServletRequest request) {
-        String header = validHeader(request);
-        HashMap<String, String> extInfo = gamerInfo(header);
+        HashMap<String, String> extInfo;
+        try{
+            String header = validHeader(request);
+            extInfo = gamerInfo(header);
+        } catch(Exception e){
+            throw new CustomException(StatusMsgCode.NECESSARY_LOG_IN);
+        }
         return new DataMsgResponseDto(StatusMsgCode.OK, extInfo);
     }
-
 }
