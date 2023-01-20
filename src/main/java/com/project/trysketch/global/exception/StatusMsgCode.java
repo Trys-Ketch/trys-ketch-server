@@ -12,6 +12,7 @@ public enum StatusMsgCode {
 
     /* 회원, 비회원 관련 Status 메시지 코드 */
     USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "회원을 찾을 수 없습니다."),
+    GAME_ROOM_USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "플레이어를 찾을 수 없습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
     EXIST_USER(HttpStatus.BAD_REQUEST, "중복된 이메일입니다."),
     EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),

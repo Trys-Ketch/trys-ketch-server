@@ -66,14 +66,14 @@ public class GameService {
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService] - startGame >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>> [GameService] RoomId : {}", requestDto.getRoomId());
-        log.info(">>>>>>> [GameService] gamerInfo : {}", gamerInfo.toString());
+        log.info(">>>>>>> [GameService] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
 
-        log.info(">>>>>>> [GameService] gameRoom 변경 전 : {}", gameRoom.toString());
+        log.info(">>>>>>> [GameService] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
 
         // 방장이 아닐경우
         if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerEnum.NICK.key()))) {
@@ -82,16 +82,16 @@ public class GameService {
 
         // GameRoom 의 상태를 true 로 변경
         gameRoom.GameRoomStatusUpdate(true);
-        log.info(">>>>>>> [GameService] gameRoom 변경 후 : {}", gameRoom);
+        log.info(">>>>>>> [GameService] gamerInfo nickname: {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // isIngaeme 으로 보내주기
         Map<String, Boolean> message = new HashMap<>();
         message.put("isIngame", true);
+        log.info(">>>>>>> [GameService] message : {}", message);
 
         // 구독하고 있는 User 에게 start 메세지 전송
         sendingOperations.convertAndSend("/topic/game/start/" + requestDto.getRoomId(), message);
-
-        log.info(">>>>>>> [GameService] requestDto : {}", requestDto);
+        log.info(">>>>>>> [GameService] message : {}", message);
 
         // 게임 시작
         return new MsgResponseDto(StatusMsgCode.START_GAME);

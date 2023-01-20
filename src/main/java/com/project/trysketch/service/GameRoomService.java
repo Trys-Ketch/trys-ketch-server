@@ -14,7 +14,6 @@ import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.redis.entity.Guest;
 import com.project.trysketch.redis.repositorty.GuestRepository;
 import com.project.trysketch.sse.SseEmitters;
 import lombok.RequiredArgsConstructor;
@@ -137,7 +136,7 @@ public class GameRoomService {
         gameRoomUserRepository.save(gameRoomUser);
 
 
-        // 1. 채팅방 객체 생성
+//         1. 채팅방 객체 생성
         // 2. 채팅방 서비스를 통해 DB 에 생성
 //        ChatRoom chatRoom = chatRoomService.createChatRoom(gameRoom.getId().toString(), gameRoom.getTitle());
 
@@ -151,7 +150,7 @@ public class GameRoomService {
         HashMap<String, String> roomInfo = new HashMap<>();
 
         // 7. HashMap 형식으로 방 제목, 방 번호, 방 랜덤코드를 response 로 반환
-        roomInfo.put("gameRoomTitle",gameRoom.getTitle());
+        roomInfo.put("title",gameRoom.getTitle());
         roomInfo.put("roomId", String.valueOf(gameRoom.getId()));
         roomInfo.put("randomCode", randomCode);
 
@@ -205,8 +204,10 @@ public class GameRoomService {
         gameRoomUserRepository.save(gameRoomUser);
 
 
-        HashMap<String, Long> roomIdInfo = new HashMap<>();
+        HashMap<String, Object> roomIdInfo = new HashMap<>();
+        roomIdInfo.put("title", enterGameRoom.getTitle());
         roomIdInfo.put("roomId", enterGameRoom.getId());
+        roomIdInfo.put("randomCode", randomCode);
         return new DataMsgResponseDto(StatusMsgCode.OK, roomIdInfo);
     }
 
@@ -223,7 +224,9 @@ public class GameRoomService {
         } else {
             // 3. 소켓 연결이 종료됨으로 인해서 게임방에서 나가지는 경우
             // 예) 웹 브라우저 창 닫기, 팅겼을 경우
-            GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID);
+            GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
+            );
             extInfo.put(GamerEnum.ID.key(), gameRoomUser.getUserId().toString());
             extInfo.put(GamerEnum.NICK.key(), gameRoomUser.getNickname());
             id = gameRoomUser.getGameRoom().getId();
@@ -370,7 +373,7 @@ public class GameRoomService {
 
     // ================= 해당 GameRoom 의 전체 유저 session id 리스트 =================
     @Transactional(readOnly = true)
-    public List<String> getAllGameRoomUsers(Long roomId) {
+    public List<String> getAllGameRoomUsersSessionId(Long roomId) {
 
         // 1. 받아온 방 번호로 gameRoomUser 의 List 조회
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(roomId);
@@ -499,5 +502,45 @@ public class GameRoomService {
             gameRoomList.add(gameRoomResponseDto);
         }
         return gameRoomList;
+    }
+
+
+    // ===================== 본인을 포함한 현재 방의 전체 유저 =====================
+    public List<Map<String, Object>> getAllGameRoomUsers(Long gameRoomId) {
+
+        // 해당 방의 정보를 가져와서 Host id 조회
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        Long hostId = gameRoom.getHostId();
+
+        // 해당 방 번호로 gameRoomUser 의 List 를 조회하여 원하는대로 가공
+        List<Map<String, Object>> attendee = new ArrayList<>();
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+            Map<String, Object> gameRoomUserMap = new HashMap<>();
+            gameRoomUserMap.put("userId", gameRoomUser.getUserId().toString());
+            gameRoomUserMap.put("nickname", gameRoomUser.getNickname());
+            gameRoomUserMap.put("imgUrl", gameRoomUser.getImgUrl());
+            gameRoomUserMap.put("isReady", gameRoomUser.isReadyStatus());
+            if (gameRoomUser.getUserId().equals(hostId)) {
+                gameRoomUserMap.put("isHost", true);
+            } else {
+                gameRoomUserMap.put("isHost", false);
+            }
+            attendee.add(gameRoomUserMap);
+
+        }
+        return attendee;
+
+    }
+
+    // ===================== 접속한 유저의 userUUID  =====================
+    public Long getRoomId(String userUUID) {
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
+        );
+
+        return gameRoomUser.getGameRoom().getId();
     }
 }
