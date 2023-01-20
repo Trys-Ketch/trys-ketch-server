@@ -5,6 +5,7 @@ import com.project.trysketch.entity.GameRoomUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 // 1. 기능   : 게임 방에 입장한 유저 repository
 // 2. 작성자 : 김재영
@@ -23,7 +24,8 @@ public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long
 
     List<GameRoomUser> findAllByGameRoomId(Long roomId);
 
-    GameRoomUser findByWebSessionId(String userUUID);
+//    GameRoomUser findByWebSessionId(String userUUID);
+    Optional<GameRoomUser> findByWebSessionId(String userUUID);
 
     boolean existsByGameRoomIdAndUserId(Long roomId, Long userId);
 

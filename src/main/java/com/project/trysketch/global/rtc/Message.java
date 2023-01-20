@@ -26,4 +26,5 @@ public class Message {
     private boolean status;   // 유저의 레디 상태
     private boolean host;     // 접속한 유저의 호스트 여부
     private String hostId;    // 해당 방 host 의 sessionId
+    private Object attendee;  // 해당 방에 본인을 포함한 전체 유저
 }
