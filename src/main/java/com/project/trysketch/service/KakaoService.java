@@ -67,7 +67,7 @@ public class KakaoService {
         
         // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
         
-        body.add("redirect_uri", "http://localhost:3000/login");                       // 프론트의 주소
+        body.add("redirect_uri", "https://trys-ketch.com/login");                       // 프론트의 주소
         body.add("code", code);
 
         // HTTP 요청 보내기
