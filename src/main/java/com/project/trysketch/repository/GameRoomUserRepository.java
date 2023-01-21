@@ -24,12 +24,13 @@ public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long
 
     List<GameRoomUser> findAllByGameRoomId(Long roomId);
 
-//    GameRoomUser findByWebSessionId(String userUUID);
     Optional<GameRoomUser> findByWebSessionId(String userUUID);
 
     boolean existsByGameRoomIdAndUserId(Long roomId, Long userId);
 
     GameRoomUser findByGameRoomIdAndWebSessionId(Long gameRoomId, String userUUID);
+
+    void deleteByWebSessionId(String userUUID);
 
     Long countByUserId(Long valueOf);
 }
