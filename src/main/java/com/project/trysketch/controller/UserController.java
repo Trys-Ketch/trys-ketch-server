@@ -3,8 +3,8 @@ package com.project.trysketch.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.redis.dto.GuestNickRequestDto;
-import com.project.trysketch.redis.service.RedisService;
+import com.project.trysketch.dto.request.GuestNickRequestDto;
+import com.project.trysketch.service.GuestService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
 import com.project.trysketch.service.KakaoService;
@@ -26,7 +26,7 @@ public class UserController {
 
     private final UserService userService;
     private final KakaoService kakaoService;
-    private final RedisService redisService;
+    private final GuestService guestService;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -62,7 +62,7 @@ public class UserController {
     // 비회원 로그인
     @PostMapping("/guest")
     public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody @Valid GuestNickRequestDto requestDto) {
-        return ResponseEntity.ok(redisService.guestLogin(response, requestDto));
+        return ResponseEntity.ok(guestService.guestLogin(response, requestDto));
     }
 
     // 랜덤 닉네임 받아오는 부분
