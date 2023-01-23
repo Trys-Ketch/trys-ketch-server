@@ -30,6 +30,9 @@ public class User {
 
     @Column
     private Long kakaoId;
+    @Column
+    private String naverId;
+
 
     @Column(nullable = false)
     private String imgUrl;
@@ -42,6 +45,10 @@ public class User {
 //
     public User kakaoIdUpdate(Long kakaoId) {
         this.kakaoId = kakaoId;
+        return this;
+    }
+    public User naverIdUpdate(String naverId) {
+        this.naverId = naverId;
         return this;
     }
 
