@@ -1,8 +1,6 @@
 package com.project.trysketch.service;
 
 import com.project.trysketch.chatting.ChatMessage;
-import com.project.trysketch.chatting.ChatRoom;
-import com.project.trysketch.chatting.ChatRoomRepository;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -38,7 +36,6 @@ public class GameRoomService {
     private final GuestRepository guestRepository;
     private final UserService userService;
     private final SseEmitters sseEmitters;
-    private final ChatRoomRepository chatRoomRepository;
     private final SimpMessageSendingOperations sendingOperations;
 
     // ============================== 게임방 조회 ==============================
@@ -162,15 +159,15 @@ public class GameRoomService {
 
 
 //         1. 채팅방 객체 생성
-        // 2. 채팅방 서비스를 통해 DB 에 생성
+//         2. 채팅방 서비스를 통해 DB 에 생성
 //        ChatRoom chatRoom = chatRoomService.createChatRoom(gameRoom.getId().toString(), gameRoom.getTitle());
-
-        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 title : {}", gameRoom.getTitle());
-        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 id : {}", gameRoom.getId().toString());
-        ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setRoomId(gameRoom.getId().toString());
-        chatRoom.setName(gameRoom.getTitle());
-        chatRoomRepository.saveRoom(chatRoom);
+//
+//        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 title : {}", gameRoom.getTitle());
+//        log.info(">>>>>>> 위치 : GameRoomService 의 createGameRoom 메서드 / gameRoom 의 id : {}", gameRoom.getId().toString());
+//        ChatRoom chatRoom = new ChatRoom();
+//        chatRoom.setRoomId(gameRoom.getId().toString());
+//        chatRoom.setName(gameRoom.getTitle());
+//        chatRoomRepository.saveRoom(chatRoom);
 
         // 7. HashMap 형식으로 방 번호를 response 로 반환
         HashMap<String, String> roomIdInfo = new HashMap<>();
@@ -271,7 +268,7 @@ public class GameRoomService {
 
         if (leftGameRoomUserList.size() == 0){
             gameRoomRepository.deleteById(gameRoomUser.getGameRoom().getId());
-            chatRoomRepository.deleteRoom(currentGameRoom.getId().toString());
+//            chatRoomRepository.deleteRoom(currentGameRoom.getId().toString());
         }
 
         // 5. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
