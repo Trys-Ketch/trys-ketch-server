@@ -32,25 +32,14 @@ public class AmazonS3Service {
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
-    public void upload(File file, String dirName, String nickname, int round, int keywordIndex, Long roomId, String webSessionId) throws IOException {
+    public String upload(File file, String dirName, String nickname) {
+        Image image = null;
         if (file != null) {
 //            File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
-
-            Image image = new Image(upload(file, dirName), nickname);
-//            img = new Image(upload(img,dirName),nickname);
-
-            GameFlow gameFlow = GameFlow.builder()
-                    .roomId(roomId)
-                    .round(round)
-                    .keywordIndex(keywordIndex)
-                    .imagePath(image.getPath())
-                    .nickname(nickname)
-                    .webSessionId(webSessionId)
-                    .build();
-
+            image = new Image(upload(file, dirName), nickname);
             imageRepository.save(image);
-            gameFlowRepository.save(gameFlow);
         }
+        return image.getPath();
     }
 
     // S3로 파일 업로드 (파일이름 지정, 로컬파일 삭제 + 파일 업로드 메서드 호출)
