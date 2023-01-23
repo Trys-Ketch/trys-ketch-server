@@ -62,8 +62,8 @@ public class UserController {
 
     // OAuth2.0 네이버 로그인 01.23 17:48 추가=================================================================
     @GetMapping("/naver/callback")
-    public MsgResponseDto naverLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return naverService.naverLogin(code, response);
+    public ResponseEntity<MsgResponseDto> naverLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(naverService.naverLogin(code, response));
     }
     //========================================================================================================
 

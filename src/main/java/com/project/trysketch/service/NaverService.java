@@ -3,8 +3,6 @@ package com.project.trysketch.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jwt.JWT;
-import com.project.trysketch.dto.request.KakaoUserRequstDto;
 import com.project.trysketch.dto.response.NaverResponseDto;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -56,12 +54,12 @@ public class NaverService {
         // 1. "인가 코드"로 "액세스 토큰" 요청
 //        String accessToken = getToken(code);
 
-        // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
+        // 2. 토큰으로 Naver API 호출 : "액세스 토큰"으로 "Naver 사용자 정보" 가져오기
         NaverResponseDto naverUserInfo = getNaverUserInfo(code, randomNickname);
 
         User naverUser = registerNaverUserIfNeeded(naverUserInfo);
 
-        String createToken = jwtUtil.createToken(naverUserInfo.getEmail(), randomNickname);
+        String createToken = jwtUtil.createToken(naverUser.getEmail(), randomNickname);
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
 
         return new MsgResponseDto(StatusMsgCode.LOG_IN);
@@ -120,19 +118,19 @@ public class NaverService {
     }
 
     private User registerNaverUserIfNeeded(NaverResponseDto naverUserInfo) {
-        // DB 에 중복된 Kakao Id 가 있는지 확인
+        // DB 에 중복된 Naver Id 가 있는지 확인
         String naverId = naverUserInfo.getId();
         User naverUser = userRepository.findByNaverId(naverId)
                 .orElse(null);
         if (naverUser == null) {
-            // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
+            // Naver 사용자 email 동일한 email 가진 회원이 있는지 확인
             String naverEmail = naverUserInfo.getEmail();
 
             User sameEmailUser = userRepository.findByEmail(naverEmail).orElse(null);
 
             if (sameEmailUser != null) {
                 naverUser = sameEmailUser;
-                // 기존 회원정보에 카카오 Id 추가
+                // 기존 회원정보에 NaverId 추가
                 naverUser = naverUser.naverIdUpdate(naverId);
             } else {
                 // 신규 회원가입
