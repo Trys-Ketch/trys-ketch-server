@@ -5,17 +5,16 @@ import com.project.trysketch.entity.GameFlow;
 import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.image.AmazonS3Service;
-import com.project.trysketch.redis.dto.GamerEnum;
+import com.project.trysketch.dto.GamerEnum;
 import com.project.trysketch.repository.GameFlowRepository;
 import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.suggest.AdjectiveEntity;
-import com.project.trysketch.suggest.AdjectiveRepository;
-import com.project.trysketch.suggest.NounEntity;
-import com.project.trysketch.suggest.NounRepository;
+import com.project.trysketch.entity.Adjective;
+import com.project.trysketch.repository.AdjectiveRepository;
+import com.project.trysketch.entity.Noun;
+import com.project.trysketch.repository.NounRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -184,15 +183,15 @@ public class GameService {
 
             // 형용사 리스트중 1개
             int adId = (int) (Math.random() * adSize + 1);
-            AdjectiveEntity adjectiveEntity = adjectiveRepository.findById(adId).orElse(null);
+            Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
 
             // 명사 리스트중 1개
             int nuId = (int) (Math.random() * nounSize + 1);
-            NounEntity nounEntity = nounRepository.findById(nuId).orElse(null);
+            Noun noun = nounRepository.findById(nuId).orElse(null);
 
             Map<String, Object> message = new HashMap<>();
 
-            message.put("keyword", adjectiveEntity.getAdjective() + nounEntity.getNoun());
+            message.put("keyword", adjective.getAdjective() + noun.getNoun());
             message.put("keywordIndex", i + 1);
 
             sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);

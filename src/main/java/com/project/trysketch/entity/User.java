@@ -30,6 +30,9 @@ public class User {
 
     @Column
     private Long kakaoId;
+    @Column
+    private String naverId;
+
 
     @Column(nullable = false)
     private String imgUrl;
@@ -44,8 +47,16 @@ public class User {
         this.kakaoId = kakaoId;
         return this;
     }
+    public User naverIdUpdate(String naverId) {
+        this.naverId = naverId;
+        return this;
+    }
 
-//    @Builder
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    //    @Builder
 //    public User(String email, String password, Long kakaoId, String kakaoNickname) {
 //        this.email = email;
 //        this.password = password;

@@ -3,11 +3,12 @@ package com.project.trysketch.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.redis.dto.GuestNickRequestDto;
-import com.project.trysketch.redis.service.RedisService;
+import com.project.trysketch.dto.request.GuestNickRequestDto;
+import com.project.trysketch.service.GuestService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
 import com.project.trysketch.service.KakaoService;
+import com.project.trysketch.service.NaverService;
 import com.project.trysketch.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,8 @@ public class UserController {
 
     private final UserService userService;
     private final KakaoService kakaoService;
-    private final RedisService redisService;
+    private final NaverService naverService;
+    private final GuestService guestService;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -58,11 +60,24 @@ public class UserController {
         return ResponseEntity.ok(kakaoService.kakaoLogin(code, response));
     }
 
+    // OAuth2.0 네이버 로그인 01.23 17:48 추가=================================================================
+    @GetMapping("/naver/callback")
+    public ResponseEntity<MsgResponseDto> naverLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(naverService.naverLogin(code, response));
+    }
+    //========================================================================================================
+
+    // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
+
+
+
+    //========================================================================================================
+
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
     // 비회원 로그인
     @PostMapping("/guest")
     public ResponseEntity<MsgResponseDto> guestLogin(HttpServletResponse response, @RequestBody @Valid GuestNickRequestDto requestDto) {
-        return ResponseEntity.ok(redisService.guestLogin(response, requestDto));
+        return ResponseEntity.ok(guestService.guestLogin(response, requestDto));
     }
 
     // 랜덤 닉네임 받아오는 부분

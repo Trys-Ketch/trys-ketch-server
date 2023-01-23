@@ -1,6 +1,6 @@
 package com.project.trysketch.entity;
 
-import com.project.trysketch.global.entity.Timestamped;
+import com.project.trysketch.global.utill.Timestamped;
 import lombok.*;
 
 import javax.persistence.*;
