@@ -1,5 +1,7 @@
 package com.project.trysketch.image;
 
+import com.project.trysketch.dto.response.UserResponseDto;
+import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
@@ -128,5 +130,47 @@ public class ImageService {
         return new MsgResponseDto(StatusMsgCode.DELETE_IMAGE);
     }
 
-    //
+    // 마이페이지 회원조회
+    public DataMsgResponseDto getMyPage(HttpServletRequest request) {
+
+        // 유저 정보 가져오기
+        Claims claims = jwtUtil.authorizeToken(request);
+        User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
+
+        // 유저 정보에서 필요한 정보( id, email, nickname, ImgUrl ) 추출
+        UserResponseDto userResponseDto = UserResponseDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .imagePath(user.getImgUrl())
+                .build();
+
+        return new DataMsgResponseDto(StatusMsgCode.OK,userResponseDto);
+    }
+
+    // 마이페이지 회원 닉네임 수정
+    @Transactional
+    public DataMsgResponseDto patchMyPage(String newNickname, HttpServletRequest request) {
+
+        // 유저 정보 가져오기
+        Claims claims = jwtUtil.authorizeToken(request);
+        User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
+
+        // 유저 닉네임 변경
+        user.updateNickname(newNickname);
+
+        // 유저 정보에서 필요한 정보( id, email, nickname, ImgUrl ) 추출
+        UserResponseDto userResponseDto = UserResponseDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .nickname(user.getNickname())
+                .imagePath(user.getImgUrl())
+                .build();
+
+        return new DataMsgResponseDto(StatusMsgCode.OK,userResponseDto);
+    }
 }
