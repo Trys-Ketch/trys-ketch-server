@@ -15,4 +15,7 @@ public interface GameFlowRepository extends JpaRepository<GameFlow, Long> {
 
     List<GameFlow> findAllByRoomIdAndRound(Long roomId, int round);
 
+    boolean existsByRoomIdAndRoundAndWebSessionId(Long roomId, int round, String webSessionId);
+
+    GameFlow findByRoomIdAndRoundAndWebSessionId(Long roomId, int round, String webSessionId);
 }

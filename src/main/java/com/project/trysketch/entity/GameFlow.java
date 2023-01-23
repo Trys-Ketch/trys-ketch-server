@@ -22,9 +22,10 @@ public class GameFlow {
     @Id
     private Long id;
 
+    @Column(nullable = false)
     private int round;
 
-    @Column
+    @Column(nullable = false)
     private int keywordIndex;
 
     @Column
@@ -33,12 +34,29 @@ public class GameFlow {
     @Column
     private String imagePath;
 
-    @Column
+    @Column(nullable = false)
     private String nickname;
 
     @Column(nullable = false)
     private Long roomId;
 
-    @Column
+    @Column(nullable = false)
     private String webSessionId;
+
+    @Column(nullable = false)
+    private boolean isSubmitted;
+
+    public void update(boolean isSubmitted) {
+        this.isSubmitted = isSubmitted;
+    }
+
+    public void update(boolean isSubmitted, String keyword) {
+        this.isSubmitted = isSubmitted;
+        this.keyword = keyword;
+    }
+
+    public void update(String imagePath, boolean isSubmitted) {
+        this.isSubmitted = isSubmitted;
+        this.imagePath = imagePath;
+    }
 }
