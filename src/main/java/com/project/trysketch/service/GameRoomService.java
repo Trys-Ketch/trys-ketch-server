@@ -1,19 +1,19 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.chatting.ChatMessage;
+import com.project.trysketch.entity.ChatMessage;
 import com.project.trysketch.dto.request.GameRoomRequestDto;
 import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.entity.GameRoom;
 import com.project.trysketch.entity.GameRoomUser;
-import com.project.trysketch.redis.dto.GamerEnum;
+import com.project.trysketch.dto.GamerEnum;
 import com.project.trysketch.repository.GameRoomRepository;
 import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
-import com.project.trysketch.redis.repositorty.GuestRepository;
-import com.project.trysketch.sse.SseEmitters;
+import com.project.trysketch.repository.GuestRepository;
+import com.project.trysketch.global.utill.sse.SseEmitters;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
