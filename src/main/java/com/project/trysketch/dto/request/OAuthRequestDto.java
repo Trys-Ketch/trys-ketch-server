@@ -7,12 +7,12 @@ import lombok.NoArgsConstructor;
 // 2. 작성자  : 황미경
 @Getter
 @NoArgsConstructor
-public class KakaoUserRequstDto {
+public class OAuthRequestDto {
     private Long id;
     private String email;
     private String nickname;
 
-    public KakaoUserRequstDto(Long id, String nickname, String email) {
+    public OAuthRequestDto(Long id, String nickname, String email) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;

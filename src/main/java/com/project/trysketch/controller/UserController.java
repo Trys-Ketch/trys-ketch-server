@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.dto.request.GuestNickRequestDto;
+import com.project.trysketch.service.GoogleService;
 import com.project.trysketch.service.GuestService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
@@ -27,6 +28,7 @@ public class UserController {
     private final UserService userService;
     private final KakaoService kakaoService;
     private final GuestService guestService;
+    private final GoogleService googleService;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -66,7 +68,10 @@ public class UserController {
 
     // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
 
-
+    @GetMapping("/google/callback")
+    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String access_token, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(googleService.googleLogin(access_token, response));
+    }
 
     //========================================================================================================
 
