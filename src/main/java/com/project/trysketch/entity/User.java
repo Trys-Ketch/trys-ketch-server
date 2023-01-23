@@ -45,7 +45,11 @@ public class User {
         return this;
     }
 
-//    @Builder
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    //    @Builder
 //    public User(String email, String password, Long kakaoId, String kakaoNickname) {
 //        this.email = email;
 //        this.password = password;

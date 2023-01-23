@@ -1,5 +1,6 @@
 package com.project.trysketch.image;
 
+import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -45,4 +46,17 @@ public class ImageController {
                                                      HttpServletRequest request) {
         return ResponseEntity.ok(imageService.cancelLike(imageId, request));
     }
+
+    // 마이페이지 회원조회
+    @GetMapping("/mypage")
+    public ResponseEntity<DataMsgResponseDto> getMyPage(HttpServletRequest request) {
+        return ResponseEntity.ok(imageService.getMyPage(request));
+    }
+
+    // 마이페이지 회원 닉네임 수정
+    @PatchMapping("/mypage/nickname")
+    public ResponseEntity<DataMsgResponseDto> patchMyPage(String newNickname, HttpServletRequest request) {
+        return ResponseEntity.ok(imageService.patchMyPage(newNickname, request));
+    }
+
 }
