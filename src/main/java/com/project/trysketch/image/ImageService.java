@@ -135,7 +135,7 @@ public class ImageService {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("email").toString()).orElseThrow(
+        User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
 
@@ -156,7 +156,7 @@ public class ImageService {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("email").toString()).orElseThrow(
+        User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
 

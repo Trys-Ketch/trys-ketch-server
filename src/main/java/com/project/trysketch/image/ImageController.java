@@ -55,7 +55,7 @@ public class ImageController {
 
     // 마이페이지 회원 닉네임 수정
     @PatchMapping("/mypage/nickname")
-    public ResponseEntity<DataMsgResponseDto> patchMyPage(String newNickname, HttpServletRequest request) {
+    public ResponseEntity<DataMsgResponseDto> patchMyPage(@RequestBody String newNickname, HttpServletRequest request) {
         return ResponseEntity.ok(imageService.patchMyPage(newNickname, request));
     }
 
