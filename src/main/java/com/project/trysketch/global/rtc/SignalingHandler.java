@@ -1,6 +1,5 @@
 package com.project.trysketch.global.rtc;
 
-import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.service.GameRoomService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -257,7 +256,7 @@ public class SignalingHandler extends TextWebSocketHandler {
         // FIXME
         // 모든 유저 아니고 현재 방 유저에게 보내야함
 
-        // 본인을 포함한 현재 방의 전체 유저 객체를 가져와서 user_exit, attendee 메시지 전달
+        // 본인을 제외한 현재 방의 전체 유저 객체를 가져와서 user_exit, attendee 메시지 전달
         try {
             for (WebSocketSession webSocketSession : getRoomSessionList(gameRoomId)) {
                 log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", gameRoomId, webSocketSession);
@@ -265,6 +264,15 @@ public class SignalingHandler extends TextWebSocketHandler {
                         .type(MSG_TYPE_ATTENDEE)
                         .attendee(gameRoomService.getAllGameRoomUsers(gameRoomId))
                         .sender(userUUID).build())));
+
+                // 방 안의 전체 각각의 유저별로 방장 찾아서 메시지 발송
+                Map<String, Object> hostCheck = gameRoomService.getGameRoomHost(gameRoomId, webSocketSession.getId());
+                webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                        .type(MSG_TYPE_IS_HOST)
+                        .hostId((String) hostCheck.get("hostId"))
+                        .host((boolean) hostCheck.get("isHost"))
+                        .build())));
+
                 log.info(">>> [ws] user_exit 메시지 받고 있는 userUUID 리스트 {}", webSocketSession.getId());
                 webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                         .type(MSG_TYPE_USER_EXIT)
