@@ -229,7 +229,7 @@ public class SignalingHandler extends TextWebSocketHandler {
                     break;
 
                 case MSG_TYPE_ENDGAME:
-                    // 본인을 포함한 현재 방의 전체 유저 객체를 가져와서 user_exit, attendee 메시지 전달
+                    // 본인을 포함한 현재 방의 전체 유저 객체를 가져와서 attendee, host 메시지 전달
                     try {
                         for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
                             log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
