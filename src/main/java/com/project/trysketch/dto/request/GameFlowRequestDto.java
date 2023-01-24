@@ -19,4 +19,6 @@ public class GameFlowRequestDto {
     private int keywordIndex;    // 키워드 순번
     private String token;        // 회원 & 비회원 토큰
     private String webSessionId; // Socket 연결 시 생성되는 유저의 UUID
+    private boolean isSubmitted; // 유저의 제출 여부
+    private String image;        // 이미지 byte code
 }
