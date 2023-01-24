@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.UUID;
 
 // 1. 기능    : OAuth2.0 구글 비즈니스 로직
-// 2. 작성자  : 황미경
+// 2. 작성자  : 서혁수
 @Slf4j
 @Service
 @RequiredArgsConstructor
