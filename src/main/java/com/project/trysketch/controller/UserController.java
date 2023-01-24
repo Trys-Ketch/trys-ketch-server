@@ -72,8 +72,8 @@ public class UserController {
     // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
 
     @GetMapping("/google/callback")
-    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String access_token, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(googleService.googleLogin(access_token, response));
+    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(googleService.googleLogin(code, response));
     }
 
     //========================================================================================================
