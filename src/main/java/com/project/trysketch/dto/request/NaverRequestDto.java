@@ -1,4 +1,4 @@
-package com.project.trysketch.dto.response;
+package com.project.trysketch.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,7 +7,7 @@ import lombok.Getter;
 // 2. 작성자 : 김재영
 @Getter
 @AllArgsConstructor
-public class NaverResponseDto {
+public class NaverRequestDto {
 
     private String id;
     private String email;
