@@ -34,6 +34,9 @@ public class User {
     private String naverId;
 
 
+    @Column
+    private Long googleId;
+
     @Column(nullable = false)
     private String imgUrl;
 
@@ -52,6 +55,11 @@ public class User {
         return this;
     }
 
+    public User googleIdUpdate(Long googleId) {
+        this.googleId = googleId;
+        return this;
+    }
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
@@ -63,4 +71,11 @@ public class User {
 //        this.kakaoId = kakaoId;
 //        this.nickname = kakaoNickname;
 //    }
+
+    public User update(String nickname, String imgUrl) {
+        this.nickname = nickname;
+        this.imgUrl = imgUrl;
+
+        return this;
+    }
 }

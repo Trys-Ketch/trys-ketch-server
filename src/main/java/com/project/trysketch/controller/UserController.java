@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.dto.request.GuestNickRequestDto;
+import com.project.trysketch.service.GoogleService;
 import com.project.trysketch.service.GuestService;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
@@ -29,6 +30,7 @@ public class UserController {
     private final KakaoService kakaoService;
     private final NaverService naverService;
     private final GuestService guestService;
+    private final GoogleService googleService;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -62,14 +64,17 @@ public class UserController {
 
     // OAuth2.0 네이버 로그인 01.23 17:48 추가=================================================================
     @GetMapping("/naver/callback")
-    public ResponseEntity<MsgResponseDto> naverLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(naverService.naverLogin(code, response));
+    public ResponseEntity<MsgResponseDto> naverLogin(@RequestParam String code, @RequestParam String state, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(naverService.naverLogin(code, state, response));
     }
     //========================================================================================================
 
     // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
 
-
+    @GetMapping("/google/callback")
+    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(googleService.googleLogin(code, response));
+    }
 
     //========================================================================================================
 
