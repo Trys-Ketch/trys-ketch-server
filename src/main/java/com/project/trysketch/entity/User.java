@@ -32,10 +32,15 @@ public class User {
     private Long kakaoId;
     @Column
     private String naverId;
-
+    @Column
+    private Long googleId;
 
     @Column(nullable = false)
     private String imgUrl;
+
+    @JoinColumn(name = "history_id")
+    @OneToOne
+    private History history;
 
 //    public User(String email, String nickname, String password) {
 //        this.email = email;
@@ -49,6 +54,10 @@ public class User {
     }
     public User naverIdUpdate(String naverId) {
         this.naverId = naverId;
+        return this;
+    }
+    public User googleIdUpdate(Long googleId) {
+        this.googleId = googleId;
         return this;
     }
 
