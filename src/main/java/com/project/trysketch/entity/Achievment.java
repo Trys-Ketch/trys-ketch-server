@@ -1,5 +1,6 @@
 package com.project.trysketch.entity;
 
+import com.project.trysketch.global.utill.AchievmentCode;
 import com.project.trysketch.global.utill.Timestamped;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,12 @@ public class Achievment extends Timestamped {
 
     public Achievment(String name, User user) {
         this.name = name;
+        this.user = user;
+    }
+
+
+    public Achievment(AchievmentCode achievmentCode, User user) {
+        this.name = achievmentCode.getAchievmentName();
         this.user = user;
     }
 }
