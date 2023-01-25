@@ -61,7 +61,7 @@ public class GameService {
 
         // 방장이 아닐경우
         if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerEnum.NICK.key()))) {
-            throw new CustomException(StatusMsgCode.YOUR_NOT_HOST);
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
 
         // GameRoom 의 상태를 true 로 변경
@@ -109,7 +109,7 @@ public class GameService {
         if (gameRoom.getHostId().equals(gameRoomUser.getUserId())) {
             hostWebSessionId = gameRoomUser.getWebSessionId();
         }else {
-            throw new CustomException(StatusMsgCode.YOUR_NOT_HOST);
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
         log.info(">>>>>>> [GameService - endGame] hostWebSessionId {}", hostWebSessionId);
 
@@ -123,6 +123,7 @@ public class GameService {
 
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
+        gameRoom.update(0);
 
         // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoom.getId());
@@ -678,11 +679,7 @@ public class GameService {
             }
         }
     }
-}
-
-
-
-//        (키워드인덱스, round)
+    //        (키워드인덱스, round)
 //            1,1   1,2    1,3   1,4   1,5
 //         [제시어, 그림, 제시어, 그림, 제시어],
 //            2,1   2,2    2,3   2,4   2,5
@@ -693,3 +690,78 @@ public class GameService {
 //         [제시어, 그림, 제시어, 그림, 제시어],
 //           5,1    5,2   5,3    5,4   5,5
 //         [제시어, 그림, 제시어, 그림, 제시어]
+
+
+    @Transactional
+    public MsgResponseDto nextResultIndex(GameFlowRequestDto requestDto) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - nextResultIndex] >>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info(">>>>>>> [GameService - nextResultIndex] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - nextResultIndex] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 요청한 유저가 방장인지 아닌지 조회
+        Long reqUserId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        if (!gameRoom.getHostId().equals(reqUserId)) {
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
+        }
+
+        int nowResultCount = gameRoom.getResultCount() + 1;
+        int maxRound = gameRoom.getRoundMaxNum();
+        log.info(">>>>>>> [GameService - nextResultIndex] #{}번 방의 요청한 Keyword Index : {}", gameRoom.getId(), nowResultCount);
+        log.info(">>>>>>> [GameService - nextResultIndex] #{}번 방의 최대 라운드 : {}", gameRoom.getId(), maxRound);
+
+        gameRoom.update(nowResultCount);
+
+        if (nowResultCount > maxRound) {
+            throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
+        }
+
+        // next-keyword-index 로 구독하고 있는 User 에게 end 메세지 전송
+        Map<String, Integer> message = new HashMap<>();
+        message.put("keywordIndex", nowResultCount);
+        sendingOperations.convertAndSend("/topic/game/next-keyword-index/" + requestDto.getRoomId(), message);
+
+        return new MsgResponseDto(StatusMsgCode.OK);
+    }
+
+    @Transactional
+    public MsgResponseDto prevResultIndex(GameFlowRequestDto requestDto) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - prevResultIndex] >>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info(">>>>>>> [GameService - prevResultIndex] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - prevResultIndex] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 요청한 유저가 방장인지 아닌지 조회
+        Long reqUserId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        if (!gameRoom.getHostId().equals(reqUserId)) {
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
+        }
+
+        int nowResultCount = gameRoom.getResultCount() - 1;
+        log.info(">>>>>>> [GameService - prevResultIndex] #{}번 방의 요청한 Keyword Index : {}", gameRoom.getId(), nowResultCount);
+        log.info(">>>>>>> [GameService - prevResultIndex] #{}번 방의 최대 라운드 : {}", gameRoom.getId(), gameRoom.getRoundMaxNum());
+
+        gameRoom.update(nowResultCount);
+
+        if (nowResultCount < 0) {
+            throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
+        }
+
+        // prev-keyword-index 로 구독하고 있는 User 에게 end 메세지 전송
+        Map<String, Integer> message = new HashMap<>();
+        message.put("keywordIndex", nowResultCount);
+        sendingOperations.convertAndSend("/topic/game/prev-keyword-index/" + requestDto.getRoomId(), message);
+
+        return new MsgResponseDto(StatusMsgCode.OK);
+    }
+}

@@ -84,5 +84,15 @@ public class GameController {
         return ResponseEntity.ok(gameService.endGame(requestDto));
     }
 
+    @MessageMapping("/game/next-keyword-index")
+    public ResponseEntity<MsgResponseDto> nextResultIndex(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameController - nextResultIndex 실행");
+        return ResponseEntity.ok(gameService.nextResultIndex(requestDto));
+    }
 
+    @MessageMapping("/game/prev-keyword-index")
+    public ResponseEntity<MsgResponseDto> prevResultIndex(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameController - prevResultIndex 실행");
+        return ResponseEntity.ok(gameService.prevResultIndex(requestDto));
+    }
 }
