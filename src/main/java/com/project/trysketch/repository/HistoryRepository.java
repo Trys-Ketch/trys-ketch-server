@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface HistoryRepository extends JpaRepository<History, Integer> {
 
     Optional<History> findByUser(User user);
+
+
 }

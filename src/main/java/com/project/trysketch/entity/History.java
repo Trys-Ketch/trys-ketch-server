@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Entity;
 import javax.persistence.*;
 
+// 1. 기능   : 유저 활동 내역
+// 2. 작성자 : 김재영
 @Entity
 @Getter
 @AllArgsConstructor
@@ -36,15 +38,19 @@ public class History extends Timestamped {
     @OneToOne(mappedBy = "history")
     private User user;
 
-    public void updatePlaytime(Long playtime) {
-        this.playtime = playtime;
+    public void updatePlaytime(Long plusnum) {
+        this.playtime += plusnum;
     }
 
     public void updateTrials(Long trials) {
-        this.trials = trials;
+        this.trials += trials;
     }
 
     public void updateVisits(Long visits) {
-        this.visits = visits;
+        this.visits += visits;
+    }
+
+    public void updateUser(User user) {
+        this.user = user;
     }
 }

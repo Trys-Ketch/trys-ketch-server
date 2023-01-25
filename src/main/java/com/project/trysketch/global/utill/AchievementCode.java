@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum AchievmentCode {
+public enum AchievementCode {
 
     /* 플레이타임 업적 코드 */
     PLAYTIME_TROPHY_BRONZE("플레이타임 브론즈"),
