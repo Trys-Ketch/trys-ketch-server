@@ -1,10 +1,7 @@
 package com.project.trysketch.entity;
 
 import com.project.trysketch.global.utill.Timestamped;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.Entity;
 import javax.persistence.*;
@@ -16,6 +13,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class History extends Timestamped {
 
     @Id
@@ -35,7 +33,9 @@ public class History extends Timestamped {
     private Long visits;
 
     // 1:1 연관관계 - User
-    @OneToOne(mappedBy = "history")
+//    @OneToOne(mappedBy = "history")
+    @OneToOne
+    @JoinColumn(name = "user_id")
     private User user;
 
     public void updatePlaytime(Long plusnum) {
