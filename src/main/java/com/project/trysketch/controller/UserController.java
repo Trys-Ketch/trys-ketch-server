@@ -1,15 +1,13 @@
 package com.project.trysketch.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.dto.request.GuestNickRequestDto;
-import com.project.trysketch.service.GuestService;
+import com.project.trysketch.service.*;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
-import com.project.trysketch.service.KakaoService;
-import com.project.trysketch.service.NaverService;
-import com.project.trysketch.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +27,8 @@ public class UserController {
     private final KakaoService kakaoService;
     private final NaverService naverService;
     private final GuestService guestService;
+    private final GoogleService googleService;
+    private final HistoryService historyService;
 
     // 회원가입
     @PostMapping("/sign-up")
@@ -60,19 +60,24 @@ public class UserController {
         return ResponseEntity.ok(kakaoService.kakaoLogin(code, response));
     }
 
-    // OAuth2.0 네이버 로그인 01.23 17:48 추가=================================================================
+    // OAuth2.0 네이버 로그인
     @GetMapping("/naver/callback")
-    public ResponseEntity<MsgResponseDto> naverLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(naverService.naverLogin(code, response));
+    public ResponseEntity<MsgResponseDto> naverLogin(@RequestParam String code, @RequestParam String state, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(naverService.naverLogin(code, state, response));
     }
-    //========================================================================================================
 
-    // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
-
-
-
-    //========================================================================================================
-
+    // OAuth2.0 구글 로그인
+//    @GetMapping("/google/callback")
+//    public void googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+//        User googleUer =googleService.googleLogin(code, response);
+//
+////                ResponseEntity.ok(googleService.googleLogin(code, response));
+//        googleUer.getHistory().updateVisits(1L);
+//    }
+    @GetMapping("/google/callback")
+    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(googleService.googleLogin(code, response));
+    }
     // ======================== 여기서 부터는 비회원 관련입니다. ========================
     // 비회원 로그인
     @PostMapping("/guest")
