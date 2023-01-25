@@ -32,6 +32,9 @@ public class GameRoom extends Timestamped {
     @Column
     private String randomCode;
 
+    @Column
+    private Integer roundMaxNum;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean isPlaying = false;
@@ -42,6 +45,10 @@ public class GameRoom extends Timestamped {
 
     public void GameRoomStatusUpdate(boolean isPlaying) {
         this.isPlaying = isPlaying;
+    }
+
+    public void RoundMaxNumUpdate(int gamerNum) {
+        this.roundMaxNum = gamerNum;
     }
 
     public void GameRoomUpdate(Long hostId, String hostNick, boolean isPlaying) {
