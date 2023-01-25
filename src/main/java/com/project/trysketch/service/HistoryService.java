@@ -6,7 +6,7 @@ import com.project.trysketch.entity.User;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.utill.AchievementCode;
-import com.project.trysketch.repository.AchievmentRepository;
+import com.project.trysketch.repository.AchievementRepository;
 import com.project.trysketch.repository.HistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.Map;
 public class HistoryService {
 
     private final HistoryRepository historyRepository;
-    private final AchievmentRepository achievmentRepository;
+    private final AchievementRepository achievementRepository;
 
     public History createHistory() {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [HistoryService - createHistory] >>>>>>>>>>>>>>>>>>>>>>>>");
@@ -45,7 +45,7 @@ public class HistoryService {
                 () -> new CustomException(StatusMsgCode.HISTORY_NOT_FOUND)
         );
         // 해당 유저가 획득한 업적
-        List<Achievement> achievementList = achievmentRepository.findAllByUser(user);
+        List<Achievement> achievementList = achievementRepository.findAllByUser(user);
 
         Map<Integer, Achievement> achievements = new HashMap<>();
         achievements.put(5, new Achievement(AchievementCode.PLAYTIME_TROPHY_BRONZE, user));
@@ -70,7 +70,7 @@ public class HistoryService {
                 () -> new CustomException(StatusMsgCode.HISTORY_NOT_FOUND)
         );
         // 해당 유저가 획득한 업적
-        List<Achievement> achievementList = achievmentRepository.findAllByUser(user);
+        List<Achievement> achievementList = achievementRepository.findAllByUser(user);
 
         Map<Integer, Achievement> achievements = new HashMap<>();
         achievements.put(1, new Achievement(AchievementCode.TRIAL_TROPHY_BRONZE, user));
@@ -95,7 +95,7 @@ public class HistoryService {
                 () -> new CustomException(StatusMsgCode.HISTORY_NOT_FOUND)
         );
         // 해당 유저가 획득한 업적
-        List<Achievement> achievementList = achievmentRepository.findAllByUser(user);
+        List<Achievement> achievementList = achievementRepository.findAllByUser(user);
 
         Map<Integer, Achievement> achievements = new HashMap<>();
         achievements.put(1, new Achievement(AchievementCode.VISIT_TROPHY_BRONZE, user));
@@ -125,7 +125,7 @@ public class HistoryService {
                 if (achievement.equals(currentAchievement)) {
                     continue;
                 }
-                achievmentRepository.save(achievement);
+                achievementRepository.save(achievement);
             }
         }
     }
