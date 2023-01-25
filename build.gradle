@@ -44,7 +44,6 @@ dependencies {
 
     // s3 설정 관련
     implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -70,6 +69,9 @@ dependencies {
 //    implementation 'io.springfox:springfox-swagger2:3.0.0'
 //    implementation 'io.springfox:springfox-swagger-ui:3.0.0'
 //    implementation 'io.springfox:springfox-boot-starter:3.0.0'
+
+    // Oauth
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 
 //tasks.named('test') {

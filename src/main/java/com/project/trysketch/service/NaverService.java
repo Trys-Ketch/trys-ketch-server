@@ -71,7 +71,7 @@ public class NaverService {
         User naverUser = registerNaverUserIfNeeded(naverUserInfo);
 
         log.info(">>>>>>>>>>>>>>>> naverLogin - register 완료");
-        String createToken = jwtUtil.createToken(naverUser.getEmail(), randomNickname);
+        String createToken = jwtUtil.createToken(naverUser.getEmail(), naverUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
 
         return new MsgResponseDto(StatusMsgCode.LOG_IN);

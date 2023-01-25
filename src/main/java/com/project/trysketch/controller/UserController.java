@@ -66,14 +66,26 @@ public class UserController {
         return ResponseEntity.ok(naverService.naverLogin(code, state, response));
     }
 
+    //========================================================================================================
+
+    // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
+
+    @GetMapping("/google/callback")
+    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
+        return ResponseEntity.ok(googleService.googleLogin(code, response));
+    }
+
+    //========================================================================================================
+
     // OAuth2.0 구글 로그인
 //    @GetMapping("/google/callback")
 //    public void googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
 //        User googleUer =googleService.googleLogin(code, response);
 //
-////                ResponseEntity.ok(googleService.googleLogin(code, response));
+//                ResponseEntity.ok(googleService.googleLogin(code, response));
 //        googleUer.getHistory().updateVisits(1L);
 //    }
+
     @GetMapping("/google/callback")
     public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         return ResponseEntity.ok(googleService.googleLogin(code, response));
