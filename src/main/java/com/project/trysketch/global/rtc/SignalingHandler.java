@@ -58,7 +58,12 @@ public class SignalingHandler extends TextWebSocketHandler {
     // 방장 여부와 방장 session id 반환 메시지
     private static final String MSG_TYPE_IS_HOST = "ingame/is_host";
     private static final String MSG_TYPE_ATTENDEE = "ingame/attendee";
+    // 게임이 끝났을 때 반환 메시지
     private static final String MSG_TYPE_ENDGAME = "ingame/end_game";
+    // 강퇴시 반환 메시지
+    private static final String MSG_TYPE_KICK = "ingame/kick";
+    // 강퇴당한 사람 반환 메시지
+    private static final String MSG_TYPE_BE_KICKED = "ingame/be_kicked";
 
 
     // 웹소켓 연결 시
@@ -225,6 +230,31 @@ public class SignalingHandler extends TextWebSocketHandler {
                             }
                         }
                     });
+
+                    break;
+
+                case MSG_TYPE_KICK:
+                    // 방장의 강퇴 기능 구현
+                    log.info(">>> [ws] 강퇴 요청이 들어온 방의 번호 : #{}번 방", roomId);
+                    log.info(">>> [ws] 방장이 강퇴 요청 / 강퇴 요청한 방장의 UUID : {}", userUUID);
+
+                    String kickId = message.getKickId();
+                    log.info(">>> [ws] 방장이 강퇴 요청 / 강퇴 당하는 유저의 UUID : {}", kickId);
+
+                    try {
+                        for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
+                            // 방 안의 전체 각각의 유저별로 강퇴 당하는 사람 찾아서 메시지 발송
+                            if (webSocketSession.getId().equals(kickId)) {
+                                webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                                        .type(MSG_TYPE_BE_KICKED)
+                                        .sender(kickId).build())));
+                                log.info(">>> [ws] 강퇴 당한 사람에게 메시지 전달 성공");
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.info(">>> [ws] 에러 발생 : 강퇴 당한 사람에게 메시지 전달 실패 {}", e.getMessage());
+                    }
 
                     break;
 
