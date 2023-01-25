@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 // 1. 기능   : 유저 활동 내역
 // 2. 작성자 : 김재영
@@ -59,7 +58,7 @@ public class HistoryService {
         for (Integer baseLine : achievements.keySet()) {
 
             // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-            verifyUserAchievment(achievements, achievementList, playtime, baseLine);
+            verifyUserAchievement(achievements, achievementList, playtime, baseLine);
         }
     }
 
@@ -84,7 +83,7 @@ public class HistoryService {
         for (Integer baseLine : achievements.keySet()) {
 
             // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-            verifyUserAchievment(achievements, achievementList, trials, baseLine);
+            verifyUserAchievement(achievements, achievementList, trials, baseLine);
         }
     }
 
@@ -109,21 +108,21 @@ public class HistoryService {
         for (Integer baseLine : achievements.keySet()) {
 
             // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-            verifyUserAchievment(achievements, achievementList, visits, baseLine);
+            verifyUserAchievement(achievements, achievementList, visits, baseLine);
         }
     }
 
-    public void verifyUserAchievment(Map<Integer, Achievement> achievements, List<Achievement> achievementList, Long count, Integer baseLine){
+    public void verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> achievementList, Long count, Integer baseLine){
 
         // 유저 의 playtime 이 기준선을 넘는다면
         if (count > baseLine) {
             Achievement achievement = achievements.get(baseLine);
 
             // 해당 유저가 현재 가지고 있었던 업적 가져오기
-            for (Achievement currentachievment : achievementList) {
+            for (Achievement currentAchievement : achievementList) {
 
                 // 지금 얻으려는 업적과 같다면
-                if (achievement.equals(currentachievment)) {
+                if (achievement.equals(currentAchievement)) {
                     continue;
                 }
                 achievmentRepository.save(achievement);
