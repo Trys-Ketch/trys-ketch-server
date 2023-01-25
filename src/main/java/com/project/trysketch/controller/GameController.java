@@ -76,13 +76,26 @@ public class GameController {
         return gameService.getGameFlow(requestDto);
     }
 
-    // 7. 게임 종료
+    // 7. 게임 결과창 - 다음 키워드 가져오기
+    @MessageMapping("/game/next-keyword-index")
+    public ResponseEntity<MsgResponseDto> nextResultIndex(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameController - nextResultIndex 실행");
+        return ResponseEntity.ok(gameService.nextResultIndex(requestDto));
+    }
+
+    // 8. 게임 결과창 - 이전 키워드 가져오기
+    @MessageMapping("/game/prev-keyword-index")
+    public ResponseEntity<MsgResponseDto> prevResultIndex(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>> GameController - prevResultIndex 실행");
+        return ResponseEntity.ok(gameService.prevResultIndex(requestDto));
+    }
+
+    // 9. 게임 종료
     @MessageMapping("/game/end")
     public ResponseEntity<MsgResponseDto> endGame(GameFlowRequestDto requestDto) {
         log.info(">>>>>>>>>>>> GameController - endGame 실행");
         log.info(">>> 게임이 정상 종료되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
         return ResponseEntity.ok(gameService.endGame(requestDto));
     }
-
 
 }

@@ -35,6 +35,10 @@ public class GameRoom extends Timestamped {
     @Column
     private Integer roundMaxNum;
 
+    @Column
+    @Builder.Default
+    private int resultCount = 0;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean isPlaying = false;
@@ -55,5 +59,9 @@ public class GameRoom extends Timestamped {
         this.hostId = hostId;
         this.hostNick = hostNick;
         this.isPlaying = isPlaying;
+    }
+
+    public void update(int resultCount) {
+        this.resultCount = resultCount;
     }
 }
