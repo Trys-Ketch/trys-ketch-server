@@ -1,6 +1,9 @@
 package com.project.trysketch.global.rtc;
 
+import com.project.trysketch.global.exception.CustomException;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.service.GameRoomService;
+import com.project.trysketch.service.GameService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,6 +25,9 @@ public class SignalingHandler extends TextWebSocketHandler {
     // service 주입
     @Autowired
     private GameRoomService gameRoomService;
+
+    @Autowired
+    private GameService gameService;
 
     // 어떤 방에 어떤 유저가 들어있는지 저장 -> { 방번호 : [ { id : userUUID1 }, { id: userUUID2 }, …], ... }
     private final Map<String, List<Map<String, String>>> roomInfo = new HashMap<>();
@@ -271,6 +277,7 @@ public class SignalingHandler extends TextWebSocketHandler {
         String userUUID = session.getId(); // 유저 uuid
         Long gameRoomId = gameRoomService.getRoomId(userUUID);
 
+        gameService.submitLeftRound(userUUID);
         gameRoomService.exitGameRoom(userUUID);
 
         // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
@@ -325,6 +332,7 @@ public class SignalingHandler extends TextWebSocketHandler {
 //        });
 
     }
+
 
     // 소켓 통신 에러
     @Override
