@@ -32,10 +32,18 @@ public class User {
     private Long kakaoId;
     @Column
     private String naverId;
+    @Column
+    private Long googleId;
 
+    @Column
+    private Long googleId;
 
     @Column(nullable = false)
     private String imgUrl;
+
+    @JoinColumn(name = "history_id")
+    @OneToOne
+    private History history;
 
 //    public User(String email, String nickname, String password) {
 //        this.email = email;
@@ -51,6 +59,15 @@ public class User {
         this.naverId = naverId;
         return this;
     }
+    public User googleIdUpdate(Long googleId) {
+        this.googleId = googleId;
+        return this;
+    }
+
+    public User googleIdUpdate(Long googleId) {
+        this.googleId = googleId;
+        return this;
+    }
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
@@ -63,4 +80,11 @@ public class User {
 //        this.kakaoId = kakaoId;
 //        this.nickname = kakaoNickname;
 //    }
+
+    public User update(String nickname, String imgUrl) {
+        this.nickname = nickname;
+        this.imgUrl = imgUrl;
+
+        return this;
+    }
 }

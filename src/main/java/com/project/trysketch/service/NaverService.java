@@ -3,18 +3,19 @@ package com.project.trysketch.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.trysketch.dto.response.NaverResponseDto;
+import com.project.trysketch.dto.request.NaverRequestDto;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -29,7 +30,7 @@ import java.util.UUID;
 // 2. 작성자  : 김재영
 @Service
 @RequiredArgsConstructor
-@PropertySource("classpath:application-oauth.properties")
+@Slf4j
 public class NaverService {
 
     private final PasswordEncoder passwordEncoder;
@@ -45,21 +46,32 @@ public class NaverService {
     String redirect_uri;
     @Value("${spring.security.oauth2.client.provider.naver.user-info-uri}")
     String user_info_uri;
+    @Value("${spring.security.oauth2.client.provider.naver.token-uri}")
+    String token_uri;
 
 
-
-    public MsgResponseDto naverLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+    public MsgResponseDto naverLogin(String code, String state,HttpServletResponse response) throws JsonProcessingException {
         String randomNickname = userService.RandomNick().getMessage();
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - naverLogin");
+
+        log.info(">>>>>>>>>>>>>>>> code : {}",code);
+        log.info(">>>>>>>>>>>>>>>> state : {}",state);
+
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
-//        String accessToken = getToken(code);
+        String accessToken = getToken(code, state);      //포스트맨 테스트시 주석
+        log.info(">>>>>>>>>>>>>>>> accessToken : {}",accessToken);
+
+        accessToken = accessToken.split(",")[0].split(":")[1];
+        log.info(">>>>>>>>>>>>>>>> accessToken : {}",accessToken);
 
         // 2. 토큰으로 Naver API 호출 : "액세스 토큰"으로 "Naver 사용자 정보" 가져오기
-        NaverResponseDto naverUserInfo = getNaverUserInfo(code, randomNickname);
+        NaverRequestDto naverUserInfo = getNaverUserInfo(accessToken, randomNickname);
 
         User naverUser = registerNaverUserIfNeeded(naverUserInfo);
 
-        String createToken = jwtUtil.createToken(naverUser.getEmail(), randomNickname);
+        log.info(">>>>>>>>>>>>>>>> naverLogin - register 완료");
+        String createToken = jwtUtil.createToken(naverUser.getEmail(), naverUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
 
         return new MsgResponseDto(StatusMsgCode.LOG_IN);
@@ -67,7 +79,7 @@ public class NaverService {
 
 
     public String getToken(String code, String state) {
-
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - getToken 시작");
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
@@ -83,16 +95,17 @@ public class NaverService {
         RestTemplate rt = new RestTemplate();
 
         ResponseEntity<String> accessTokenResponse = rt.exchange(
-                "https://nid.naver.com/oauth2.0/token",
+                token_uri,
                 HttpMethod.POST,
                 naverTokenRequest,
                 String.class
         );
-
-        return "access_token: " + accessTokenResponse.getBody();
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - getToken 끝");
+        return accessTokenResponse.getBody();
     }
 
-    private NaverResponseDto getNaverUserInfo(String accessToken, String randomNickname) throws JsonProcessingException {
+    private NaverRequestDto getNaverUserInfo(String accessToken, String randomNickname) throws JsonProcessingException {
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - getNaverUserInfo 시작");
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
@@ -101,6 +114,7 @@ public class NaverService {
         // HTTP 요청 보내기
         HttpEntity<MultiValueMap<String, String>> naverUserInfoRequest = new HttpEntity<>(headers);
         RestTemplate rt = new RestTemplate();
+        rt.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
         ResponseEntity<String> response = rt.exchange(
                 user_info_uri,
                 HttpMethod.POST,
@@ -114,10 +128,12 @@ public class NaverService {
         String id = String.valueOf(jsonNode.get("response").get("id"));
         String email = jsonNode.get("response").get("email").asText();
 
-        return new NaverResponseDto(id, email, randomNickname);
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - getNaverUserInfo 끝");
+        return new NaverRequestDto(id, email, randomNickname);
     }
 
-    private User registerNaverUserIfNeeded(NaverResponseDto naverUserInfo) {
+    private User registerNaverUserIfNeeded(NaverRequestDto naverUserInfo) {
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - registerNaverUserIfNeeded 시작");
         // DB 에 중복된 Naver Id 가 있는지 확인
         String naverId = naverUserInfo.getId();
         User naverUser = userRepository.findByNaverId(naverId)
@@ -148,6 +164,7 @@ public class NaverService {
             }
             userRepository.save(naverUser);
         }
+        log.info(">>>>>>>>>>>>>>>> [NaverService] - registerNaverUserIfNeeded 끝");
         return naverUser;
     }
 
