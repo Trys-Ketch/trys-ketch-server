@@ -3,11 +3,14 @@ package com.project.trysketch.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.trysketch.entity.History;
 import com.project.trysketch.global.dto.MsgResponseDto;
+import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.dto.request.OAuthRequestDto;
 import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.HistoryRepository;
 import com.project.trysketch.repository.UserRepository;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -32,8 +35,10 @@ public class KakaoService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final HistoryRepository historyRepository;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final HistoryService historyService;
 
     public MsgResponseDto kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         String randomNickname = userService.RandomNick().getMessage();
@@ -118,19 +123,30 @@ public class KakaoService {
     private User registerKakaoUserIfNeeded(OAuthRequestDto kakaoUserInfo) {
         // DB 에 중복된 Kakao Id 가 있는지 확인
         Long kakaoId = kakaoUserInfo.getId();
-        User kakaoUser = userRepository.findByKakaoId(kakaoId)
-                .orElse(null);
+        User kakaoUser = userRepository.findByKakaoId(kakaoId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
         if (kakaoUser == null) {
             // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
             String kakaoEmail = kakaoUserInfo.getEmail();
 
-            User sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
+            User sameEmailUser = userRepository.findByEmail(kakaoEmail).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+            );
 
             if (sameEmailUser != null) {
                 kakaoUser = sameEmailUser;
                 // 기존 회원정보에 카카오 Id 추가
                 kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
+                userRepository.save(kakaoUser);
+
+                // 방문 횟수 1 증가!
+                History history = kakaoUser.getHistory().updateVisits(1L);
+
+                historyRepository.save(history);
             } else {
+                // history 생성부
+                History newHistory = historyService.createHistory();
                 // 신규 회원가입
                 String password = UUID.randomUUID().toString();
                 String encodedPassword = passwordEncoder.encode(password);
@@ -143,8 +159,14 @@ public class KakaoService {
                         .email(email)
                         .imgUrl(userService.getRandomThumbImg().getMessage())
                         .build();
+                userRepository.save(kakaoUser);
+                newHistory.updateUser(kakaoUser);
+
+                // 방문 횟수 1 증가!
+                History history = kakaoUser.getHistory().updateVisits(1L);
+                historyRepository.save(history);
             }
-            userRepository.save(kakaoUser);
+
         }
         return kakaoUser;
     }

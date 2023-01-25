@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.dto.request.NaverRequestDto;
+import com.project.trysketch.entity.History;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.MsgResponseDto;
+import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
+import com.project.trysketch.repository.HistoryRepository;
 import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +38,10 @@ public class NaverService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final HistoryRepository historyRepository;
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final HistoryService historyService;
 
     @Value("${spring.security.oauth2.client.registration.naver.client-id}")
     String client_id;
@@ -60,10 +65,8 @@ public class NaverService {
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
         String accessToken = getToken(code, state);      //포스트맨 테스트시 주석
-        log.info(">>>>>>>>>>>>>>>> accessToken : {}",accessToken);
 
         accessToken = accessToken.split(",")[0].split(":")[1];
-        log.info(">>>>>>>>>>>>>>>> accessToken : {}",accessToken);
 
         // 2. 토큰으로 Naver API 호출 : "액세스 토큰"으로 "Naver 사용자 정보" 가져오기
         NaverRequestDto naverUserInfo = getNaverUserInfo(accessToken, randomNickname);
@@ -79,7 +82,6 @@ public class NaverService {
 
 
     public String getToken(String code, String state) {
-        log.info(">>>>>>>>>>>>>>>> [NaverService] - getToken 시작");
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
 
@@ -100,12 +102,11 @@ public class NaverService {
                 naverTokenRequest,
                 String.class
         );
-        log.info(">>>>>>>>>>>>>>>> [NaverService] - getToken 끝");
         return accessTokenResponse.getBody();
     }
 
     private NaverRequestDto getNaverUserInfo(String accessToken, String randomNickname) throws JsonProcessingException {
-        log.info(">>>>>>>>>>>>>>>> [NaverService] - getNaverUserInfo 시작");
+
         // HTTP Header 생성
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
@@ -127,28 +128,36 @@ public class NaverService {
         JsonNode jsonNode = objectMapper.readTree(responseBody);
         String id = String.valueOf(jsonNode.get("response").get("id"));
         String email = jsonNode.get("response").get("email").asText();
-
-        log.info(">>>>>>>>>>>>>>>> [NaverService] - getNaverUserInfo 끝");
         return new NaverRequestDto(id, email, randomNickname);
     }
 
     private User registerNaverUserIfNeeded(NaverRequestDto naverUserInfo) {
-        log.info(">>>>>>>>>>>>>>>> [NaverService] - registerNaverUserIfNeeded 시작");
         // DB 에 중복된 Naver Id 가 있는지 확인
         String naverId = naverUserInfo.getId();
-        User naverUser = userRepository.findByNaverId(naverId)
-                .orElse(null);
+        User naverUser = userRepository.findByNaverId(naverId).orElseThrow(
+                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+        );
         if (naverUser == null) {
             // Naver 사용자 email 동일한 email 가진 회원이 있는지 확인
             String naverEmail = naverUserInfo.getEmail();
 
-            User sameEmailUser = userRepository.findByEmail(naverEmail).orElse(null);
+            User sameEmailUser = userRepository.findByEmail(naverEmail).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+            );
 
             if (sameEmailUser != null) {
                 naverUser = sameEmailUser;
                 // 기존 회원정보에 NaverId 추가
                 naverUser = naverUser.naverIdUpdate(naverId);
+                userRepository.save(naverUser);
+
+                // 방문 횟수 1 증가!
+                History history = naverUser.getHistory().updateVisits(1L);
+
+                historyRepository.save(history);
             } else {
+                // history 생성부
+                History newHistory = historyService.createHistory();
                 // 신규 회원가입
                 String password = UUID.randomUUID().toString();
                 String encodedPassword = passwordEncoder.encode(password);
@@ -161,10 +170,14 @@ public class NaverService {
                         .email(email)
                         .imgUrl(userService.getRandomThumbImg().getMessage())
                         .build();
+                userRepository.save(naverUser);
+                newHistory.updateUser(naverUser);
+
+                // 방문 횟수 1 증가!
+                History history = naverUser.getHistory().updateVisits(1L);
+                historyRepository.save(history);
             }
-            userRepository.save(naverUser);
         }
-        log.info(">>>>>>>>>>>>>>>> [NaverService] - registerNaverUserIfNeeded 끝");
         return naverUser;
     }
 
