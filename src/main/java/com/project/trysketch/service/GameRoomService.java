@@ -520,6 +520,7 @@ public class GameRoomService {
             gameRoomUserMap.put("nickname", gameRoomUser.getNickname());
             gameRoomUserMap.put("imgUrl", gameRoomUser.getImgUrl());
             gameRoomUserMap.put("isReady", gameRoomUser.isReadyStatus());
+            gameRoomUserMap.put("socketId", gameRoomUser.getWebSessionId());
             if (gameRoomUser.getUserId().equals(hostId)) {
                 gameRoomUserMap.put("isHost", true);
             } else {
