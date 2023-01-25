@@ -58,6 +58,7 @@ public class SignalingHandler extends TextWebSocketHandler {
     // 방장 여부와 방장 session id 반환 메시지
     private static final String MSG_TYPE_IS_HOST = "ingame/is_host";
     private static final String MSG_TYPE_ATTENDEE = "ingame/attendee";
+    private static final String MSG_TYPE_ENDGAME = "ingame/end_game";
 
 
     // 웹소켓 연결 시
@@ -224,6 +225,31 @@ public class SignalingHandler extends TextWebSocketHandler {
                             }
                         }
                     });
+
+                    break;
+
+                case MSG_TYPE_ENDGAME:
+                    // 본인을 포함한 현재 방의 전체 유저 객체를 가져와서 attendee, host 메시지 전달
+                    try {
+                        for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
+                            log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
+                            webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                                    .type(MSG_TYPE_ATTENDEE)
+                                    .attendee(gameRoomService.getAllGameRoomUsers(roomId))
+                                    .sender(userUUID).build())));
+
+                            // 방 안의 전체 각각의 유저별로 방장 찾아서 메시지 발송
+                            Map<String, Object> hostCheck = gameRoomService.getGameRoomHost(roomId, webSocketSession.getId());
+                            webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
+                                    .type(MSG_TYPE_IS_HOST)
+                                    .hostId((String) hostCheck.get("hostId"))
+                                    .host((boolean) hostCheck.get("isHost"))
+                                    .build())));
+                        }
+                        log.info(">>> [ws] 현재 방 전체 사람들에게 상태 전송 성공 !!!");
+                    } catch (Exception e) {
+                        log.info(">>> 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
+                    }
 
                     break;
 

@@ -75,7 +75,7 @@ public class GameService {
         // GameRoom 의 상태를 true 로 변경
         gameRoom.GameRoomStatusUpdate(true);
 
-        // isIngaeme 으로 구독하고 있는 User 에게 start 메세지 전송
+        // isIngame 으로 구독하고 있는 User 에게 start 메세지 전송
         Map<String, Boolean> message = new HashMap<>();
         message.put("isIngame", true);
         sendingOperations.convertAndSend("/topic/game/start/" + requestDto.getRoomId(), message);
@@ -127,6 +127,18 @@ public class GameService {
 
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
+
+        // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoom.getId());
+        for (GameRoomUser gameRoomUsers : gameRoomUserList) {
+            if (!gameRoomUsers.getWebSessionId().equals(hostWebSessionId)) {
+                gameRoomUsers.update(false);
+                gameRoomUserRepository.save(gameRoomUsers);
+            } else {
+                gameRoomUsers.update(true);
+                gameRoomUserRepository.save(gameRoomUsers);
+            }
+        }
 
         // end 로 구독하고 있는 User 에게 end 메세지 전송
         Map<String, Boolean> message = new HashMap<>();
