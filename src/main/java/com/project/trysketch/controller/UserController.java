@@ -5,10 +5,12 @@ import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.dto.request.GuestNickRequestDto;
+import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.service.*;
 import com.project.trysketch.dto.request.SignInRequestDto;
 import com.project.trysketch.dto.request.SignUpRequestDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ import javax.validation.Valid;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -47,16 +50,6 @@ public class UserController {
     // OAuth2.0 카카오톡 로그인
     @GetMapping("/kakao/callback")
     public ResponseEntity<MsgResponseDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-
-/*        // code: 카카오 서버로부터 받은 인가 코드
-        String createToken = kakaoService.kakaoLogin(code, response);
-        // Cookie 생성 및 직접 브라우저에 Set
-        Cookie cookie = new Cookie(JwtUtil.AUTHORIZATION_HEADER, createToken.substring(7));
-        cookie.setPath("/");
-        response.addCookie(cookie);*/
-
-
-        // code: 카카오 서버로부터 받은 인가 코드
         return ResponseEntity.ok(kakaoService.kakaoLogin(code, response));
     }
 
@@ -66,26 +59,7 @@ public class UserController {
         return ResponseEntity.ok(naverService.naverLogin(code, state, response));
     }
 
-    //========================================================================================================
-
-    // OAuth2.0 구글 로그인 01.23 17:53 추가==================================================================
-
-    @GetMapping("/google/callback")
-    public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(googleService.googleLogin(code, response));
-    }
-
-    //========================================================================================================
-
     // OAuth2.0 구글 로그인
-//    @GetMapping("/google/callback")
-//    public void googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-//        User googleUer =googleService.googleLogin(code, response);
-//
-//                ResponseEntity.ok(googleService.googleLogin(code, response));
-//        googleUer.getHistory().updateVisits(1L);
-//    }
-
     @GetMapping("/google/callback")
     public ResponseEntity<MsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
         return ResponseEntity.ok(googleService.googleLogin(code, response));

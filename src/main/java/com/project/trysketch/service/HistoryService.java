@@ -31,7 +31,7 @@ public class HistoryService {
             History history =  History.builder()
                     .playtime(0L)
                     .trials(0L)
-                    .visits(1L)
+                    .visits(0L)
                     .user(null)
                     .build();
         return historyRepository.saveAndFlush(history);
@@ -129,4 +129,6 @@ public class HistoryService {
             }
         }
     }
+
+
 }
