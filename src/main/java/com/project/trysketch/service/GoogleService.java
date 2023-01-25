@@ -60,25 +60,6 @@ public class GoogleService {
     @Value("${google.oauth2.client.token.uri}")
     private String tokenUri;
 
-//    public User googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
-//        String randomNickname = userService.RandomNick().getMessage();
-//
-//        // 1. "인가 코드"로 "액세스 토큰" 요청
-//        String accessToken = getToken(code);
-//
-//        // 2. 토큰으로 구글 API 호출 : "액세스 토큰"으로 "구글 사용자 정보" 가져오기
-//        OAuthRequestDto googleUserInfo = getGoogleUserInfo(accessToken, randomNickname);
-//
-//        // 3. 필요시에 회원가입
-//        User googleUser = registerGoogleUserIfNeeded(googleUserInfo);
-//
-//        // 4. JWT 토큰 반환
-//        String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
-//        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
-//
-//        return googleUser;
-////        return new MsgResponseDto(StatusMsgCode.LOG_IN);
-//    }
     public MsgResponseDto googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         String randomNickname = userService.RandomNick().getMessage();
 
