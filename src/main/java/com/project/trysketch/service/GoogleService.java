@@ -3,11 +3,13 @@ package com.project.trysketch.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.trysketch.entity.History;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.dto.request.OAuthRequestDto;
 import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.HistoryRepository;
 import com.project.trysketch.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -16,6 +18,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -33,8 +36,10 @@ public class GoogleService {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final HistoryRepository historyRepository;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final HistoryService historyService;
 
     @Value("${google.oauth2.client.id}")
     private String clientId;
@@ -54,23 +59,42 @@ public class GoogleService {
     @Value("${google.oauth2.client.token.uri}")
     private String tokenUri;
 
-    public MsgResponseDto googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
-        String randomNickname = userService.RandomNick().getMessage();
+//    public User googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+//        String randomNickname = userService.RandomNick().getMessage();
+//
+//        // 1. "인가 코드"로 "액세스 토큰" 요청
+//        String accessToken = getToken(code);
+//
+//        // 2. 토큰으로 구글 API 호출 : "액세스 토큰"으로 "구글 사용자 정보" 가져오기
+//        OAuthRequestDto googleUserInfo = getGoogleUserInfo(accessToken, randomNickname);
+//
+//        // 3. 필요시에 회원가입
+//        User googleUser = registerGoogleUserIfNeeded(googleUserInfo);
+//
+//        // 4. JWT 토큰 반환
+//        String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
+//        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+//
+//        return googleUser;
+////        return new MsgResponseDto(StatusMsgCode.LOG_IN);
+//    }
+public MsgResponseDto googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+    String randomNickname = userService.RandomNick().getMessage();
 
-        // 1. "인가 코드"로 "액세스 토큰" 요청
-        String accessToken = getToken(code);
+    // 1. "인가 코드"로 "액세스 토큰" 요청
+    String accessToken = getToken(code);
 
-        // 2. 토큰으로 구글 API 호출 : "액세스 토큰"으로 "구글 사용자 정보" 가져오기
-        OAuthRequestDto googleUserInfo = getGoogleUserInfo(accessToken, randomNickname);
+    // 2. 토큰으로 구글 API 호출 : "액세스 토큰"으로 "구글 사용자 정보" 가져오기
+    OAuthRequestDto googleUserInfo = getGoogleUserInfo(accessToken, randomNickname);
 
-        // 3. 필요시에 회원가입
-        User googleUser = registerGoogleUserIfNeeded(googleUserInfo);
+    // 3. 필요시에 회원가입
+    User googleUser = registerGoogleUserIfNeeded(googleUserInfo);
 
-        // 4. JWT 토큰 반환
-        String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
-        return new MsgResponseDto(StatusMsgCode.LOG_IN);
-    }
+    // 4. JWT 토큰 반환
+    String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
+    response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+    return new MsgResponseDto(StatusMsgCode.LOG_IN);
+}
 
     // "인가 코드" 로 "액세스 토큰" 요청
     private String getToken(String code) throws JsonProcessingException {
@@ -133,7 +157,8 @@ public class GoogleService {
     }
 
     // 필요시에 회원가입
-    private User registerGoogleUserIfNeeded(OAuthRequestDto googleUserInfo) {
+    @Transactional
+    public User registerGoogleUserIfNeeded(OAuthRequestDto googleUserInfo) {
         // 1. DB 에 중복된 Google Id 가 있는지 확인
         Long googleId = googleUserInfo.getId();
         User googleUser = userRepository.findByGoogleId(googleId).orElse(null);
@@ -143,6 +168,17 @@ public class GoogleService {
             String googleEmail = googleUserInfo.getEmail();
             // 3. 유저정보에 동일한 이메일을 소유한 유저가 있는지 확인
             User emailCheck = userRepository.findByEmail(googleEmail).orElse(null);
+
+//            History history = History.builder()
+//                    .playtime(0L)
+//                    .trials(0L)
+//                    .visits(1L)
+//                    .user(null)
+//                    .build();
+//            History newHistory = historyRepository.saveAndFlush(history);
+
+            // history 생성부
+            History newHistory = historyService.createHistory();
 
             // 4. null 이 아닌 즉, 유저가 존재할 경우 시작
             if (emailCheck != null) {
@@ -162,9 +198,21 @@ public class GoogleService {
                         .nickname(googleUserInfo.getNickname())
                         .email(googleUserInfo.getEmail())
                         .imgUrl(userService.getRandomThumbImg().getMessage())
+                        .history(newHistory)
                         .build();
             }
+
+
+
+//            History history = historyService.createHistory(googleUser);
+
+            // history 를 이미 가지고 있을때
+//            if (history != null){
+
+////            }
+//            googleUser.updateUserHistory(history);
             userRepository.save(googleUser);
+            newHistory.updateUser(googleUser);
         }
         return googleUser;
     }

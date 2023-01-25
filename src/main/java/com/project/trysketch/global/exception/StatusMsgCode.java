@@ -20,6 +20,7 @@ public enum StatusMsgCode {
     INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
     NECESSARY_LOG_IN(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
     NOT_FOUND_NICK(HttpStatus.BAD_REQUEST, "닉네임을 찾을 수 없습니다"),
+    HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "활동 이력을 찾울 수 없습니다"),
 
 
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
