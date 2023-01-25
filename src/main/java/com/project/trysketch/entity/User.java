@@ -34,10 +34,6 @@ public class User {
     private String naverId;
     @Column
     private Long googleId;
-
-    @Column
-    private Long googleId;
-
     @Column(nullable = false)
     private String imgUrl;
 
@@ -57,10 +53,6 @@ public class User {
     }
     public User naverIdUpdate(String naverId) {
         this.naverId = naverId;
-        return this;
-    }
-    public User googleIdUpdate(Long googleId) {
-        this.googleId = googleId;
         return this;
     }
 

@@ -46,8 +46,9 @@ public class History extends Timestamped {
         this.trials += trials;
     }
 
-    public void updateVisits(Long visits) {
+    public History updateVisits(Long visits) {
         this.visits += visits;
+        return this;
     }
 
     public void updateUser(User user) {
