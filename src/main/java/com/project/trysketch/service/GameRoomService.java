@@ -232,61 +232,62 @@ public class GameRoomService {
     // ============================= 게임방 나가기 =============================
     @Transactional
     public MsgResponseDto exitGameRoom(String userUUID, Long gameRoomId) {
-
         // 1. 유저의 sessionID로 gameRoomUser 정보, 유저가 있는 gameRoom 불러오기
-        GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
-        );
+        GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElse(null);
+        if (gameRoomUser == null) {
+            // gameRoomUser 조회 결과가 null 즉, 강퇴로 인해 유저정보가 이미 없어진 상태
+            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 이미 강퇴된 상태면 아무런 로직 실행 없이 null 값을 반환");
+            return null;
+        } else {
+            GameRoom currentGameRoom = gameRoomUser.getGameRoom();
 
-        GameRoom currentGameRoom = gameRoomUser.getGameRoom();
+            // 게임이 진행중이며, 나가는 유저 포함 4명 이하일 때 게임종료 (4명 미만으로는 게임진행 불가)
+            if(currentGameRoom.isPlaying() && currentGameRoom.getGameRoomUserList().size() <= 2) {
+                gameService.shutDownGame(gameRoomId);
+            }
 
-        // 게임이 진행중이며, 나가는 유저 포함 4명 이하일 때 게임종료 (4명 미만으로는 게임진행 불가)
-        if(currentGameRoom.isPlaying() && currentGameRoom.getGameRoomUserList().size() <= 2) {
-            gameService.shutDownGame(gameRoomId);
-        }
+            // 2. 해당 유저를 GameRoomUser 에서 삭제
+            try {
+                gameRoomUserRepository.deleteByWebSessionId(userUUID);
+            } catch(Exception e) {
+                return new MsgResponseDto(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND);
+            }
 
-        // 2. 해당 유저를 GameRoomUser 에서 삭제
-        try{
-            gameRoomUserRepository.deleteByWebSessionId(userUUID);
-        } catch(Exception e) {
-            return new MsgResponseDto(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND);
-        }
+            // 3. 구독된 같은 방 사람들에게 퇴장 메세지 보내기
+            ChatMessage chatMessage = ChatMessage.builder()
+                    .type(ChatMessage.MessageType.LEAVE)
+                    .roomId(currentGameRoom.getId().toString())
+                    .userId(gameRoomUser.getUserId().toString())
+                    .nickname(gameRoomUser.getNickname())
+                    .content(String.format("%s 님이 퇴장하셨습니다.", gameRoomUser.getNickname()))
+                    .build();
 
-        // 3. 구독된 같은 방 사람들에게 퇴장 메세지 보내기
-        ChatMessage chatMessage = ChatMessage.builder()
-                .type(ChatMessage.MessageType.LEAVE)
-                .roomId(currentGameRoom.getId().toString())
-                .userId(gameRoomUser.getUserId().toString())
-                .nickname(gameRoomUser.getNickname())
-                .content(String.format("%s 님이 퇴장하셨습니다.", gameRoomUser.getNickname()))
-                .build();
+            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 타입 : {}", chatMessage.getType());
+            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 내용 : {}", chatMessage.getContent());
+            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 나가려는 방 : {}", currentGameRoom.getId());
 
-        log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 타입 : {}", chatMessage.getType());
-        log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 내용 : {}", chatMessage.getContent());
-        log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 나가려는 방 : {}", currentGameRoom.getId());
+            sendingOperations.convertAndSend("/topic/chat/room/" + currentGameRoom.getId(), chatMessage);
+            log.info(">>>>>>>>>>>>>>>>>>>>> 채팅방 나가기 다음 로그 <<<<<<<<<<<<<<<<<<<<<");
 
-        sendingOperations.convertAndSend("/topic/chat/room/" + currentGameRoom.getId(), chatMessage);
-        log.info(">>>>>>>>>>>>>>>>>>>>> 채팅방 나가기 다음 로그 <<<<<<<<<<<<<<<<<<<<<");
+            // 4. 유저가 나간 방의 UserList 정보 가져와서, 남은인원 0명이면 게임방, 채팅방 삭제
+            List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(currentGameRoom.getId());
 
-        // 4. 유저가 나간 방의 UserList 정보 가져와서, 남은인원 0명이면 게임방, 채팅방 삭제
-        List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(currentGameRoom.getId());
-
-        if (leftGameRoomUserList.size() == 0){
-            gameRoomRepository.deleteById(gameRoomUser.getGameRoom().getId());
+            if (leftGameRoomUserList.size() == 0){
+                gameRoomRepository.deleteById(gameRoomUser.getGameRoom().getId());
 //            chatRoomRepository.deleteRoom(currentGameRoom.getId().toString());
-        }
+            }
 
-        // 5. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
-        if (gameRoomUser.getUserId().equals(currentGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
+            // 5. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
+            if (gameRoomUser.getUserId().equals(currentGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
 
-            // 6. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
-            Long newHostId = leftGameRoomUserList.get(0).getUserId();
+                // 6. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
+                Long newHostId = leftGameRoomUserList.get(0).getUserId();
 
-            // 7. UserId 를 들고 GameRoomUser 정보 가져오기
-            GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
+                // 7. UserId 를 들고 GameRoomUser 정보 가져오기
+                GameRoomUser userHost = gameRoomUserRepository.findByUserId(newHostId);
 //            Guest guestHost = guestRepository.findById(String.valueOf(newHostId)).orElse(null);
 
-            // 8. gameRoomUser 정보로 새로운 Host 의 id 와 nickname 가져오기
+                // 8. gameRoomUser 정보로 새로운 Host 의 id 와 nickname 가져오기
 //            if (userHost != null) {
                 Long hostId = userHost.getUserId();
                 String hostNick = userHost.getNickname();
@@ -295,9 +296,9 @@ public class GameRoomService {
 //                hostNick = guestHost.getNickname();
 //            }
 
-            // 9. 새로운 Host 가 선정되어 id 와 nickname 을 업데이트 해주고
-            //     게임 방의 isPlaying 을 false 로 변경
-            //     새로운 Host 의 readyStatus 를 true 로 변경
+                // 9. 새로운 Host 가 선정되어 id 와 nickname 을 업데이트 해주고
+                //     게임 방의 isPlaying 을 false 로 변경
+                //     새로운 Host 의 readyStatus 를 true 로 변경
 //            GameRoom updateGameRoom = GameRoom.builder()
 //                    .id(enterGameRoom.getId())
 //                    .hostId(hostId)
@@ -306,14 +307,15 @@ public class GameRoomService {
 //                    .isPlaying(false)
 //                    .build();
 //            enterGameRoom.GameRoomUpdate(hostId, hostNick, false);
-            currentGameRoom.GameRoomUpdate(hostId, hostNick, false);
-            userHost.update(true);
+                currentGameRoom.GameRoomUpdate(hostId, hostNick, false);
+                userHost.update(true);
 
-            // 10. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
+                // 10. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
 //            gameRoomRepository.save(updateGameRoom);
 
-            // 11. SSE event 생성
-            sseEmitters.changeRoom(getrooms());
+                // 11. SSE event 생성
+                sseEmitters.changeRoom(getrooms());
+            }
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
