@@ -72,6 +72,11 @@ public class GoogleService {
         // 3. 필요시에 회원가입
         User googleUser = registerGoogleUserIfNeeded(googleUserInfo);
 
+        History history = googleUser.getHistory().updateVisits(1L);
+        historyRepository.save(history);
+
+        historyService.getTrophyOfVisit(googleUser);
+
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
@@ -151,18 +156,14 @@ public class GoogleService {
             // 3. 유저정보에 동일한 이메일을 소유한 유저가 있는지 확인
             User emailCheck = userRepository.findByEmail(googleEmail).orElse(null);
 
-
-
             // 4. null 이 아닌 즉, 유저가 존재할 경우 시작
             if (emailCheck != null) {
                 // 5. 기존의 유저 정보를 재활용(새롭게 받아온 유저에 기존 유저 정보를 덮어 씌운다)
                 googleUser = emailCheck;
                 // 6. 새롭게 받아온 ID 를 기존 계정의 ID 로 변경(기존 유저에서 ID 값만 변경)
                 googleUser = googleUser.googleIdUpdate(googleId);
-                userRepository.save(googleUser);
 
-                History history = googleUser.getHistory().updateVisits(1L);
-                historyRepository.save(history);
+                googleUser = userRepository.save(googleUser);
             } else {
                 // history 생성부
                 History newHistory = historyService.createHistory();
@@ -179,16 +180,9 @@ public class GoogleService {
                         .imgUrl(userService.getRandomThumbImg().getMessage())
                         .history(newHistory)
                         .build();
-
-                userRepository.save(googleUser);
-                newHistory.updateUser(googleUser);
-                log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> googleUser 의 History ID : {}",googleUser.getHistory().getId());
-                log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> googleUser 의 History 의 최초 Visit status : {}",googleUser.getHistory().getVisits());
-                History history = googleUser.getHistory().updateVisits(1L);
-                historyRepository.save(history);
-                log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> googleUser 의 History 의 변경 후 Visit status : {}",googleUser.getHistory().getVisits());
+                User newUser = userRepository.save(googleUser);
+                newHistory.updateUser(newUser);
             }
-
         }
         return googleUser;
     }
