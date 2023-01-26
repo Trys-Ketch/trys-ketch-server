@@ -220,7 +220,7 @@ public class GameService {
             Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
             sendCount.put("trueCount", 0L);
             sendCount.put("maxTrueCount", maxCount);
-            log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
+            log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
 
             message.put("keyword", adjective.getAdjective() + noun.getNoun());
             message.put("keywordIndex", i + 1);
@@ -733,9 +733,9 @@ public class GameService {
 //           5,1    5,2   5,3    5,4   5,5
 //         [제시어, 그림, 제시어, 그림, 제시어]
 
-    // 게임 결과창 - 다음 키워드 번호 가져오기
+    // 게임 결과창 - 다음 또는 이전 키워드 번호 가져오기
     @Transactional
-    public MsgResponseDto nextResultIndex(GameFlowRequestDto requestDto) {
+    public MsgResponseDto getKeywordIndex(GameFlowRequestDto requestDto, String destination) {
         // 1. 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
 
@@ -748,57 +748,41 @@ public class GameService {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
 
-        // 3. 다음 키워드 번호 가져오기 및 최대 라운드 가져오기
-        int nowResultCount = gameRoom.getResultCount() + 1;
-        int maxRound = gameRoom.getRoundMaxNum();
-
-        // 4. DB 에 다음 키워드 번호 등록
-        gameRoom.update(nowResultCount);
-
-        // 5. 키워드 번호가 최대 라운드 수 보다 크면 Exception 발생
-        if (nowResultCount > maxRound) {
-            throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
-        }
-
-        // 6. next-keyword-index 로 구독하고 있는 User 에게 next-keyword-index 메세지 전송
         Map<String, Integer> message = new HashMap<>();
-        message.put("keywordIndex", nowResultCount);
-        sendingOperations.convertAndSend("/topic/game/next-keyword-index/" + requestDto.getRoomId(), message);
+        int nowResultCount = 0;
+
+        switch (destination) {
+            case "next" -> {
+                // 3. 요청이 "next" 이면 다음 키워드 번호 가져오기 DB 에 다음 키워드 번호 등록
+                nowResultCount = gameRoom.getResultCount() + 1;
+                gameRoom.update(nowResultCount);
+
+                // 4. 키워드 번호가 최대 라운드 수 보다 크면 Exception 발생
+                if (nowResultCount > gameRoom.getRoundMaxNum()) {
+                    throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
+                }
+
+                // 5. next-keyword-index 로 구독하고 있는 User 에게 next-keyword-index 메세지 전송
+                message.put("keywordIndex", nowResultCount);
+                sendingOperations.convertAndSend("/topic/game/next-keyword-index/" + requestDto.getRoomId(), message);
+            }
+            case "prev" -> {
+                // 6. 요청이 "prev" 이면 이전 키워드 번호 가져오기 및 DB 에 이전 키워드 번호 등록
+                nowResultCount = gameRoom.getResultCount() - 1;
+                gameRoom.update(nowResultCount);
+
+                // 7. 키워드 번호가 최소 라운드 수 보다 적으면 Exception 발생
+                if (nowResultCount < 0) {
+                    throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
+                }
+
+                // 8. prev-keyword-index 로 구독하고 있는 User 에게 prev-keyword-index 메세지 전송
+                message.put("keywordIndex", nowResultCount);
+                sendingOperations.convertAndSend("/topic/game/prev-keyword-index/" + requestDto.getRoomId(), message);
+            }
+        }
 
         return new MsgResponseDto(StatusMsgCode.OK);
     }
 
-    // 게임 결과창 - 이전 키워드 번호 가져오기
-    @Transactional
-    public MsgResponseDto prevResultIndex(GameFlowRequestDto requestDto) {
-        // 1. 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-
-        // 2. 요청한 유저가 방장인지 아닌지 조회 아니면 Exception 발생
-        Long reqUserId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
-        );
-        if (!gameRoom.getHostId().equals(reqUserId)) {
-            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
-        }
-
-        // 3. 이전 키워드 번호 가져오기
-        int nowResultCount = gameRoom.getResultCount() - 1;
-
-        // 4. DB 에 이전 키워드 번호 등록
-        gameRoom.update(nowResultCount);
-
-        // 5. 키워드 번호가 최소 라운드 수 보다 적으면 Exception 발생
-        if (nowResultCount < 0) {
-            throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
-        }
-
-        // 6. prev-keyword-index 로 구독하고 있는 User 에게 prev-keyword-index 메세지 전송
-        Map<String, Integer> message = new HashMap<>();
-        message.put("keywordIndex", nowResultCount);
-        sendingOperations.convertAndSend("/topic/game/prev-keyword-index/" + requestDto.getRoomId(), message);
-
-        return new MsgResponseDto(StatusMsgCode.OK);
-    }
 }
