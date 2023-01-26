@@ -11,20 +11,20 @@ import org.springframework.http.HttpStatus;
 public enum StatusMsgCode {
 
     /* 회원, 비회원 관련 Status 메시지 코드 */
-    USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "회원을 찾을 수 없습니다."),
-    GAME_ROOM_USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "플레이어를 찾을 수 없습니다."),
-    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
-    EXIST_USER(HttpStatus.BAD_REQUEST, "중복된 이메일입니다."),
-    EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다."),
-    BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "형식이 맞지 않습니다."),
-    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
+    USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "회원을 찾을 수 없습니다"),
+    GAME_ROOM_USER_NOT_FOUND(HttpStatus.BAD_REQUEST, "플레이어를 찾을 수 없습니다"),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다"),
+    EXIST_USER(HttpStatus.BAD_REQUEST, "중복된 이메일입니다"),
+    EXIST_NICK(HttpStatus.BAD_REQUEST, "중복된 닉네임입니다"),
+    BAD_ID_PASSWORD(HttpStatus.BAD_REQUEST, "형식이 맞지 않습니다"),
+    INVALID_AUTH_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다"),
     NECESSARY_LOG_IN(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
     NOT_FOUND_NICK(HttpStatus.BAD_REQUEST, "닉네임을 찾을 수 없습니다"),
     HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "활동 이력을 찾울 수 없습니다"),
 
 
-    IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다."),
-    ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다."),
+    IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다"),
+    ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다"),
     ALREADY_CANCEL_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요 취소를 눌렀습니다"),
 
 
@@ -39,8 +39,8 @@ public enum StatusMsgCode {
 
 
     /* Resource 의 현재 상태와 충돌 관련 Status 메시지 코드*/
-    DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "데이터가 이미 존재합니다."),
-    DUPLICATE_USER(HttpStatus.CONFLICT, "유저가 이미 존재합니다."),
+    DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "데이터가 이미 존재합니다"),
+    DUPLICATE_USER(HttpStatus.CONFLICT, "유저가 이미 존재합니다"),
     ONE_MAN_ONE_ROOM(HttpStatus.CONFLICT, "이미 접속중인 방이 있습니다"),
 
 
