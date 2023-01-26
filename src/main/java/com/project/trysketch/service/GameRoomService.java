@@ -33,7 +33,7 @@ import java.util.*;
 public class GameRoomService {
     private final GameRoomRepository gameRoomRepository;
     private final GameRoomUserRepository gameRoomUserRepository;
-    private final GuestRepository guestRepository;
+    private final GameService gameService;
     private final UserService userService;
     private final SseEmitters sseEmitters;
     private final SimpMessageSendingOperations sendingOperations;
@@ -231,7 +231,7 @@ public class GameRoomService {
 
     // ============================= 게임방 나가기 =============================
     @Transactional
-    public MsgResponseDto exitGameRoom(String userUUID) {
+    public MsgResponseDto exitGameRoom(String userUUID, Long gameRoomId) {
 
         // 1. 유저의 sessionID로 gameRoomUser 정보, 유저가 있는 gameRoom 불러오기
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
@@ -239,6 +239,11 @@ public class GameRoomService {
         );
 
         GameRoom currentGameRoom = gameRoomUser.getGameRoom();
+
+        // 게임이 진행중이며, 나가는 유저 포함 4명 이하일 때 게임종료 (4명 미만으로는 게임진행 불가)
+        if(currentGameRoom.isPlaying() && currentGameRoom.getGameRoomUserList().size() <= 2) {
+            gameService.shutDownGame(gameRoomId);
+        }
 
         // 2. 해당 유저를 GameRoomUser 에서 삭제
         try{
