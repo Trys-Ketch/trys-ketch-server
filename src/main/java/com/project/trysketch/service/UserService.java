@@ -151,13 +151,15 @@ public class UserService {
             log.info(">>>>>> UserService 의 gamerInfo 메서드 / 비회원 Token : {}", Arrays.toString(guestInfo));
 
             // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
-            Optional<Guest> guest = guestRepository.findByGuestId(guestInfo[0]);
-//            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestId : " + guest.get().getId());
-//            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestNick : " + guest.get().getNickname());
-//            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestImg : " + guest.get().getImgUrl());
-            result.put(GamerEnum.ID.key(), guestInfo[0]);                           // guest Id 를 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.NICK.key(), guestInfo[1]);                         // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
-            result.put(GamerEnum.IMG.key(), guestInfo[2]);                          // guest img url 을 key 값으로 value 추출 해서 result 에 주입
+            Optional<Guest> guest = Optional.ofNullable(guestRepository.findByGuestId(guestInfo[0]).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+            ));
+            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestId : " + guest.get().getId());
+            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestNick : " + guest.get().getNickname());
+            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestImg : " + guest.get().getImgUrl());
+            result.put(GamerEnum.ID.key(), guest.get().getGuestId());               // guest Id 를 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.NICK.key(), guest.get().getNickname());            // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
+            result.put(GamerEnum.IMG.key(), guest.get().getImgUrl());               // guest img url 을 key 값으로 value 추출 해서 result 에 주입
         }
         return result;
     }
