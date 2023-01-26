@@ -308,7 +308,7 @@ public class SignalingHandler extends TextWebSocketHandler {
         Long gameRoomId = gameRoomService.getRoomId(userUUID);
 
         gameService.submitLeftRound(userUUID);
-        gameRoomService.exitGameRoom(userUUID);
+        gameRoomService.exitGameRoom(userUUID, gameRoomId);
 
         // 연결이 종료되면 sessions 와 userInfo 에서 해당 유저 삭제
         sessions.remove(userUUID);

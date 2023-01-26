@@ -148,19 +148,18 @@ public class GameService {
 
     // 강제 종료( 비정상적인 종료 )
     @Transactional
-    public MsgResponseDto shutDownGame(GameFlowRequestDto requestDto) {
+      public MsgResponseDto shutDownGame(Long gameRoomId) {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - shutDownGame] RoomId : {}", requestDto.getRoomId());
+        log.info(">>>>>>> [GameService - shutDownGame] RoomId : {}", gameRoomId);
 
         // 현재 방 정보 가져오기
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
+        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.getId() {}", gameRoom.getId());
+        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.getTitle() {}", gameRoom.getTitle());
+        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.isPlaying() {}", gameRoom.isPlaying());
 
-        // 현재 GameRoom 이 시작되지 않았다면
-        if (!gameRoom.isPlaying()) {
-            throw new CustomException(StatusMsgCode.NOT_STARTED_YET);
-        }
 
         // GameRoom 에서 진행된 모든 GameFlow 삭제
         gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
@@ -168,8 +167,24 @@ public class GameService {
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
 
-        // 구독하고 있는 User 에게 start 메세지 전송
-        sendingOperations.convertAndSend("/topic/game/shutDown/" + requestDto.getRoomId(),"shutDown");
+        // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoom.getId());
+        for (GameRoomUser gameRoomUsers : gameRoomUserList) {
+            if (!gameRoomUsers.getUserId().equals(gameRoom.getHostId())) {
+                gameRoomUsers.update(false);
+                log.info(">>>>>>>> [GameService - shutDownGame] 유저 readyStatus 업데이트 : {}", gameRoomUsers.isReadyStatus());
+                gameRoomUserRepository.save(gameRoomUsers);
+            } else {
+                gameRoomUsers.update(true);
+                gameRoomUserRepository.save(gameRoomUsers);
+                log.info(">>>>>>>> [GameService - shutDownGame] 유저 readyStatus 업데이트 : {}", gameRoomUsers.isReadyStatus());
+            }
+        }
+
+        // 구독하고 있는 User 에게 shutdown 메세지 전송
+        Map<String, Boolean> message = new HashMap<>();
+        message.put("shutdown", true);
+        sendingOperations.convertAndSend("/topic/game/shutdown/" + gameRoomId, message);
 
         // 게임 강제 종료
         return new MsgResponseDto(StatusMsgCode.SHUTDOWN_GAME);
