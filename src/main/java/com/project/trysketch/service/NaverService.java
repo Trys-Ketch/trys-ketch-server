@@ -68,12 +68,12 @@ public class NaverService {
         // 2. 토큰으로 Naver API 호출 : "액세스 토큰"으로 "Naver 사용자 정보" 가져오기
         NaverRequestDto naverUserInfo = getNaverUserInfo(accessToken, randomNickname);
 
+        // 3. 필요시에 회원가입
         User naverUser = registerNaverUserIfNeeded(naverUserInfo);
 
         History history = naverUser.getHistory().updateVisits(1L);
-        historyRepository.saveAndFlush(history);
+        historyRepository.save(history);
 
-        log.info(">>>>>>>>>>>>>>>>>> naver History의 주인 : {}",history.getUser().getId());
         historyService.getTrophyOfVisit(naverUser);
 
         String createToken = jwtUtil.createToken(naverUser.getEmail(), naverUser.getNickname());
@@ -150,7 +150,7 @@ public class NaverService {
                 // 기존 회원정보에 NaverId 추가
                 naverUser = naverUser.naverIdUpdate(naverId);
 
-                naverUser = userRepository.saveAndFlush(naverUser);
+                naverUser = userRepository.save(naverUser);
             } else {
                 // history 생성부
                 History newHistory = historyService.createHistory();
@@ -167,10 +167,7 @@ public class NaverService {
                         .imgUrl(userService.getRandomThumbImg().getMessage())
                         .history(newHistory)
                         .build();
-                User user2 = userRepository.saveAndFlush(naverUser);
-                User newUser = userRepository.findById(user2.getId()).orElseThrow(
-                        () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-                );
+                User newUser = userRepository.save(naverUser);
                 newHistory.updateUser(newUser);
             }
         }
