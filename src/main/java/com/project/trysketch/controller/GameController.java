@@ -20,6 +20,8 @@ public class GameController {
     private final GameService gameService;
     private final String word = "word";
     private final String image = "image";
+    private final String next = "next";
+    private final String prev = "prev";
 
     // MessageMapping 을 통해 webSocket 로 들어오는 메시지를 발신 처리한다.
     // 이때 클라이언트에서는 /app/game/** 로 요청하게 되고 이것을 controller 가 받아서 처리한다.
@@ -78,16 +80,16 @@ public class GameController {
 
     // 7. 게임 결과창 - 다음 키워드 가져오기
     @MessageMapping("/game/next-keyword-index")
-    public ResponseEntity<MsgResponseDto> nextResultIndex(GameFlowRequestDto requestDto) {
+    public ResponseEntity<MsgResponseDto> nextKeywordIndex(GameFlowRequestDto requestDto) {
         log.info(">>>>>>>>>>>> GameController - nextResultIndex 실행");
-        return ResponseEntity.ok(gameService.nextResultIndex(requestDto));
+        return ResponseEntity.ok(gameService.getKeywordIndex(requestDto, next));
     }
 
     // 8. 게임 결과창 - 이전 키워드 가져오기
     @MessageMapping("/game/prev-keyword-index")
-    public ResponseEntity<MsgResponseDto> prevResultIndex(GameFlowRequestDto requestDto) {
+    public ResponseEntity<MsgResponseDto> prevKeywordIndex(GameFlowRequestDto requestDto) {
         log.info(">>>>>>>>>>>> GameController - prevResultIndex 실행");
-        return ResponseEntity.ok(gameService.prevResultIndex(requestDto));
+        return ResponseEntity.ok(gameService.getKeywordIndex(requestDto, prev));
     }
 
     // 9. 게임 종료
