@@ -12,9 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 // 1. 기능   : 유저 활동 내역
 // 2. 작성자 : 김재영
@@ -28,12 +26,12 @@ public class HistoryService {
 
     public History createHistory() {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [HistoryService - createHistory] >>>>>>>>>>>>>>>>>>>>>>>>");
-            History history =  History.builder()
-                    .playtime(0L)
-                    .trials(0L)
-                    .visits(0L)
-                    .user(null)
-                    .build();
+        History history = History.builder()
+                .playtime(0L)
+                .trials(0L)
+                .visits(0L)
+                .user(null)
+                .build();
         return historyRepository.saveAndFlush(history);
     }
 
@@ -94,10 +92,9 @@ public class HistoryService {
         History history = historyRepository.findByUser(user).orElseThrow(
                 () -> new CustomException(StatusMsgCode.HISTORY_NOT_FOUND)
         );
-        log.info(">>>>>>>>>>>>>>>>> History 의 id : {}",history.getId());
-        log.info(">>>>>>>>>>>>>>>>> History 의 주인 id : {}",history.getUser().getId());
         // 해당 유저가 획득한 업적
         List<Achievement> achievementList = achievementRepository.findAllByUser(user);
+
 
         Map<Integer, Achievement> achievements = new HashMap<>();
         achievements.put(5, new Achievement(AchievementCode.VISIT_TROPHY_BRONZE, user));
@@ -106,32 +103,37 @@ public class HistoryService {
 
         // 유저로 찾아온 history 의 playtime 을 가져옴
         Long visits = history.getVisits();
-        log.info(">>>>>>>>>>>>>>>>> History 의 visit status : {}", visits);
 
         for (Integer baseLine : achievements.keySet()) {
-            log.info(">>>>>>>>>>>>>>>>> History 의 baseLine : {}", baseLine);
             // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
             verifyUserAchievement(achievements, achievementList, visits, baseLine);
         }
     }
 
-    public void verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> achievementList, Long count, Integer baseLine){
+    public void verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine) {
         log.info(">>>>>>>>>>>>>>>>> [HistoryService] - verifyUserAchievement");
-        // 유저 의 playtime 이 기준선을 넘는다면
+
+        // 유저 의 count 가  baseLine 이 기준선을 넘는다면
+        int cnt = 0;
         if (count > baseLine) {
             Achievement achievement = achievements.get(baseLine);
+
             // 해당 유저가 현재 가지고 있었던 업적 가져오기
-            if (achievementList.isEmpty()){
+            if (currentAchievementList.isEmpty()) {
                 achievementRepository.save(achievement);
-                log.info(">>>>>>>>>>>>>>>>> achievement 만들었다");
+                log.info(">>>>>>>>>>>>>>>>> achievement 처음 만들었다");
             } else {
-                for (Achievement currentAchievement : achievementList) {
+
+                for (Achievement currentAchievement : currentAchievementList) {
+
                     // 지금 얻으려는 업적과 같다면
                     if (achievement.getName().equals(currentAchievement.getName())) {
-                        continue;
+                        cnt++;
                     }
+                }
+                if (cnt == 0) {
                     achievementRepository.save(achievement);
-                    log.info(">>>>>>>>>>>>>>>>> achievement 만들었다");
+                    log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
                 }
             }
         }
