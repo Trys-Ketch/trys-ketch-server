@@ -623,12 +623,6 @@ public class GameService {
 
     // 게임 중간에 나갈 시 남은 라운드 결과 null로 모두 제출
     public void submitLeftRound(String userUUID) {
-        if (userUUID == null) {
-            // 강퇴당한 경우 userUUID 가 null 이기 때문에 바로 리턴
-            log.info(">>>>>>> 위치 : GameRoomService 의 submitLeftRound 메서드 / 이미 강퇴된 상태면 아무런 로직 실행 없이 바로 반환");
-            return;
-        }
-
         // gameRoomUser 정보로부터 isPlaying 확인
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
