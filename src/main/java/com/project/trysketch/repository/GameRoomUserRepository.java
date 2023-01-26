@@ -33,4 +33,6 @@ public interface GameRoomUserRepository extends JpaRepository<GameRoomUser, Long
     void deleteByWebSessionId(String userUUID);
 
     Long countByUserId(Long valueOf);
+
+    Long countByGameRoomId(Long roomId);
 }
