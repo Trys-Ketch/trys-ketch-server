@@ -285,6 +285,10 @@ public class GameService {
         // 2. 받아온 유저의 정보가 gameFlow 에 없다면 -> 새롭게 생성
         else {
 
+            GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(requestDto.getWebSessionId()).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
+            );
+
             // 2-1. image 가 없다면 -> keyword 로 저장
             if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
                 gameFlow = GameFlow.builder()
@@ -294,6 +298,7 @@ public class GameService {
                         .keyword(requestDto.getKeyword())
                         .nickname(gamerInfo.get(GamerEnum.NICK.key()))
                         .webSessionId(requestDto.getWebSessionId())
+                        .gameRoomUser(gameRoomUser)
                         .isSubmitted(!requestDto.isSubmitted()).build();
                 log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 키워드 : {}", gameFlow.getKeyword());
             }
@@ -307,6 +312,7 @@ public class GameService {
                         .imagePath(saveImage(requestDto))
                         .nickname(gamerInfo.get(GamerEnum.NICK.key()))
                         .webSessionId(requestDto.getWebSessionId())
+                        .gameRoomUser(gameRoomUser)
                         .isSubmitted(!requestDto.isSubmitted()).build();
                 log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 이미지 : {}", gameFlow.getImagePath());
             }
@@ -556,15 +562,6 @@ public class GameService {
         log.info(">>>>>>> [GameService - getGameFlow] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
         log.info(">>>>>>> [GameService - getGameFlow] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
-        // 요청한 유저가 방장인지 아닌지 조회
-        Long userId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
-        );
-        boolean isHost = false;
-        if (gameRoom.getHostId().equals(userId)){
-            isHost = true;
-        }
 
         // 현재 방의 정보로 GameFlow 정보 List 형태로 가져오기
         List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomId(requestDto.getRoomId());
@@ -580,45 +577,74 @@ public class GameService {
         }
 
         // 반환될 2차원 배열 선언
-        Object[][] listlist = new Object[roundTotalNum][roundTotalNum];
+        Object[][] resultlist = new Object[roundTotalNum][roundTotalNum];
 
+        // 중첩 for문 돌면서 round, keyword index에 해당하는 데이터 불러오기
         for (int i = 1; i <= roundTotalNum; i++) {
             for (int j = 1; j <= roundTotalNum; j++) {
                 log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> i{}", i);
                 log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> j {}", j);
                 log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> requestDto.getRoomId() {}", requestDto.getRoomId());
 
-                // 중첩 for문 돌면서 round, keyword index에 해당하는 데이터 불러오기
-                List<String> resultList = new ArrayList<>();
+                // 2차원 배열의 요소에 해당하는 리스트 생성 (요소에 들어가는 것 : 닉네임, 키워드 or imagePath, 프로필사진)
+                List<String> result = new ArrayList<>();
                 GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(requestDto.getRoomId(), j, i).orElseThrow(
                         () -> new CustomException(StatusMsgCode.GAMEFLOW_NOT_FOUND)
                 );
-                resultList.add(gameFlow.getNickname());
+                // 2차원 배열의 요소에 닉네임 저장
+                result.add(gameFlow.getNickname());
+                // 2차원 배열의 요소에 키워드 or imagePath저장
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 가져오기
                     if(gameFlow.getImagePath().equals("미제출")){
                         // 게임중 방 나가서 제출 못했을 경우, 미제출 이미지 보여주기
                         UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
                             () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
-                        resultList.add(unsubmissionImg.getUnsubmissionImg());
+                        result.add(unsubmissionImg.getUnsubmissionImg());
                     } else{
-                        resultList.add(gameFlow.getImagePath());
+                        result.add(gameFlow.getImagePath());
                     }
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기
-                    resultList.add(gameFlow.getKeyword());
+                    result.add(gameFlow.getKeyword());
                 }
-                listlist[i - 1][j - 1] = resultList;
+                // 2차원 배열의 요소에 프로필사진 url 저장
+                result.add(gameFlow.getGameRoomUser().getImgUrl());
+                // 닉네임, 키워드 or imagePath, 프로필사진 담긴 리스트를 2차원 배열의 요소로 저장
+                resultlist[i - 1][j - 1] = result;
             }
         }
-        log.info(">>>>>>> [GameService - getGameFlow] 대망의 마지막 2차원 배열 : {}", Arrays.deepToString(listlist));
+        log.info(">>>>>>> [GameService - getGameFlow] 2차원 배열 : {}", Arrays.deepToString(resultlist));
 
-        // 요청한 유저에게 게임 결과와 본인의 방장 여부 메시지 전송
+        // 요청한 유저가 방장인지 아닌지 조회
+        Long userId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        boolean isHost = false;
+        if (gameRoom.getHostId().equals(userId)){
+            isHost = true;
+        }
+
+        // gamerList에 프로필사진, 닉네임, 방장여부 저장하기
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoom.getId());
+        List<Map<String, Object>> gamerList = new ArrayList<>();
+        for(GameRoomUser gameRoomUser : gameRoomUserList) {
+            Map<String, Object> gamerMap = new HashMap<>();
+            gamerMap.put("imgUrl", gameRoomUser.getImgUrl());
+            gamerMap.put("nickname", gameRoomUser.getNickname());
+            gamerMap.put("isHost", gameRoom.getHostId().equals(gameRoomUser.getUserId()));
+            gamerList.add(gamerMap);
+        }
+
+        // 요청한 유저에게 게임 결과, 본인의 방장 여부, 게임 참여자 리스트 메시지 전송
         Map<String, Object> message = new HashMap<>();
-        message.put("result", listlist);
-        message.put("isHost", isHost);
+        message.put("result", resultlist);       // 게임 결과 (2차원 배열)
+        message.put("isHost", isHost);           // 방장 유무
+        message.put("gamerList", gamerList);     // 게임 참여자 리스트
+
         sendingOperations.convertAndSend("/queue/game/result/" + requestDto.getWebSessionId(), message);
-        return listlist;
+        return resultlist;
     }
 
     // 게임 중간에 나갈 시 남은 라운드 결과 null로 모두 제출
