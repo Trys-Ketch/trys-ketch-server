@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 // 1. 기능   : 방에 들어가있는 유저 엔티티
 // 2. 작성자 : 김재영, 서혁수
@@ -38,6 +40,10 @@ public class GameRoomUser {
 
     @Column
     private String imgUrl;
+
+    @OneToMany(mappedBy = "gameRoomUser")
+    @Builder.Default
+    private List<GameFlow> gameFlowList = new ArrayList<>();
 
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
