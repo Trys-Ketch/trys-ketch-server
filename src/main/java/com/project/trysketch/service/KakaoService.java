@@ -52,6 +52,11 @@ public class KakaoService {
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
 
+        History history = kakaoUser.getHistory().updateVisits(1L);
+        historyRepository.save(history);
+
+        historyService.getTrophyOfVisit(kakaoUser);
+
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
@@ -123,27 +128,21 @@ public class KakaoService {
     private User registerKakaoUserIfNeeded(OAuthRequestDto kakaoUserInfo) {
         // DB 에 중복된 Kakao Id 가 있는지 확인
         Long kakaoId = kakaoUserInfo.getId();
-        User kakaoUser = userRepository.findByKakaoId(kakaoId).orElseThrow(
-                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-        );
+        log.info(">>>>>>>>>>>>> [kakaoService] - 레지스트 부분 kakaoUser 시작");
+        User kakaoUser = userRepository.findByKakaoId(kakaoId).orElse(null);
+        log.info(">>>>>>>>>>>>> [kakaoService] - 레지스트 부분 kakaoUser 완료");
         if (kakaoUser == null) {
             // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
             String kakaoEmail = kakaoUserInfo.getEmail();
 
-            User sameEmailUser = userRepository.findByEmail(kakaoEmail).orElseThrow(
-                    () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-            );
+            User sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
 
             if (sameEmailUser != null) {
                 kakaoUser = sameEmailUser;
                 // 기존 회원정보에 카카오 Id 추가
                 kakaoUser = kakaoUser.kakaoIdUpdate(kakaoId);
+
                 userRepository.save(kakaoUser);
-
-                // 방문 횟수 1 증가!
-                History history = kakaoUser.getHistory().updateVisits(1L);
-
-                historyRepository.save(history);
             } else {
                 // history 생성부
                 History newHistory = historyService.createHistory();
@@ -159,12 +158,8 @@ public class KakaoService {
                         .email(email)
                         .imgUrl(userService.getRandomThumbImg().getMessage())
                         .build();
-                userRepository.save(kakaoUser);
-                newHistory.updateUser(kakaoUser);
-
-                // 방문 횟수 1 증가!
-                History history = kakaoUser.getHistory().updateVisits(1L);
-                historyRepository.save(history);
+                User newUser = userRepository.save(kakaoUser);
+                newHistory.updateUser(newUser);
             }
 
         }

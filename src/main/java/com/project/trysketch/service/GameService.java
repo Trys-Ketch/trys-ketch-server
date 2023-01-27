@@ -148,19 +148,18 @@ public class GameService {
 
     // 강제 종료( 비정상적인 종료 )
     @Transactional
-    public MsgResponseDto shutDownGame(GameFlowRequestDto requestDto) {
+      public MsgResponseDto shutDownGame(Long gameRoomId) {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - shutDownGame] RoomId : {}", requestDto.getRoomId());
+        log.info(">>>>>>> [GameService - shutDownGame] RoomId : {}", gameRoomId);
 
         // 현재 방 정보 가져오기
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+        GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
+        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.getId() {}", gameRoom.getId());
+        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.getTitle() {}", gameRoom.getTitle());
+        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.isPlaying() {}", gameRoom.isPlaying());
 
-        // 현재 GameRoom 이 시작되지 않았다면
-        if (!gameRoom.isPlaying()) {
-            throw new CustomException(StatusMsgCode.NOT_STARTED_YET);
-        }
 
         // GameRoom 에서 진행된 모든 GameFlow 삭제
         gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
@@ -168,8 +167,24 @@ public class GameService {
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
 
-        // 구독하고 있는 User 에게 start 메세지 전송
-        sendingOperations.convertAndSend("/topic/game/shutDown/" + requestDto.getRoomId(),"shutDown");
+        // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoom.getId());
+        for (GameRoomUser gameRoomUsers : gameRoomUserList) {
+            if (!gameRoomUsers.getUserId().equals(gameRoom.getHostId())) {
+                gameRoomUsers.update(false);
+                log.info(">>>>>>>> [GameService - shutDownGame] 유저 readyStatus 업데이트 : {}", gameRoomUsers.isReadyStatus());
+                gameRoomUserRepository.save(gameRoomUsers);
+            } else {
+                gameRoomUsers.update(true);
+                gameRoomUserRepository.save(gameRoomUsers);
+                log.info(">>>>>>>> [GameService - shutDownGame] 유저 readyStatus 업데이트 : {}", gameRoomUsers.isReadyStatus());
+            }
+        }
+
+        // 구독하고 있는 User 에게 shutdown 메세지 전송
+        Map<String, Boolean> message = new HashMap<>();
+        message.put("shutdown", true);
+        sendingOperations.convertAndSend("/topic/game/shutdown/" + gameRoomId, message);
 
         // 게임 강제 종료
         return new MsgResponseDto(StatusMsgCode.SHUTDOWN_GAME);
@@ -179,7 +194,7 @@ public class GameService {
     // requestDto 필요한 정보
     // token, roomId
     @Transactional
-    public void getRandomKeyword(GameFlowRequestDto requestDto) {
+    public void getInGameData(GameFlowRequestDto requestDto) {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getRandomKeyword] >>>>>>>>>>>>>>>>>>>>>>>>");
 
         // 해당 gameRoom 의 전체 유저 리스트 조회
@@ -199,10 +214,18 @@ public class GameService {
             Noun noun = nounRepository.findById(nuId).orElse(null);
 
             Map<String, Object> message = new HashMap<>();
+            Map<String, Long> sendCount = new HashMap<>();
+
+            // 제출한 인원수 및 게임중인 인원수 메시지 전송
+            Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
+            sendCount.put("trueCount", 0L);
+            sendCount.put("maxTrueCount", maxCount);
+            log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
 
             message.put("keyword", adjective.getAdjective() + noun.getNoun());
             message.put("keywordIndex", i + 1);
 
+            sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
             sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
         }
     }
@@ -290,6 +313,25 @@ public class GameService {
         }
 
         gameFlowRepository.saveAndFlush(gameFlow);
+
+        // 제출한 사람 인원수 및 현재 방의 플레이중인 인원수 체크
+        Long trueCount = 0L;
+        Long maxCount = gameRoomUserRepository.countByGameRoomId(gameFlow.getRoomId());
+        List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(gameFlow.getRoomId(), gameFlow.getRound());
+        for (GameFlow findList : gameFlowList) {
+            if (findList.isSubmitted()) {
+                trueCount++;
+            }
+        }
+
+        // 제출한 인원수 및 게임중인 인원수 메시지 전송
+        HashMap<String, Long> message = new HashMap<>();
+        message.put("trueCount", trueCount);
+        message.put("maxTrueCount", maxCount);
+        sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), message);
+        log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 trueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), trueCount);
+        log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 maxTrueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), maxCount);
+
 
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 라운드 : {}", gameFlow.getRound());
@@ -691,14 +733,11 @@ public class GameService {
 //           5,1    5,2   5,3    5,4   5,5
 //         [제시어, 그림, 제시어, 그림, 제시어]
 
-    // 게임 결과창 - 다음 키워드 번호 가져오기
+    // 게임 결과창 - 다음 또는 이전 키워드 번호 가져오기
     @Transactional
-    public MsgResponseDto nextResultIndex(GameFlowRequestDto requestDto) {
+    public MsgResponseDto getKeywordIndex(GameFlowRequestDto requestDto, String destination) {
         // 1. 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - nextResultIndex] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - nextResultIndex] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - nextResultIndex] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 2. 요청한 유저가 방장인지 아닌지 조회 아니면 Exception 발생
         Long reqUserId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
@@ -709,64 +748,41 @@ public class GameService {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
 
-        // 3. 다음 키워드 번호 가져오기 및 최대 라운드 가져오기
-        int nowResultCount = gameRoom.getResultCount() + 1;
-        int maxRound = gameRoom.getRoundMaxNum();
-        log.info(">>>>>>> [GameService - nextResultIndex] #{}번 방의 요청한 Keyword Index : {}", gameRoom.getId(), nowResultCount);
-        log.info(">>>>>>> [GameService - nextResultIndex] #{}번 방의 최대 라운드 : {}", gameRoom.getId(), maxRound);
-
-        // 4. DB 에 다음 키워드 번호 등록
-        gameRoom.update(nowResultCount);
-
-        // 5. 키워드 번호가 최대 라운드 수 보다 크면 Exception 발생
-        if (nowResultCount > maxRound) {
-            throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
-        }
-
-        // 6. next-keyword-index 로 구독하고 있는 User 에게 next-keyword-index 메세지 전송
         Map<String, Integer> message = new HashMap<>();
-        message.put("keywordIndex", nowResultCount);
-        sendingOperations.convertAndSend("/topic/game/next-keyword-index/" + requestDto.getRoomId(), message);
+        int nowResultCount = 0;
+
+        switch (destination) {
+            case "next" -> {
+                // 3. 요청이 "next" 이면 다음 키워드 번호 가져오기 DB 에 다음 키워드 번호 등록
+                nowResultCount = gameRoom.getResultCount() + 1;
+                gameRoom.update(nowResultCount);
+
+                // 4. 키워드 번호가 최대 라운드 수 보다 크면 Exception 발생
+                if (nowResultCount > gameRoom.getRoundMaxNum()) {
+                    throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
+                }
+
+                // 5. next-keyword-index 로 구독하고 있는 User 에게 next-keyword-index 메세지 전송
+                message.put("keywordIndex", nowResultCount);
+                sendingOperations.convertAndSend("/topic/game/next-keyword-index/" + requestDto.getRoomId(), message);
+            }
+            case "prev" -> {
+                // 6. 요청이 "prev" 이면 이전 키워드 번호 가져오기 및 DB 에 이전 키워드 번호 등록
+                nowResultCount = gameRoom.getResultCount() - 1;
+                gameRoom.update(nowResultCount);
+
+                // 7. 키워드 번호가 최소 라운드 수 보다 적으면 Exception 발생
+                if (nowResultCount < 0) {
+                    throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
+                }
+
+                // 8. prev-keyword-index 로 구독하고 있는 User 에게 prev-keyword-index 메세지 전송
+                message.put("keywordIndex", nowResultCount);
+                sendingOperations.convertAndSend("/topic/game/prev-keyword-index/" + requestDto.getRoomId(), message);
+            }
+        }
 
         return new MsgResponseDto(StatusMsgCode.OK);
     }
 
-    // 게임 결과창 - 이전 키워드 번호 가져오기
-    @Transactional
-    public MsgResponseDto prevResultIndex(GameFlowRequestDto requestDto) {
-        // 1. 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - prevResultIndex] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - prevResultIndex] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - prevResultIndex] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
-
-        // 2. 요청한 유저가 방장인지 아닌지 조회 아니면 Exception 발생
-        Long reqUserId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
-        );
-        if (!gameRoom.getHostId().equals(reqUserId)) {
-            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
-        }
-
-        // 3. 이전 키워드 번호 가져오기
-        int nowResultCount = gameRoom.getResultCount() - 1;
-        log.info(">>>>>>> [GameService - prevResultIndex] #{}번 방의 요청한 Keyword Index : {}", gameRoom.getId(), nowResultCount);
-        log.info(">>>>>>> [GameService - prevResultIndex] #{}번 방의 최대 라운드 : {}", gameRoom.getId(), gameRoom.getRoundMaxNum());
-
-        // 4. DB 에 이전 키워드 번호 등록
-        gameRoom.update(nowResultCount);
-
-        // 5. 키워드 번호가 최소 라운드 수 보다 적으면 Exception 발생
-        if (nowResultCount < 0) {
-            throw new CustomException(StatusMsgCode.KEYWORD_INDEX_NOT_FOUND);
-        }
-
-        // 6. prev-keyword-index 로 구독하고 있는 User 에게 prev-keyword-index 메세지 전송
-        Map<String, Integer> message = new HashMap<>();
-        message.put("keywordIndex", nowResultCount);
-        sendingOperations.convertAndSend("/topic/game/prev-keyword-index/" + requestDto.getRoomId(), message);
-
-        return new MsgResponseDto(StatusMsgCode.OK);
-    }
 }
