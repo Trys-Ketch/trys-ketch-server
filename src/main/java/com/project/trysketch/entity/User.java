@@ -37,8 +37,7 @@ public class User {
     @Column(nullable = false)
     private String imgUrl;
 
-    @JoinColumn(name = "history_id")
-    @OneToOne
+    @OneToOne(mappedBy = "user")
     private History history;
 
 //    public User(String email, String nickname, String password) {
