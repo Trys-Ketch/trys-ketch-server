@@ -577,7 +577,7 @@ public class GameService {
         }
 
         // 반환될 2차원 배열 선언
-        Object[][] resultlist = new Object[roundTotalNum][roundTotalNum];
+        Object[][] resultList = new Object[roundTotalNum][roundTotalNum];
 
         // 중첩 for문 돌면서 round, keyword index에 해당하는 데이터 불러오기
         for (int i = 1; i <= roundTotalNum; i++) {
@@ -587,12 +587,12 @@ public class GameService {
                 log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> requestDto.getRoomId() {}", requestDto.getRoomId());
 
                 // 2차원 배열의 요소에 해당하는 리스트 생성 (요소에 들어가는 것 : 닉네임, 키워드 or imagePath, 프로필사진)
-                List<String> result = new ArrayList<>();
+                List<String> gameResult = new ArrayList<>();
                 GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(requestDto.getRoomId(), j, i).orElseThrow(
                         () -> new CustomException(StatusMsgCode.GAMEFLOW_NOT_FOUND)
                 );
                 // 2차원 배열의 요소에 닉네임 저장
-                result.add(gameFlow.getNickname());
+                gameResult.add(gameFlow.getNickname());
                 // 2차원 배열의 요소에 키워드 or imagePath저장
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 가져오기
@@ -600,21 +600,21 @@ public class GameService {
                         // 게임중 방 나가서 제출 못했을 경우, 미제출 이미지 보여주기
                         UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
                             () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
-                        result.add(unsubmissionImg.getUnsubmissionImg());
+                        gameResult.add(unsubmissionImg.getUnsubmissionImg());
                     } else{
-                        result.add(gameFlow.getImagePath());
+                        gameResult.add(gameFlow.getImagePath());
                     }
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기
-                    result.add(gameFlow.getKeyword());
+                    gameResult.add(gameFlow.getKeyword());
                 }
                 // 2차원 배열의 요소에 프로필사진 url 저장
-                result.add(gameFlow.getGameRoomUser().getImgUrl());
+                gameResult.add(gameFlow.getGameRoomUser().getImgUrl());
                 // 닉네임, 키워드 or imagePath, 프로필사진 담긴 리스트를 2차원 배열의 요소로 저장
-                resultlist[i - 1][j - 1] = result;
+                resultList[i - 1][j - 1] = gameResult;
             }
         }
-        log.info(">>>>>>> [GameService - getGameFlow] 2차원 배열 : {}", Arrays.deepToString(resultlist));
+        log.info(">>>>>>> [GameService - getGameFlow] 2차원 배열 : {}", Arrays.deepToString(resultList));
 
         // 요청한 유저가 방장인지 아닌지 조회
         Long userId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
@@ -639,12 +639,12 @@ public class GameService {
 
         // 요청한 유저에게 게임 결과, 본인의 방장 여부, 게임 참여자 리스트 메시지 전송
         Map<String, Object> message = new HashMap<>();
-        message.put("result", resultlist);       // 게임 결과 (2차원 배열)
+        message.put("result", resultList);       // 게임 결과 (2차원 배열)
         message.put("isHost", isHost);           // 방장 유무
         message.put("gamerList", gamerList);     // 게임 참여자 리스트
 
         sendingOperations.convertAndSend("/queue/game/result/" + requestDto.getWebSessionId(), message);
-        return resultlist;
+        return resultList;
     }
 
     // 게임 중간에 나갈 시 남은 라운드 결과 null로 모두 제출
