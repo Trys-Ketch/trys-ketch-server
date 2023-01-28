@@ -104,9 +104,9 @@ public class GameRoomService {
         String header = userService.validHeader(request);
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
-        // 2. 요청을 한 유저가 이미 속한 방이 있으면 생성 불가능
+        // 2. 혹시 모를 오류상황으로 현재 User 가 다른 방에 들어가 있다면 gameRoomUser삭제
         if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))) {
-            throw new CustomException(StatusMsgCode.ONE_MAN_ONE_ROOM);
+            gameRoomUserRepository.deleteByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())));
         }
 
         // 3. 초대 코드를 위한 랜덤코드 생성
@@ -188,7 +188,6 @@ public class GameRoomService {
         HashMap<String, String> extInfo = userService.gamerInfo(header);
 
         // 2. id로 DB 에서 현재 들어갈 게임방 데이터 찾기
-//        Optional<GameRoom> enterGameRoom = gameRoomRepository.findById(id);
         GameRoom enterGameRoom = gameRoomRepository.findByRandomCode(randomCode).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
@@ -204,9 +203,9 @@ public class GameRoomService {
             return new DataMsgResponseDto(StatusMsgCode.FULL_BANG);
         }
 
-        // 5. 현재 User 가 다른 방에 들어가 있다면
+        // 5. 혹시 모를 오류상황으로 현재 User 가 다른 방에 들어가 있다면 gameRoomUser삭제
         if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))) {
-            return new DataMsgResponseDto(StatusMsgCode.ONE_MAN_ONE_ROOM);
+            gameRoomUserRepository.deleteByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())));
         }
 
         // 6. 새롭게 게임방에 들어온 유저 생성
@@ -241,19 +240,19 @@ public class GameRoomService {
         } else {
             GameRoom currentGameRoom = gameRoomUser.getGameRoom();
 
-            // 게임이 진행중이며, 나가는 유저 포함 3명 이하일 때 게임종료 (3명 미만으로는 게임진행 불가)
+            // 2. 게임이 진행중이며, 나가는 유저 포함 3명 이하일 때 게임종료 (3명 미만으로는 게임진행 불가)
             if(currentGameRoom.isPlaying() && currentGameRoom.getGameRoomUserList().size() <= 3) {
                 gameService.shutDownGame(gameRoomId);
             }
 
-            // 2. 해당 유저를 GameRoomUser 에서 삭제
+            // 3. 해당 유저를 GameRoomUser 에서 삭제
             try {
                 gameRoomUserRepository.deleteByWebSessionId(userUUID);
             } catch(Exception e) {
                 return new MsgResponseDto(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND);
             }
 
-            // 3. 구독된 같은 방 사람들에게 퇴장 메세지 보내기
+            // 4. 구독된 같은 방 사람들에게 퇴장 메세지 보내기
             ChatMessage chatMessage = ChatMessage.builder()
                     .type(ChatMessage.MessageType.LEAVE)
                     .roomId(currentGameRoom.getId().toString())
@@ -269,7 +268,7 @@ public class GameRoomService {
             sendingOperations.convertAndSend("/topic/chat/room/" + currentGameRoom.getId(), chatMessage);
             log.info(">>>>>>>>>>>>>>>>>>>>> 채팅방 나가기 다음 로그 <<<<<<<<<<<<<<<<<<<<<");
 
-            // 4. 유저가 나간 방의 UserList 정보 가져와서, 남은인원 0명이면 게임방, 채팅방 삭제
+            // 5. 유저가 나간 방의 UserList 정보 가져와서, 남은인원 0명이면 게임방, 채팅방 삭제
             List<GameRoomUser> leftGameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(currentGameRoom.getId());
 
             if (leftGameRoomUserList.size() == 0){
@@ -277,7 +276,7 @@ public class GameRoomService {
 //            chatRoomRepository.deleteRoom(currentGameRoom.getId().toString());
             }
 
-            // 5. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
+            // 6. 나간 User 와 해당 GameRoom 의 방장이 같으며 GameRoom 에 User 남아있을 경우
             if (gameRoomUser.getUserId().equals(currentGameRoom.getHostId()) && !leftGameRoomUserList.isEmpty()) {
 
                 // 6. 게임 방 유저들중 현재 방장 다음으로 들어온 UserId 가져오기
