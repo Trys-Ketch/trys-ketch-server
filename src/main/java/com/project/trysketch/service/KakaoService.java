@@ -134,7 +134,6 @@ public class KakaoService {
         if (kakaoUser == null) {
             // 카카오 사용자 email 동일한 email 가진 회원이 있는지 확인
             String kakaoEmail = kakaoUserInfo.getEmail();
-
             User sameEmailUser = userRepository.findByEmail(kakaoEmail).orElse(null);
 
             if (sameEmailUser != null) {
@@ -149,19 +148,18 @@ public class KakaoService {
                 // 신규 회원가입
                 String password = UUID.randomUUID().toString();
                 String encodedPassword = passwordEncoder.encode(password);
-                String email = kakaoUserInfo.getEmail();
 
                 kakaoUser = User.builder()
                         .password(encodedPassword)
                         .kakaoId(kakaoId)
                         .nickname(kakaoUserInfo.getNickname())
-                        .email(email)
+                        .email(kakaoUserInfo.getEmail())
                         .imgUrl(userService.getRandomThumbImg().getMessage())
+                        .history(newHistory)
                         .build();
                 User newUser = userRepository.save(kakaoUser);
                 newHistory.updateUser(newUser);
             }
-
         }
         return kakaoUser;
     }

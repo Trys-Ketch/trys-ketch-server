@@ -33,9 +33,7 @@ public class History extends Timestamped {
     private Long visits;
 
     // 1:1 연관관계 - User
-//    @OneToOne(mappedBy = "history")
     @OneToOne
-    @JoinColumn(name = "user_id")
     private User user;
 
     public void updatePlaytime(Long plusnum) {

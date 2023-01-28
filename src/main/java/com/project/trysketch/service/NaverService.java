@@ -157,13 +157,12 @@ public class NaverService {
                 // 신규 회원가입
                 String password = UUID.randomUUID().toString();
                 String encodedPassword = passwordEncoder.encode(password);
-                String email = naverUserInfo.getEmail();
 
                 naverUser = User.builder()
                         .password(encodedPassword)
                         .naverId(naverId)
                         .nickname(naverUserInfo.getNickname())
-                        .email(email)
+                        .email(naverUserInfo.getEmail())
                         .imgUrl(userService.getRandomThumbImg().getMessage())
                         .history(newHistory)
                         .build();
