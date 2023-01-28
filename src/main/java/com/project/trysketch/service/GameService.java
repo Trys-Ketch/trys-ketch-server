@@ -298,7 +298,7 @@ public class GameService {
                         .keyword(requestDto.getKeyword())
                         .nickname(gamerInfo.get(GamerEnum.NICK.key()))
                         .webSessionId(requestDto.getWebSessionId())
-                        .gameRoomUser(gameRoomUser)
+                        .userImgPath(gameRoomUser.getImgUrl())
                         .isSubmitted(!requestDto.isSubmitted()).build();
                 log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 키워드 : {}", gameFlow.getKeyword());
             }
@@ -312,7 +312,7 @@ public class GameService {
                         .imagePath(saveImage(requestDto))
                         .nickname(gamerInfo.get(GamerEnum.NICK.key()))
                         .webSessionId(requestDto.getWebSessionId())
-                        .gameRoomUser(gameRoomUser)
+                        .userImgPath(gameRoomUser.getImgUrl())
                         .isSubmitted(!requestDto.isSubmitted()).build();
                 log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 이미지 : {}", gameFlow.getImagePath());
             }
@@ -651,7 +651,7 @@ public class GameService {
                     gameResult.add(gameFlow.getKeyword());
                 }
                 // 2차원 배열의 요소에 프로필사진 url 저장
-                gameResult.add(gameFlow.getGameRoomUser().getImgUrl());
+                gameResult.add(gameFlow.getUserImgPath());
                 // 닉네임, 키워드 or imagePath, 프로필사진 담긴 리스트를 2차원 배열의 요소로 저장
                 resultList[i - 1][j - 1] = gameResult;
             }
@@ -757,6 +757,7 @@ public class GameService {
                             .nickname(gameRoomUser.getNickname())
                             .webSessionId(userUUID)
                             .imagePath("미제출")
+                            .userImgPath(gameRoomUser.getImgUrl())
                             .isSubmitted(true).build();
                     gameFlowRepository.saveAndFlush(gameFlow);
                 } else {
@@ -768,6 +769,7 @@ public class GameService {
                             .nickname(gameRoomUser.getNickname())
                             .webSessionId(userUUID)
                             .keyword("미제출")
+                            .userImgPath(gameRoomUser.getImgUrl())
                             .isSubmitted(true).build();
                     gameFlowRepository.saveAndFlush(gameFlow);
                 }

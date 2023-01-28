@@ -40,11 +40,7 @@ public class GameRoomUser {
 
     @Column
     private String imgUrl;
-
-    @OneToMany(mappedBy = "gameRoomUser")
-    @Builder.Default
-    private List<GameFlow> gameFlowList = new ArrayList<>();
-
+    
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
     }

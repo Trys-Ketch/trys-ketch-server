@@ -241,8 +241,8 @@ public class GameRoomService {
         } else {
             GameRoom currentGameRoom = gameRoomUser.getGameRoom();
 
-            // 게임이 진행중이며, 나가는 유저 포함 4명 이하일 때 게임종료 (4명 미만으로는 게임진행 불가)
-            if(currentGameRoom.isPlaying() && currentGameRoom.getGameRoomUserList().size() <= 2) {
+            // 게임이 진행중이며, 나가는 유저 포함 3명 이하일 때 게임종료 (3명 미만으로는 게임진행 불가)
+            if(currentGameRoom.isPlaying() && currentGameRoom.getGameRoomUserList().size() <= 3) {
                 gameService.shutDownGame(gameRoomId);
             }
 
