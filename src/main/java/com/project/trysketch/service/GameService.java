@@ -222,7 +222,7 @@ public class GameService {
             sendCount.put("maxTrueCount", maxCount);
             log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
 
-            message.put("keyword", adjective.getAdjective() + noun.getNoun());
+            message.put("keyword", adjective.getAdjective() + " " + noun.getNoun());
             message.put("keywordIndex", i + 1);
 
             sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
@@ -345,8 +345,50 @@ public class GameService {
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 보내는 사람 세션Id : {}", gameFlow.getWebSessionId());
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 제출 여부 : {}", gameFlow.isSubmitted());
 
+
+        // 동시성 제어를 위해 분리했던 메소드 다시 결합
         // DB 기준 제출 여부 조회 후 메시지 전송
-        sendSubmitMessage(requestDto);
+//        sendSubmitMessage(requestDto);
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendSubmitMessage] >>>>>>>>>>>>>>>>>>>>>>>>");
+//        List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(requestDto.getRoomId(), requestDto.getRound());
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회
+        boolean allFlag = true;
+        boolean userFlag = true;
+        for (GameFlow gameflow : gameFlowList) {
+            if (gameflow.getWebSessionId().equals(requestDto.getWebSessionId())) {
+                userFlag = gameflow.isSubmitted();
+            }
+            if (!gameflow.isSubmitted()) {
+                allFlag = false;
+            }
+        }
+        log.info(">>>>>>> [GameService - getToggleSubmit] 전체가 다 제출했습니까?! : {}", allFlag);
+
+        // 본인에게 본인 제출 여부 메시지 전송
+        Map<String, Object> submitMessage = new HashMap<>();
+        submitMessage.put("isSubmitted", userFlag);
+        sendingOperations.convertAndSend("/queue/game/is-submitted/" + requestDto.getWebSessionId(), submitMessage);
+        log.info(">>>>>>> [GameService - getToggleSubmit] 제출할 때 마다 개인에게 메시지 전송 성공! : {}", submitMessage);
+
+        // 이미지 포함 여부에 따라 destination 부여
+        String destination = requestDto.getImage() == null || requestDto.getImage().length() == 0 ? "word" : "image";
+
+        // 전체 제출 여부 확인
+        log.info(">>>>>>> [GameService - sendSubmitMessage] gameFlowList.size() {}", gameFlowList.size());
+        log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoomUserList.size() {}", gameRoomUserList.size());
+        log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoom.getRoundMaxNum() {}", gameRoom.getRoundMaxNum());
+        if (gameFlowList.size() == gameRoom.getRoundMaxNum() && allFlag) {
+            // 전체가 제출 했다면 모두에게 메시지 전송
+            Map<String, Object> allSubmitMessage = new HashMap<>();
+            allSubmitMessage.put("completeSubmit", true);
+            sendingOperations.convertAndSend("/topic/game/submit-" + destination + "/" + requestDto.getRoomId(), allSubmitMessage);
+            log.info(">>>>>>> [GameService - isAllSubmit] 전체 제출 후 메시지 전송 성공! : {}", allSubmitMessage);
+        }
     }
 
     // 받아온 그림 S3에 저장 후 imagePath 반환
