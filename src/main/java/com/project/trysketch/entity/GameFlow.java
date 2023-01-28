@@ -46,8 +46,8 @@ public class GameFlow {
     @Column(nullable = false)
     private boolean isSubmitted;
 
-    @ManyToOne
-    private GameRoomUser gameRoomUser;
+    @Column(nullable = false)
+    private String userImgPath;
 
     public void update(boolean isSubmitted) {
         this.isSubmitted = isSubmitted;
