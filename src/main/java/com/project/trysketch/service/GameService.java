@@ -531,9 +531,6 @@ public class GameService {
             throw new CustomException(StatusMsgCode.GAME_NOT_ONLINE);
         }
 
-        // 현재 GameRoom 의 UserList 가져오기
-        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
-
         // gameRoom 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
