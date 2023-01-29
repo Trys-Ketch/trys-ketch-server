@@ -34,7 +34,7 @@ public class GameService {
     private final AmazonS3Service s3Service;
     private final UserService userService;
     private final SimpMessageSendingOperations sendingOperations;
-    private final UnsubmissionImgRepository unsubmissionImgRepository;
+//    private final UnsubmissionImgRepository unsubmissionImgRepository;
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
@@ -570,13 +570,13 @@ public class GameService {
             }
             case "image" -> {
                 // 제출하지 못한 이미지는, 미제출 이미지 보여주기
-                if(gameFlow.getImagePath().equals("미제출")){
-                    UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
-                            () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
-                    message.put("image", unsubmissionImg.getUnsubmissionImg());
-                } else{
+//                if(gameFlow.getImagePath().equals("미제출")){
+//                    UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
+//                            () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
+//                    message.put("image", unsubmissionImg.getUnsubmissionImg());
+//                } else{
                     message.put("image", gameFlow.getImagePath());
-                }
+//                }
                 log.info(">>>>>>> [GameService - getPreviousImage] 메시지 : {}", message);
             }
             default -> {
@@ -634,39 +634,39 @@ public class GameService {
                 log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> requestDto.getRoomId() {}", requestDto.getRoomId());
 
                 // 2차원 배열의 요소에 해당하는 리스트 생성 (요소에 들어가는 것 : 닉네임, 키워드 or imagePath, 프로필사진)
-                List<String> gameResult = new ArrayList<>();
+//                List<String> gameResult = new ArrayList<>();
                 Map<String, String> gameResultMap = new HashMap<>(); // 수정 추가 김재영 01.29
 
                 GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(requestDto.getRoomId(), j, i).orElseThrow(
                         () -> new CustomException(StatusMsgCode.GAMEFLOW_NOT_FOUND)
                 );
                 // 2차원 배열의 요소에 닉네임 저장
-                gameResult.add(gameFlow.getNickname());
+//                gameResult.add(gameFlow.getNickname());
                 gameResultMap.put("nickname",gameFlow.getNickname()); // 수정 추가 김재영 01.29
 
                 // 2차원 배열의 요소에 키워드 or imagePath저장
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 가져오기
-                    if(gameFlow.getImagePath().equals("미제출")){
+//                    if(gameFlow.getImagePath().equals("미제출")){
                         // 게임중 방 나가서 제출 못했을 경우, 미제출 이미지 보여주기
-                        UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
-                            () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
-                        gameResult.add(unsubmissionImg.getUnsubmissionImg());
-                        gameResultMap.put("imgPath", unsubmissionImg.getUnsubmissionImg()); // 수정 추가 김재영 01.29
-                    } else{
-                        gameResult.add(gameFlow.getImagePath());
+//                        UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
+//                            () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
+//                        gameResult.add(unsubmissionImg.getUnsubmissionImg());
+//                        gameResultMap.put("imgPath", unsubmissionImg.getUnsubmissionImg()); // 수정 추가 김재영 01.29
+//                    } else{
+//                        gameResult.add(gameFlow.getImagePath());
                         gameResultMap.put("imgPath", gameFlow.getImagePath()); // 수정 추가 김재영 01.29
 
-                        gameResult.add(gameFlow.getImagePk().toString());
-                        gameResultMap.put("imgId", gameFlow.getImagePk().toString()); // 수정 추가 김재영 01.29
-                    }
+//                        gameResult.add(gameFlow.getImagePk().toString());
+                        gameResultMap.put("imgId", String.valueOf(gameFlow.getImagePk())); // 수정 추가 김재영 01.29
+//                    }
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기
-                    gameResult.add(gameFlow.getKeyword());
+//                    gameResult.add(gameFlow.getKeyword());
                     gameResultMap.put("keyword", gameFlow.getKeyword()); // 수정 추가 김재영 01.29
                 }
                 // 2차원 배열의 요소에 프로필사진 url 저장
-                gameResult.add(gameFlow.getUserImgPath());
+//                gameResult.add(gameFlow.getUserImgPath());
                 gameResultMap.put("userImgPath", gameFlow.getUserImgPath()); // 수정 추가 김재영 01.29
 
                 // 닉네임, 키워드 or imagePath, 프로필사진 담긴 리스트를 2차원 배열의 요소로 저장
@@ -768,26 +768,26 @@ public class GameService {
                 j = (j > roundMaxNum) ? j - roundMaxNum : j;
 
                 if (i % 2 == 0) {
-                    // round가 짝수, 즉 그리기 제출 라운드 일 때
+                    // round 가 짝수, 즉 그리기 제출 라운드 일 때
                     GameFlow gameFlow = GameFlow.builder()
                             .roomId(gameRoomId)
                             .round(i)
                             .keywordIndex(j)
                             .nickname(gameRoomUser.getNickname())
                             .webSessionId(userUUID)
-                            .imagePath("미제출")
+                            .imagePath("null")
                             .userImgPath(gameRoomUser.getImgUrl())
                             .isSubmitted(true).build();
                     gameFlowRepository.saveAndFlush(gameFlow);
                 } else {
-                    // round가 홀수, 즉 키워드 제출 라운드 일 때
+                    // round 가 홀수, 즉 키워드 제출 라운드 일 때
                     GameFlow gameFlow = GameFlow.builder()
                             .roomId(gameRoomId)
                             .round(i)
                             .keywordIndex(j)
                             .nickname(gameRoomUser.getNickname())
                             .webSessionId(userUUID)
-                            .keyword("미제출")
+                            .keyword("null")
                             .userImgPath(gameRoomUser.getImgUrl())
                             .isSubmitted(true).build();
                     gameFlowRepository.saveAndFlush(gameFlow);
@@ -796,7 +796,7 @@ public class GameService {
 
                 // 다음 라운드로 넘어가는 trigger 역할 하는 sendSubmitMessage 메서드 실행
 //                if (j % 2 == 0) {
-//                    // round가 짝수, 즉 그리기 제출 라운드 일 때
+//                    // round 가 짝수, 즉 그리기 제출 라운드 일 때
 //                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
 //                            .webSessionId(userUUID)
 //                            .roomId(gameRoomId)

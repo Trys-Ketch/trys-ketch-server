@@ -1,5 +1,6 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.dto.request.UserRequestDto;
 import com.project.trysketch.dto.response.ImageLikeResponseDto;
 import com.project.trysketch.dto.response.UserResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
@@ -15,6 +16,7 @@ import com.project.trysketch.repository.ImageRepository;
 import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import java.util.*;
 // 2. 작성자 : 황미경
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ImageService {
 
     private final AmazonS3Service s3Service;
@@ -53,27 +56,41 @@ public class ImageService {
 
     // 이미지 좋아요
     public DataMsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
+        log.info(">>>>>>>>>>>>>>>>> [ImageService] - likeImage");
         Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+        User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
+        log.info(">>>>>>>>>>>>>>>>> UserId : {}", user.getId());
 
         Image image = imageRepository.findById(imageId).orElseThrow(
                 () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
         );
+        log.info(">>>>>>>>>>>>>>>>> ImageId : {}", image.getId());
 
         // ImageLike 에 값이 있는지 확인
-        Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
+        ImageLike imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId()).orElse(null);
+        if (imageLike != null){ // 삭제할 것
+            log.info(">>>>>>>>>>>>>>>>> ImageLike 가 null 이 아니면");
+            log.info(">>>>>>>>>>>>>>>>> ImageLike : {}", imageLike.getId());
+        }
+        Map<String, Boolean> checkLikeMap = new HashMap<>();
 
-        if (imageLike.isPresent()) { // 좋아요 하지 않았으면 좋아요 추가
-            imageLikeRepository.save(new ImageLike(image, user));
-            Map<String, Boolean> checkLikeMap = new HashMap<>();
+        if (imageLike == null) { // 좋아요 하지 않았으면 좋아요 추가
+            log.info(">>>>>>>>>>>>>>>>> if 문 통과");
+            ImageLike newImageLike = imageLikeRepository.save(new ImageLike(image, user));
+            log.info(">>>>>>>>>>>>>>>>> 최초 이미지좋아요 imageLikeId : {}", newImageLike.getId());
+            log.info(">>>>>>>>>>>>>>>>> 최초 이미지좋아요 imageLike UserId : {}", newImageLike.getUser().getId());
             checkLikeMap.put("isLike",true);
+
             return new DataMsgResponseDto(StatusMsgCode.LIKE_IMAGE, checkLikeMap);
         }else {  // 이미 좋아요 했다면 좋아요 취소
-            imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
-            Map<String, Boolean> checkLikeMap = new HashMap<>();
+            log.info(">>>>>>>>>>>>>>>>> else 문 통과");
+//            imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
+            log.info(">>>>>>>>>>>>>>>>> 삭제할 이미지좋아요 imageLikeId : {}", imageLike.getId());
+            imageLikeRepository.deleteById(imageLike.getId());
             checkLikeMap.put("isLike",false);
+
             return new DataMsgResponseDto(StatusMsgCode.CANCEL_LIKE, checkLikeMap);
         }
     }
@@ -107,14 +124,12 @@ public class ImageService {
 //        return new MsgResponseDto(StatusMsgCode.CANCEL_LIKE);
 //    }
 
-
-
-
     // S3에 업로드 된 이미지 조회
     @Transactional(readOnly = true)
     public Page<ImageLike> getImage(HttpServletRequest request, Pageable pageable) { // 수정 pageable 추가 김재영 01.29
         Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+//        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+        User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
 
@@ -149,14 +164,6 @@ public class ImageService {
 //        }
 //        return imagePathList;
     }
-
-
-
-
-
-
-
-
     // 스케줄러 통해서 관리. 좋아요 안 눌린 이미지 삭제
     @Transactional
     public MsgResponseDto deleteImage() {
@@ -192,9 +199,9 @@ public class ImageService {
         return new DataMsgResponseDto(StatusMsgCode.OK,userResponseDto);
     }
 
-    // 마이페이지 회원 닉네임 수정
+    // 마이페이지 회원 닉네임, 프로필사진 수정
     @Transactional
-    public DataMsgResponseDto patchMyPage(String newNickname, HttpServletRequest request) {
+    public DataMsgResponseDto patchMyPage(UserRequestDto userRequestDto, HttpServletRequest request) {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);
@@ -202,17 +209,16 @@ public class ImageService {
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
 
-        // 유저 닉네임 변경
-        user.updateNickname(newNickname);
+        // 유저 프로필, 닉네임 변경
+        user.update(userRequestDto.getNickname(), userRequestDto.getImgUrl());
 
         // 유저 정보에서 필요한 정보( id, email, nickname, ImgUrl ) 추출
         UserResponseDto userResponseDto = UserResponseDto.builder()
                 .id(user.getId())
-                .email(user.getEmail())
                 .nickname(user.getNickname())
                 .imagePath(user.getImgUrl())
                 .build();
 
-        return new DataMsgResponseDto(StatusMsgCode.OK,userResponseDto);
+        return new DataMsgResponseDto(StatusMsgCode.UPDATE_USER_PROFILE, userResponseDto);
     }
 }

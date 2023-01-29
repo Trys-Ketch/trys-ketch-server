@@ -13,10 +13,12 @@ public interface ImageLikeRepository extends JpaRepository<ImageLike, Long> {
 
     Optional<ImageLike> findByImageIdAndUserId(Long imageId, Long userId);
 
-    List<ImageLike> findAllByUserId(Long userId);
+//    List<ImageLike> findAllByUserId(Long userId);
 
     Page<ImageLike> findAllByUserId(Long userId, Pageable pageable); // 수정 추가 김재영 01.29
 
     void deleteByImageIdAndUserId(Long imageId, Long userId);
+
+//    void deleteByImageLike(ImageLike imageLike);
 
 }
