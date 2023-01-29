@@ -52,7 +52,7 @@ public class ImageService {
 
 
     // 이미지 좋아요
-    public MsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
+    public DataMsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
@@ -64,8 +64,9 @@ public class ImageService {
         if (checkLike(imageId, request)) {
             throw new CustomException(StatusMsgCode.ALREADY_CLICKED_LIKE);
         }
-        imageLikeRepository.save(new ImageLike(image, user));
-        return new MsgResponseDto(StatusMsgCode.LIKE_IMAGE);
+        ImageLike imageLike =  imageLikeRepository.save(new ImageLike(image, user));
+
+        return new DataMsgResponseDto(StatusMsgCode.LIKE_IMAGE, imageLike);
     }
 
 

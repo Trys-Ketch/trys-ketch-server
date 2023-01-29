@@ -33,7 +33,7 @@ public class ImageController {
 
     // 그림 좋아요 기능
     @PostMapping(value = "/image/like/{imageId}")
-    public ResponseEntity<MsgResponseDto> imageLike(@PathVariable Long imageId,
+    public ResponseEntity<DataMsgResponseDto> imageLike(@PathVariable Long imageId,
                                                     HttpServletRequest request) {
         return ResponseEntity.ok(imageService.likeImage(imageId, request));
     }
