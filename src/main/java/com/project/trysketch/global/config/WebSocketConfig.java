@@ -1,6 +1,5 @@
 package com.project.trysketch.global.config;
 
-import com.project.trysketch.global.stomp.AgentWebSocketHandlerDecoratorFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -41,11 +40,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // 웹 소켓 버퍼 사이즈 증축
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.setDecoratorFactories(agentWebSocketHandlerDecoratorFactory());
-    }
-
-    public AgentWebSocketHandlerDecoratorFactory agentWebSocketHandlerDecoratorFactory() {
-        return new AgentWebSocketHandlerDecoratorFactory();
+        registration.setMessageSizeLimit(160 * 64 * 1024); // default : 64 * 1024
+        registration.setSendTimeLimit(100 * 10000); // default : 10 * 10000
+        registration.setSendBufferSizeLimit(3* 512 * 1024); // default : 512 * 1024
     }
 
 }
