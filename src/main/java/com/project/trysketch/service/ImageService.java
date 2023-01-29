@@ -66,11 +66,15 @@ public class ImageService {
         Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
 
         if (imageLike.isPresent()) { // 좋아요 하지 않았으면 좋아요 추가
-            ImageLike newImageLike = imageLikeRepository.save(new ImageLike(image, user));
-            return new DataMsgResponseDto(StatusMsgCode.LIKE_IMAGE, newImageLike);
+            imageLikeRepository.save(new ImageLike(image, user));
+            Map<String, Boolean> checkLikeMap = new HashMap<>();
+            checkLikeMap.put("isLike",true);
+            return new DataMsgResponseDto(StatusMsgCode.LIKE_IMAGE, checkLikeMap);
         }else {  // 이미 좋아요 했다면 좋아요 취소
             imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
-            return new DataMsgResponseDto(StatusMsgCode.CANCEL_LIKE);
+            Map<String, Boolean> checkLikeMap = new HashMap<>();
+            checkLikeMap.put("isLike",false);
+            return new DataMsgResponseDto(StatusMsgCode.CANCEL_LIKE, checkLikeMap);
         }
     }
 
