@@ -1,5 +1,6 @@
 package com.project.trysketch.global.config;
 
+import com.project.trysketch.global.stomp.AgentWebSocketHandlerDecoratorFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
@@ -7,6 +8,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 // 1. 기능   : WebSocket 설정
 // 2. 작성자 : 안은솔
@@ -34,6 +36,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // 메시지를 발행하는 요청 url => 즉 메시지 보낼 때
         registry.setApplicationDestinationPrefixes("/app");
         log.info(">>>>>>>[ws] 메시지 브로커 : {}", registry);
+    }
+
+    // 웹 소켓 버퍼 사이즈 증축
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setDecoratorFactories(agentWebSocketHandlerDecoratorFactory());
+    }
+
+    public AgentWebSocketHandlerDecoratorFactory agentWebSocketHandlerDecoratorFactory() {
+        return new AgentWebSocketHandlerDecoratorFactory();
     }
 
 }
