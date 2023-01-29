@@ -322,21 +322,27 @@ public class GameService {
 
         // 제출한 사람 인원수 및 현재 방의 플레이중인 인원수 체크
         Long trueCount = 0L;
-        Long maxCount = gameRoomUserRepository.countByGameRoomId(gameFlow.getRoomId());
+        Long nowUserCount = gameRoomUserRepository.countByGameRoomId(gameFlow.getRoomId());
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
         List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(gameFlow.getRoomId(), gameFlow.getRound());
         for (GameFlow findList : gameFlowList) {
             if (findList.isSubmitted()) {
                 trueCount++;
             }
         }
+        if (gameRoom.getRoundMaxNum() > nowUserCount) {
+            trueCount = trueCount - (gameRoom.getRoundMaxNum() - nowUserCount);
+        }
 
         // 제출한 인원수 및 게임중인 인원수 메시지 전송
         HashMap<String, Long> message = new HashMap<>();
         message.put("trueCount", trueCount);
-        message.put("maxTrueCount", maxCount);
+        message.put("maxTrueCount", nowUserCount);
         sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), message);
         log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 trueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), trueCount);
-        log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 maxTrueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), maxCount);
+        log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 maxTrueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), nowUserCount);
 
 
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
@@ -352,9 +358,9 @@ public class GameService {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendSubmitMessage] >>>>>>>>>>>>>>>>>>>>>>>>");
 //        List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(requestDto.getRoomId(), requestDto.getRound());
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
-        );
+//        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+//                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+//        );
 
         // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회
         boolean allFlag = true;
@@ -718,7 +724,8 @@ public class GameService {
                 maxRound = (maxRound > gameFlow.getRound()) ? maxRound : gameFlow.getRound();
                 lastKeywordIndex = (maxRound > gameFlow.getRound()) ? lastKeywordIndex : gameFlow.getKeywordIndex();
             }
-            currentKeywordIndex = lastKeywordIndex + 1;
+//            currentKeywordIndex = lastKeywordIndex + 1;
+            currentKeywordIndex = lastKeywordIndex + 1 > roundMaxNum ? (lastKeywordIndex + 1 - roundMaxNum) : lastKeywordIndex + 1;
 
 
             // 첫 라운드에서 방 나가서 유저의 gameFlow가 하나도 없는 경우
@@ -773,24 +780,24 @@ public class GameService {
 
 
                 // 다음 라운드로 넘어가는 trigger 역할 하는 sendSubmitMessage 메서드 실행
-                if (j % 2 == 0) {
-                    // round가 짝수, 즉 그리기 제출 라운드 일 때
-                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
-                            .webSessionId(userUUID)
-                            .roomId(gameRoomId)
-                            .round(i)
-                            .image("미제출")
-                            .build();
-                    sendSubmitMessage(requestDto);
-                } else {
-                    // round가 홀수, 즉 키워드 제출 라운드 일 때
-                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
-                            .webSessionId(userUUID)
-                            .roomId(gameRoomId)
-                            .round(i)
-                            .build();
-                    sendSubmitMessage(requestDto);
-                }
+//                if (j % 2 == 0) {
+//                    // round가 짝수, 즉 그리기 제출 라운드 일 때
+//                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
+//                            .webSessionId(userUUID)
+//                            .roomId(gameRoomId)
+//                            .round(i)
+//                            .image("미제출")
+//                            .build();
+//                    sendSubmitMessage(requestDto);
+//                } else {
+//                    // round가 홀수, 즉 키워드 제출 라운드 일 때
+//                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
+//                            .webSessionId(userUUID)
+//                            .roomId(gameRoomId)
+//                            .round(i)
+//                            .build();
+//                    sendSubmitMessage(requestDto);
+//                }
             }
         }
     }
