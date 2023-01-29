@@ -1,5 +1,6 @@
 package com.project.trysketch.service;
 
+import com.project.trysketch.dto.response.ImageLikeResponseDto;
 import com.project.trysketch.dto.response.UserResponseDto;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
@@ -14,13 +15,13 @@ import com.project.trysketch.repository.ImageRepository;
 import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 // 1. 기능   : ImageLike 서비스
@@ -70,18 +71,42 @@ public class ImageService {
 
     // S3에 업로드 된 이미지 조회
     @Transactional(readOnly = true)
-    public List<String> getImage(HttpServletRequest request) {
+    public Page<ImageLike> getImage(HttpServletRequest request, Pageable pageable) { // 수정 pageable 추가 김재영 01.29
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
 
-        List<ImageLike> imageLikeList = imageLikeRepository.findAllByUserId(user.getId());
-        List<String> imagePathList = new ArrayList<>();
-        for (ImageLike imageLike : imageLikeList) {
-            imagePathList.add(imageLike.getImage().getPath());
+//        List<ImageLike> imageLikeList = imageLikeRepository.findAllByUserId(user.getId());
+
+        Page<ImageLike> imageLikePage = imageLikeRepository.findAllByUserId(user.getId(), pageable); // 수정 pageable 추가 김재영 01.29
+
+        // ImageLike 을 Dto 형태로 담아줄 List 선언
+        List<ImageLikeResponseDto> imageLikeResponseDtoList = new ArrayList<>();
+
+        // GameRoom 의 정보와 LastPage 정보를 담아줄 Map 선언
+        Map<String, Object> getAllImageLike = new HashMap<>();
+
+        for (ImageLike imageLike : imageLikePage){
+
+            ImageLikeResponseDto imageLikeResponseDto = ImageLikeResponseDto.builder()
+                    .imgId(imageLike.getImage().getId())
+                    .imgPath(imageLike.getImage().getPath())
+                    .painter(imageLike.getUser().getNickname())
+                    .createdAt(imageLike.getImage().getCreatedAt())
+                    .build();
+            imageLikeResponseDtoList.add(imageLikeResponseDto);
         }
-        return imagePathList;
+        getAllImageLike.put("image", imageLikeResponseDtoList);
+        getAllImageLike.put("lastPage",imageLikePage.getTotalPages());
+
+        return imageLikePage;
+//        List<String> imagePathList = new ArrayList<>();
+//
+//        for (ImageLike imageLike : imageLikeList) {
+//            imagePathList.add(imageLike.getImage().getPath());
+//        }
+//        return imagePathList;
     }
 
 

@@ -34,6 +34,9 @@ public class GameFlow {
     @Column
     private String imagePath;
 
+    @Column
+    private Long imagePk; // 수정 추가 김재영 01.29
+
     @Column(nullable = false)
     private String nickname;
 

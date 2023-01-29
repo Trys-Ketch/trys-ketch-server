@@ -275,7 +275,7 @@ public class GameService {
 
                 // 1-2-2. image 가 있다면 -> image
                 else {
-                    gameFlow.update(saveImage(requestDto),
+                    gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
                             !requestDto.isSubmitted());
                     log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 이미지 저장 : {}", requestDto.getImage());
                 }
@@ -309,7 +309,8 @@ public class GameService {
                         .roomId(requestDto.getRoomId())
                         .round(requestDto.getRound())
                         .keywordIndex(requestDto.getKeywordIndex())
-                        .imagePath(saveImage(requestDto))
+                        .imagePath(saveImage(requestDto).getPath())
+                        .imagePk(saveImage(requestDto).getId()) // 수정 추가 김재영 01.29
                         .nickname(gamerInfo.get(GamerEnum.NICK.key()))
                         .webSessionId(requestDto.getWebSessionId())
                         .userImgPath(gameRoomUser.getImgUrl())
@@ -392,8 +393,9 @@ public class GameService {
     }
 
     // 받아온 그림 S3에 저장 후 imagePath 반환
+    // 수정 리턴값 변경 String → Image 김재영 01.29
     @Transactional
-    public String saveImage(GameFlowRequestDto requestDto) throws IOException {
+    public Image saveImage(GameFlowRequestDto requestDto) throws IOException {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 이미지 파일 있니? : {}", !requestDto.getImage().isEmpty());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] image.length() : {}", requestDto.getImage().length());
@@ -627,11 +629,15 @@ public class GameService {
 
                 // 2차원 배열의 요소에 해당하는 리스트 생성 (요소에 들어가는 것 : 닉네임, 키워드 or imagePath, 프로필사진)
                 List<String> gameResult = new ArrayList<>();
+                Map<String, String> gameResultMap = new HashMap<>(); // 수정 추가 김재영 01.29
+
                 GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndKeywordIndex(requestDto.getRoomId(), j, i).orElseThrow(
                         () -> new CustomException(StatusMsgCode.GAMEFLOW_NOT_FOUND)
                 );
                 // 2차원 배열의 요소에 닉네임 저장
                 gameResult.add(gameFlow.getNickname());
+                gameResultMap.put("nickname",gameFlow.getNickname()); // 수정 추가 김재영 01.29
+
                 // 2차원 배열의 요소에 키워드 or imagePath저장
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 가져오기
@@ -640,17 +646,26 @@ public class GameService {
                         UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
                             () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
                         gameResult.add(unsubmissionImg.getUnsubmissionImg());
+                        gameResultMap.put("imgPath", unsubmissionImg.getUnsubmissionImg()); // 수정 추가 김재영 01.29
                     } else{
                         gameResult.add(gameFlow.getImagePath());
+                        gameResultMap.put("imgPath", gameFlow.getImagePath()); // 수정 추가 김재영 01.29
+
+                        gameResult.add(gameFlow.getImagePk().toString());
+                        gameResultMap.put("imgId", gameFlow.getImagePk().toString()); // 수정 추가 김재영 01.29
                     }
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기
                     gameResult.add(gameFlow.getKeyword());
+                    gameResultMap.put("keyword", gameFlow.getKeyword()); // 수정 추가 김재영 01.29
                 }
                 // 2차원 배열의 요소에 프로필사진 url 저장
                 gameResult.add(gameFlow.getUserImgPath());
+                gameResultMap.put("userImgPath", gameFlow.getUserImgPath()); // 수정 추가 김재영 01.29
+
                 // 닉네임, 키워드 or imagePath, 프로필사진 담긴 리스트를 2차원 배열의 요소로 저장
-                resultList[i - 1][j - 1] = gameResult;
+//                resultList[i - 1][j - 1] = gameResult;
+                resultList[i - 1][j - 1] = gameResultMap; // 수정 변경 김재영 01.29
             }
         }
         log.info(">>>>>>> [GameService - getGameFlow] 2차원 배열 : {}", Arrays.deepToString(resultList));

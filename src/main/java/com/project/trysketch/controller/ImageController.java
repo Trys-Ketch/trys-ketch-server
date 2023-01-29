@@ -1,9 +1,14 @@
 package com.project.trysketch.controller;
 
+import com.project.trysketch.entity.ImageLike;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.service.ImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,9 +39,10 @@ public class ImageController {
     }
 
     // 마이페이지에서 좋아요 누른 사진 조회
-    @GetMapping("/mypage/image-like")
-    public ResponseEntity<List<String>> getImage(HttpServletRequest request) {
-        return ResponseEntity.ok(imageService.getImage(request));
+    @GetMapping("/mypage/image-like") // 수정 추가 김재영 01.29
+    public ResponseEntity<Page<ImageLike>> getImage(@PageableDefault(size = 5,sort = "createdAt",direction = Sort.Direction.DESC) Pageable pageable,
+                                                    HttpServletRequest request) {
+        return ResponseEntity.ok(imageService.getImage(request, pageable));
     }
 
     // 마이페이지에서 좋아요 누른 사진 취소

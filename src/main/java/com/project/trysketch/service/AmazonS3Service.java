@@ -34,14 +34,14 @@ public class AmazonS3Service {
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
-    public String upload(File file, String dirName, String nickname) {
+    public Image upload(File file, String dirName, String nickname) { // 수정 리턴값 변경 String → Image 김재영 01.29
         Image image = null;
         if (file != null) {
 //            File uploadFile = convert(multipartFile).orElseThrow(() -> new IllegalArgumentException("파일 전환 실패"));
             image = new Image(upload(file, dirName), nickname);
             imageRepository.save(image);
         }
-        return image.getPath();
+        return image;
     }
 
     // S3로 파일 업로드 (파일이름 지정, 로컬파일 삭제 + 파일 업로드 메서드 호출)
