@@ -66,12 +66,8 @@ public class ImageController {
     public ResponseEntity<DataMsgResponseDto> getMyPage(HttpServletRequest request) {
         return ResponseEntity.ok(imageService.getMyPage(request));
     }
-    // 마이페이지 회원 닉네임 수정
-//    @PatchMapping("/mypage/nickname")
-//    public ResponseEntity<DataMsgResponseDto> patchMyPage(@RequestBody String newNickname, HttpServletRequest request) {
-//        return ResponseEntity.ok(imageService.patchMyPage(newNickname, request));
-//    }
 
+    // 마이페이지 정보변경
     @PatchMapping("/mypage/profile")
     public ResponseEntity<DataMsgResponseDto> patchMyPage(@RequestBody UserRequestDto userRequestDto, HttpServletRequest request) {
         return ResponseEntity.ok(imageService.patchMyPage(userRequestDto, request));

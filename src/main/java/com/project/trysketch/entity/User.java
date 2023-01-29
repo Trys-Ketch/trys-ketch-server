@@ -22,7 +22,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, unique = true)
+//    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String nickname;
 
     @Column(nullable = false)
@@ -60,22 +61,9 @@ public class User {
         return this;
     }
 
-    public void updateNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    //    @Builder
-//    public User(String email, String password, Long kakaoId, String kakaoNickname) {
-//        this.email = email;
-//        this.password = password;
-//        this.kakaoId = kakaoId;
-//        this.nickname = kakaoNickname;
-//    }
-
     public User update(String nickname, String imgUrl) {
         this.nickname = nickname;
         this.imgUrl = imgUrl;
-
         return this;
     }
 }

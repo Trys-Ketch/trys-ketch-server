@@ -19,4 +19,6 @@ public interface ImageLikeRepository extends JpaRepository<ImageLike, Long> {
 
     void deleteByImageIdAndUserId(Long imageId, Long userId);
 
+    void deleteByImageLike(ImageLike imageLike);
+
 }

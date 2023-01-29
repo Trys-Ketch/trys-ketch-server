@@ -26,6 +26,7 @@ public enum StatusMsgCode {
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다"),
     ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다"),
     ALREADY_CANCEL_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요 취소를 눌렀습니다"),
+    IMAGE_LIKE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지 좋아요를 찾을 수 없습니다"),
 
 
     ALREADY_PLAYING(HttpStatus.BAD_REQUEST, "게임이 이미 시작되었습니다"),
@@ -58,7 +59,8 @@ public enum StatusMsgCode {
     START_GAME(HttpStatus.OK, "게임이 시작되었습니다"),
     SUBMIT_IMAGE_DONE(HttpStatus.OK, "이미지 제출이 되었습니다"),
     SUBMIT_KEYWORD_DONE(HttpStatus.OK, "단어 제출이 되었습니다"),
-    CREATE_ROOM(HttpStatus.OK, "방을 만들었습니다");
+    CREATE_ROOM(HttpStatus.OK, "방을 만들었습니다"),
+    UPDATE_USER_PROFILE(HttpStatus.OK, "프로필이 변경되었습니다");
 
 
 
