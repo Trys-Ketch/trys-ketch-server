@@ -88,7 +88,7 @@ public class ImageService {
             log.info(">>>>>>>>>>>>>>>>> else 문 통과");
 //            imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
             log.info(">>>>>>>>>>>>>>>>> 삭제할 이미지좋아요 imageLikeId : {}", imageLike.getId());
-            imageLikeRepository.deleteByImageLike(imageLike);
+            imageLikeRepository.deleteById(imageLike.getId());
             checkLikeMap.put("isLike",false);
 
             return new DataMsgResponseDto(StatusMsgCode.CANCEL_LIKE, checkLikeMap);
