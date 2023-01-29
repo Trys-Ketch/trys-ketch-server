@@ -52,7 +52,7 @@ public class ImageService {
 
 
     // 이미지 좋아요
-    public MsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
+    public DataMsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
@@ -61,12 +61,53 @@ public class ImageService {
         Image image = imageRepository.findById(imageId).orElseThrow(
                 () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
         );
-        if (checkLike(imageId, request)) {
-            throw new CustomException(StatusMsgCode.ALREADY_CLICKED_LIKE);
+
+        // ImageLike 에 값이 있는지 확인
+        Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
+
+        if (imageLike.isPresent()) { // 좋아요 하지 않았으면 좋아요 추가
+            imageLikeRepository.save(new ImageLike(image, user));
+            Map<String, Boolean> checkLikeMap = new HashMap<>();
+            checkLikeMap.put("isLike",true);
+            return new DataMsgResponseDto(StatusMsgCode.LIKE_IMAGE, checkLikeMap);
+        }else {  // 이미 좋아요 했다면 좋아요 취소
+            imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
+            Map<String, Boolean> checkLikeMap = new HashMap<>();
+            checkLikeMap.put("isLike",false);
+            return new DataMsgResponseDto(StatusMsgCode.CANCEL_LIKE, checkLikeMap);
         }
-        imageLikeRepository.save(new ImageLike(image, user));
-        return new MsgResponseDto(StatusMsgCode.LIKE_IMAGE);
     }
+
+//    // 좋아요 여부 확인
+//    @Transactional(readOnly = true)
+//    public boolean checkLike(Long imageId, HttpServletRequest request) {
+//        Claims claims = jwtUtil.authorizeToken(request);
+//        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+//                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+//        );
+//
+//        Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
+//        return imageLike.isPresent();
+//    }
+//    // 좋아요 삭제
+//    @Transactional
+//    public MsgResponseDto cancelLike(Long imageId, HttpServletRequest request) {
+//        Claims claims = jwtUtil.authorizeToken(request);
+//        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
+//                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+//        );
+//
+//        imageRepository.findById(imageId).orElseThrow(
+//                () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
+//        );
+//        if (!checkLike(imageId, request)) {
+//            throw new CustomException(StatusMsgCode.ALREADY_CANCEL_LIKE);
+//        }
+//        imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
+//        return new MsgResponseDto(StatusMsgCode.CANCEL_LIKE);
+//    }
+
+
 
 
     // S3에 업로드 된 이미지 조회
@@ -110,36 +151,10 @@ public class ImageService {
     }
 
 
-    // 좋아요 여부 확인
-    @Transactional(readOnly = true)
-    public boolean checkLike(Long imageId, HttpServletRequest request) {
-        Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-        );
-
-        Optional<ImageLike> imageLike = imageLikeRepository.findByImageIdAndUserId(imageId, user.getId());
-        return imageLike.isPresent();
-    }
 
 
-    // 좋아요 삭제
-    @Transactional
-    public MsgResponseDto cancelLike(Long imageId, HttpServletRequest request) {
-        Claims claims = jwtUtil.authorizeToken(request);
-        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-        );
 
-        imageRepository.findById(imageId).orElseThrow(
-                () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND)
-        );
-        if (!checkLike(imageId, request)) {
-            throw new CustomException(StatusMsgCode.ALREADY_CANCEL_LIKE);
-        }
-        imageLikeRepository.deleteByImageIdAndUserId(imageId, user.getId());
-        return new MsgResponseDto(StatusMsgCode.CANCEL_LIKE);
-    }
+
 
 
     // 스케줄러 통해서 관리. 좋아요 안 눌린 이미지 삭제
