@@ -1,6 +1,7 @@
 package com.project.trysketch.entity;
 
 import com.project.trysketch.entity.ImageLike;
+import com.project.trysketch.global.utill.Timestamped;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import javax.persistence.*;
@@ -13,7 +14,7 @@ import java.util.List;
 @Getter
 @Entity
 @NoArgsConstructor
-public class Image {
+public class Image extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;                     // id
