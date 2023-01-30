@@ -40,6 +40,9 @@ public class GameRoomUser {
 
     @Column
     private String imgUrl;
+
+    @OneToOne(mappedBy = "gameRoomUser")
+    private UserPlayTime userPlayTime;
     
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
@@ -50,16 +53,4 @@ public class GameRoomUser {
         this.webSessionId = userUUID;
     }
 
-    @Override
-    public String toString() {
-        return "GameRoomUser{" +
-                "id=" + id +
-                ", gameRoom=" + gameRoom +
-                ", userId=" + userId +
-                ", nickname='" + nickname + '\'' +
-                ", webSessionId='" + webSessionId + '\'' +
-                ", readyStatus=" + readyStatus +
-                ", imgUrl='" + imgUrl + '\'' +
-                '}';
-    }
 }
