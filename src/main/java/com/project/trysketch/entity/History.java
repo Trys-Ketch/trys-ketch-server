@@ -13,7 +13,6 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@ToString
 public class History extends Timestamped {
 
     @Id
@@ -36,12 +35,14 @@ public class History extends Timestamped {
     @OneToOne
     private User user;
 
-    public void updatePlaytime(Long plusnum) {
-        this.playtime += plusnum;
+    public History updatePlaytime(Long playtime) {
+        this.playtime += playtime;
+        return this;
     }
 
-    public void updateTrials(Long trials) {
+    public History updateTrials(Long trials) {
         this.trials += trials;
+        return this;
     }
 
     public History updateVisits(Long visits) {

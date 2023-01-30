@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.imageio.ImageIO;
 import java.awt.image.*;
 import java.io.*;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 
@@ -31,10 +33,13 @@ public class GameService {
     private final AdjectiveRepository adjectiveRepository;
     private final NounRepository nounRepository;
     private final GameFlowRepository gameFlowRepository;
+    private final PlayTimeRepository playTimeRepository;
+    private final UserRepository userRepository;
+    private final HistoryRepository historyRepository;
     private final AmazonS3Service s3Service;
     private final UserService userService;
+    private final HistoryService historyService;
     private final SimpMessageSendingOperations sendingOperations;
-//    private final UnsubmissionImgRepository unsubmissionImgRepository;
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
@@ -47,6 +52,16 @@ public class GameService {
     // token, roomId
     @Transactional
     public MsgResponseDto startGame(GameFlowRequestDto requestDto) {
+
+        // 게임 시작시간
+        LocalDateTime startTime = LocalDateTime.of(
+                LocalDateTime.now().getYear(),
+                LocalDateTime.now().getMonth(),
+                LocalDateTime.now().getDayOfMonth(),
+                LocalDateTime.now().getHour(),
+                LocalDateTime.now().getMinute(),
+                LocalDateTime.now().getSecond());
+
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - startGame] >>>>>>>>>>>>>>>>>>>>>>>>");
@@ -58,6 +73,20 @@ public class GameService {
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
+
+        // 현재 방의 유저 정보 가져오기
+        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoom(gameRoom);
+
+        // 게임이 시작된 시간을 유저마다 저장
+        for (GameRoomUser gameRoomUser : gameRoomUserList) {
+            UserPlayTime userPlayTime = UserPlayTime.builder()
+                    .playStartTime(startTime)
+                    .playEndTime(null)
+                    .gameRoomUser(gameRoomUser)
+                    .gameRoomId(gameRoom.getId())
+                    .build();
+            playTimeRepository.save(userPlayTime);
+        }
 
         // 방장이 아닐경우
         if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerEnum.NICK.key()))) {
@@ -125,8 +154,10 @@ public class GameService {
         gameRoom.GameRoomStatusUpdate(false);
         gameRoom.update(0);
 
-        // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
+        // 현재 방의 유저 정보 가져오기
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoom.getId());
+
+        // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
         for (GameRoomUser gameRoomUsers : gameRoomUserList) {
             if (!gameRoomUsers.getWebSessionId().equals(hostWebSessionId)) {
                 gameRoomUsers.update(false);
@@ -135,6 +166,57 @@ public class GameService {
                 gameRoomUsers.update(true);
                 gameRoomUserRepository.save(gameRoomUsers);
             }
+        }
+
+        // 게임 종료시간
+        LocalDateTime endTime = LocalDateTime.of(
+                LocalDateTime.now().getYear(),
+                LocalDateTime.now().getMonth(),
+                LocalDateTime.now().getDayOfMonth(),
+                LocalDateTime.now().getHour(),
+                LocalDateTime.now().getMinute(),
+                LocalDateTime.now().getSecond());
+
+        // 현재 방의 모든 유저의 playTime 정보 가져오기
+        List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
+
+        // 게임이 시작된 시간을 유저마다 저장
+        for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
+            for (UserPlayTime userPlayTime : userPlayTimeList){
+                // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
+                if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())){
+                    
+                    // 게임 종료시간 업데이트
+                    userPlayTime.updateUserPlayTime(endTime);
+                
+                    Long userId = currentGameRoomUser.getUserId();
+                    log.info(">>>>>>> [GameService - endGame] userId {}", userId);
+
+                    // 유저 정보 가져오기
+                    User currentUser = userRepository.findById(userId).orElseThrow(
+                            () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+                    );
+
+                    // startGame 과 endGame 의 차이 구하기
+                    Duration duration = Duration.between(userPlayTime.getPlayStartTime(), userPlayTime.getPlayEndTime());
+
+                    // 분 단위로 변환
+                    Long difference = duration.getSeconds()/60;
+                    log.info(">>>>>>> [GameService - endGame] 실질적인 플레이타임 {}", difference);
+
+                    // 해당 history 에 실질적인 플레이타임 업데이트
+                    History history = currentUser.getHistory().updatePlaytime(difference);
+                    historyRepository.save(history);
+                    historyService.getTrophyOfTime(currentUser);
+
+                    playTimeRepository.delete(userPlayTime);
+
+                    history = currentUser.getHistory().updateTrials(1L);
+                    historyRepository.save(history);
+                    historyService.getTrophyOfTrial(currentUser);
+                }
+            }
+
         }
 
         // end 로 구독하고 있는 User 에게 end 메세지 전송
