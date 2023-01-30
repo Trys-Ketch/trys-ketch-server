@@ -341,7 +341,12 @@ public class GameService {
 
             // 1-1. isSubmitted 의 상태가 true 라면 (취소) -> 제출 상태만 update
             if (gameFlow.isSubmitted()) {
-                gameFlow.update(!requestDto.isSubmitted());
+//                gameFlow.update(!requestDto.isSubmitted());
+                GameFlow gameFlowUpdate = GameFlow.builder()
+                        .id(gameFlow.getId())
+                        .isSubmitted(!requestDto.isSubmitted()).build();
+                gameFlowRepository.save(gameFlowUpdate);
+
                 log.info(">>>>>>> [GameService - getToggleSubmit] {} 에서 {}로 상태 변경", requestDto.isSubmitted(), !requestDto.isSubmitted());
             }
 
@@ -350,15 +355,25 @@ public class GameService {
 
                 // 1-2-1. image 가 없다면 -> keyword
                 if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
-                    gameFlow.update(!requestDto.isSubmitted(),
-                            requestDto.getKeyword());
+//                    gameFlow.update(!requestDto.isSubmitted(),
+//                            requestDto.getKeyword());
+                    GameFlow gameFlowUpdate = GameFlow.builder()
+                            .id(gameFlow.getId())
+                            .isSubmitted(!requestDto.isSubmitted())
+                            .keyword(requestDto.getKeyword()).build();
+                    gameFlowRepository.save(gameFlowUpdate);
                     log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 키워드 저장 : {}", requestDto.getKeyword());
                 }
 
                 // 1-2-2. image 가 있다면 -> image
                 else {
-                    gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
-                            !requestDto.isSubmitted());
+//                    gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
+//                            !requestDto.isSubmitted());
+                    GameFlow gameFlowUpdate = GameFlow.builder()
+                            .id(gameFlow.getId())
+                            .isSubmitted(!requestDto.isSubmitted())
+                            .imagePath(saveImage(requestDto).getPath()).build();
+                    gameFlowRepository.save(gameFlowUpdate);
                     log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 이미지 저장 : {}", requestDto.getImage());
                 }
             }
