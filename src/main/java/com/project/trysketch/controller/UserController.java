@@ -31,7 +31,6 @@ public class UserController {
     private final NaverService naverService;
     private final GuestService guestService;
     private final GoogleService googleService;
-    private final HistoryService historyService;
 
     // 회원가입
     @PostMapping("/sign-up")
