@@ -21,7 +21,7 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+//    developmentOnly 'org.springframework.boot:spring-boot-devtools'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // JPA
@@ -31,8 +31,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // H2, MySQL
-    runtimeOnly 'com.h2database:h2'
+    // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     // Spring Security
@@ -43,10 +42,38 @@ dependencies {
     runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.2'
     runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.2'
 
+    // s3 설정 관련
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // sockJS
+    implementation 'org.webjars:sockjs-client:1.5.1'
+
+    // stompJS
+    implementation 'org.webjars:stomp-websocket:2.3.4'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+//    implementation group: 'it.ozimov', name: 'embedded-redis', version: '0.7.2'
+//    implementation 'org.springframework.data:spring-data-redis'
+
+    // Json
+    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+
+    // Swagger
+//    implementation 'io.springfox:springfox-swagger2:3.0.0'
+//    implementation 'io.springfox:springfox-swagger-ui:3.0.0'
+//    implementation 'io.springfox:springfox-boot-starter:3.0.0'
+
+    // Oauth
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
+//tasks.named('test') {
+//    useJUnitPlatform()
+//}

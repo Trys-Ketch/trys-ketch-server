@@ -20,7 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 // 1. 기능   : Spring Security 설정
-// 2. 작성자 : 서혁수
+// 2. 작성자 : 서혁수, 안은솔
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
@@ -38,7 +38,7 @@ public class WebSecurityConfig {
     public WebSecurityCustomizer webSecurityCustomizer() {
         // 모든 static 리소스 접근 허가
         return (web -> web.ignoring().requestMatchers(PathRequest
-                        .toStaticResources().atCommonLocations()));
+                .toStaticResources().atCommonLocations()));
 //                .toH2Console()));     // h2 사용시 이것을 사용
     }
 
@@ -53,7 +53,8 @@ public class WebSecurityConfig {
         http.httpBasic().disable()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET).permitAll()
-                .antMatchers("/api/users/**").permitAll()
+                .antMatchers("/api/users/**", "/api/**").permitAll()
+                .antMatchers("/signal/**", "/ws/**").permitAll()
                 .anyRequest().authenticated()
 
                 // corsConfigurationSource 적용
@@ -83,8 +84,9 @@ public class WebSecurityConfig {
 
         // 접근 가능한 출처
         // config.addAllowedOrigin("http://localhost:3000");
-        config.addAllowedOriginPattern("*");
-        config.addAllowedOrigin("http://localhost:3000/**");
+        // config.addAllowedOriginPattern("*");
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("https://trys-ketch.com");
 
         // 브라우저에서 인증 관련 정보들을 요청에 담을 수 있도록 허가
         config.setAllowCredentials(true);
@@ -97,6 +99,7 @@ public class WebSecurityConfig {
 
         // 클라이언트가 접근 가능한 헤더 지정 (토큰 사용 가능하게)
         config.addExposedHeader("Authorization"); // ********
+        config.addExposedHeader("guest");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

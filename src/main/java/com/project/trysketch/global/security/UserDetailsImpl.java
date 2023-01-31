@@ -1,7 +1,6 @@
 package com.project.trysketch.global.security;
 
-
-import com.project.trysketch.user.entity.User;
+import com.project.trysketch.entity.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

@@ -1,7 +1,7 @@
 package com.project.trysketch.global.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.trysketch.global.dto.ResponseMsgDto;
+import com.project.trysketch.global.dto.MsgResponseDto;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 // 1. 기능   : JWT 인증 필터 / 토큰 유효성 검사
-// 2. 작성자 : 서혁수
+// 2. 작성자 : 서혁수, 황미경
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -29,20 +30,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = jwtUtil.resolveToken(request);
 
-        if(token != null) {
-            if(!jwtUtil.validateToken(token)){
+        if (token != null) {
+            if (!jwtUtil.validateToken(token)) {
                 jwtExceptionHandler(response, "Token Error", HttpStatus.UNAUTHORIZED.value());
                 return;
             }
             Claims info = jwtUtil.getUserInfoFromToken(token);
-            setAuthentication(info.getSubject());
+            setAuthentication(info.get("email").toString());
         }
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
     }
 
-    public void setAuthentication(String username) {
+    public void setAuthentication(String email) {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        Authentication authentication = jwtUtil.createAuthentication(username);
+        Authentication authentication = jwtUtil.createAuthentication(email);
         context.setAuthentication(authentication);
 
         SecurityContextHolder.setContext(context);
@@ -52,7 +53,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         response.setStatus(statusCode);
         response.setContentType("application/json");
         try {
-            String json = new ObjectMapper().writeValueAsString(new ResponseMsgDto(statusCode, msg));
+            String json = new ObjectMapper().writeValueAsString(new MsgResponseDto(statusCode, msg));
             response.getWriter().write(json);
         } catch (Exception e) {
             log.error(e.getMessage());

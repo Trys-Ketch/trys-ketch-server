@@ -1,7 +1,7 @@
 package com.project.trysketch.global.security;
 
-import com.project.trysketch.user.entity.User;
-import com.project.trysketch.user.repository.UserRepository;
+import com.project.trysketch.entity.User;
+import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -17,8 +17,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String nickname) throws UsernameNotFoundException {
-        User user = userRepository.findByNickname(nickname)
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(()-> new IllegalArgumentException("없는 유저"));
 
         return new UserDetailsImpl(user, user.getNickname());
