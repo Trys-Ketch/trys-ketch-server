@@ -36,11 +36,17 @@ public class GameController {
 
     // 2. 최초 랜덤 제시어 하나 가져오기
     @MessageMapping("/game/ingame-data")
-    public void getInGameData(GameFlowRequestDto requestDto){
+    public void getEasyInGameData(GameFlowRequestDto requestDto){
         log.info(">>>>>>>>>>>> GameController - getRandomKeyword 실행");
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
         log.info(">>>>>> {} : 내가 누구냐",requestDto.getToken());
         gameService.getInGameData(requestDto);
+    }
+
+    // 난이도 조절 버튼
+    @MessageMapping("/game/ingame-level")
+    public void changeLevel(GameFlowRequestDto requestDto) {
+        gameService.changeLevel(requestDto);
     }
 
     // 3. 제출 여부 확인하고 DB 저장

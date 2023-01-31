@@ -36,6 +36,9 @@ public class GameRoom extends Timestamped {
     private Integer roundMaxNum;
 
     @Column
+    private String level = "easy";
+
+    @Column
     @Builder.Default
     private int resultCount = 0;
 
@@ -53,6 +56,10 @@ public class GameRoom extends Timestamped {
 
     public void RoundMaxNumUpdate(int gamerNum) {
         this.roundMaxNum = gamerNum;
+    }
+
+    public void LevelUpdate(String level) {
+        this.level = level;
     }
 
     public void GameRoomUpdate(Long hostId, String hostNick, boolean isPlaying) {

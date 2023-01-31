@@ -282,21 +282,36 @@ public class GameService {
         // 해당 gameRoom 의 전체 유저 리스트 조회
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
+        Map<String, Object> message = new HashMap<>();
+        Map<String, Long> sendCount = new HashMap<>();
+        Map<Integer, String> keywordList = new HashMap<>();
+
+        switch (requestDto.getLevel()) {
+            case "easy" -> {
+                for (int i = 0; i < gameRoomUserList.size(); i++) {
+                    int nuId = (int) (Math.random() * nounSize + 1);
+                    Noun noun = nounRepository.findById(nuId).orElse(null);
+
+                    keywordList.put(i, noun.getNoun());
+                }
+            }
+            case "hard" -> {
+                for (int i = 0; i < gameRoomUserList.size(); i++) {
+                    // 형용사 리스트중 1개
+                    int adId = (int) (Math.random() * adSize + 1);
+                    Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
+
+                    // 명사 리스트중 1개
+                    int nuId = (int) (Math.random() * nounSize + 1);
+                    Noun noun = nounRepository.findById(nuId).orElse(null);
+
+                    keywordList.put(i, adjective.getAdjective() + " " + noun.getNoun());
+                }
+            }
+        }
         // GameRoomUser 돌면서 키워드 전송
         for (int i = 0; i < gameRoomUserList.size(); i++) {
-
             String webSessionId = gameRoomUserList.get(i).getWebSessionId();
-
-            // 형용사 리스트중 1개
-            int adId = (int) (Math.random() * adSize + 1);
-            Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
-
-            // 명사 리스트중 1개
-            int nuId = (int) (Math.random() * nounSize + 1);
-            Noun noun = nounRepository.findById(nuId).orElse(null);
-
-            Map<String, Object> message = new HashMap<>();
-            Map<String, Long> sendCount = new HashMap<>();
 
             // 제출한 인원수 및 게임중인 인원수 메시지 전송
             Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
@@ -304,11 +319,75 @@ public class GameService {
             sendCount.put("maxTrueCount", maxCount);
             log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
 
-            message.put("keyword", adjective.getAdjective() + " " + noun.getNoun());
+            message.put("keyword", keywordList.get(i));
             message.put("keywordIndex", i + 1);
 
             sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
             sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
+        }
+//        // GameRoomUser 돌면서 키워드 전송
+//        for (int i = 0; i < gameRoomUserList.size(); i++) {
+//
+//            String webSessionId = gameRoomUserList.get(i).getWebSessionId();
+//
+//            // 형용사 리스트중 1개
+//            int adId = (int) (Math.random() * adSize + 1);
+//            Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
+//
+//            // 명사 리스트중 1개
+//            int nuId = (int) (Math.random() * nounSize + 1);
+//            Noun noun = nounRepository.findById(nuId).orElse(null);
+//
+//            Map<String, Object> message = new HashMap<>();
+//            Map<String, Long> sendCount = new HashMap<>();
+//
+//            // 제출한 인원수 및 게임중인 인원수 메시지 전송
+//            Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
+//            sendCount.put("trueCount", 0L);
+//            sendCount.put("maxTrueCount", maxCount);
+//            log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
+//
+//            message.put("keyword", adjective.getAdjective() + " " + noun.getNoun());
+//            message.put("keywordIndex", i + 1);
+//
+//            sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
+//            sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
+//        }
+    }
+
+    @Transactional
+    public void changeLevel(GameFlowRequestDto requestDto) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeLevel] >>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info(">>>>>>> [GameService - changeLevel] RoomId : {}", requestDto.getRoomId());
+        log.info(">>>>>>> [GameService - changeLevel] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - changeLevel] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 현재 방 정보 가져오기
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        // 방장이 아닐경우
+        if (!gameRoom.getHostNick().equals(gamerInfo.get(GamerEnum.NICK.key()))) {
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
+        }
+
+        Map<String, Object> message = new HashMap<>();
+
+        switch (requestDto.getLevel()) {
+            case "easy" -> {
+                // 제출한 인원수 및 게임중인 인원수 메시지 전송
+                message.put("level", "easy");
+                sendingOperations.convertAndSend("/topic/game/level-easy/" + requestDto.getRoomId(), message);
+                gameRoom.LevelUpdate("easy");
+            }
+            case "hard" -> {
+                message.put("level", "hard");
+                sendingOperations.convertAndSend("/topic/game/level-hard/" + requestDto.getRoomId(), message);
+                gameRoom.LevelUpdate("hard");
+            }
         }
     }
 
