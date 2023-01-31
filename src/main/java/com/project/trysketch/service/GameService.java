@@ -53,15 +53,6 @@ public class GameService {
     @Transactional
     public MsgResponseDto startGame(GameFlowRequestDto requestDto) {
 
-        // 게임 시작시간
-        LocalDateTime startTime = LocalDateTime.of(
-                LocalDateTime.now().getYear(),
-                LocalDateTime.now().getMonth(),
-                LocalDateTime.now().getDayOfMonth(),
-                LocalDateTime.now().getHour(),
-                LocalDateTime.now().getMinute(),
-                LocalDateTime.now().getSecond());
-
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - startGame] >>>>>>>>>>>>>>>>>>>>>>>>");
@@ -77,15 +68,26 @@ public class GameService {
         // 현재 방의 유저 정보 가져오기
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoom(gameRoom);
 
+        // 게임 시작시간
+        LocalDateTime startTime = LocalDateTime.of(
+                LocalDateTime.now().getYear(),
+                LocalDateTime.now().getMonth(),
+                LocalDateTime.now().getDayOfMonth(),
+                LocalDateTime.now().getHour(),
+                LocalDateTime.now().getMinute(),
+                LocalDateTime.now().getSecond());
+
         // 게임이 시작된 시간을 유저마다 저장
         for (GameRoomUser gameRoomUser : gameRoomUserList) {
-            UserPlayTime userPlayTime = UserPlayTime.builder()
-                    .playStartTime(startTime)
-                    .playEndTime(null)
-                    .gameRoomUser(gameRoomUser)
-                    .gameRoomId(gameRoom.getId())
-                    .build();
-            playTimeRepository.save(userPlayTime);
+            if (gameRoomUser.getUserId() < 10000){
+                UserPlayTime userPlayTime = UserPlayTime.builder()
+                        .playStartTime(startTime)
+                        .playEndTime(null)
+                        .gameRoomUser(gameRoomUser)
+                        .gameRoomId(gameRoom.getId())
+                        .build();
+                playTimeRepository.save(userPlayTime);
+            }
         }
 
         // 방장이 아닐경우
@@ -168,55 +170,56 @@ public class GameService {
             }
         }
 
-        // 게임 종료시간
-        LocalDateTime endTime = LocalDateTime.of(
-                LocalDateTime.now().getYear(),
-                LocalDateTime.now().getMonth(),
-                LocalDateTime.now().getDayOfMonth(),
-                LocalDateTime.now().getHour(),
-                LocalDateTime.now().getMinute(),
-                LocalDateTime.now().getSecond());
+        if (gameRoomUser.getUserId() < 10000){
+            // 게임 종료시간
+            LocalDateTime endTime = LocalDateTime.of(
+                    LocalDateTime.now().getYear(),
+                    LocalDateTime.now().getMonth(),
+                    LocalDateTime.now().getDayOfMonth(),
+                    LocalDateTime.now().getHour(),
+                    LocalDateTime.now().getMinute(),
+                    LocalDateTime.now().getSecond());
 
-        // 현재 방의 모든 유저의 playTime 정보 가져오기
-        List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
+            // 현재 방의 모든 유저의 playTime 정보 가져오기
+            List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
 
-        // 게임이 시작된 시간을 유저마다 저장
-        for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
-            for (UserPlayTime userPlayTime : userPlayTimeList){
-                // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
-                if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())){
-                    
-                    // 게임 종료시간 업데이트
-                    userPlayTime.updateUserPlayTime(endTime);
-                
-                    Long userId = currentGameRoomUser.getUserId();
-                    log.info(">>>>>>> [GameService - endGame] userId {}", userId);
+            // 게임이 시작된 시간을 유저마다 저장
+            for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
+                for (UserPlayTime userPlayTime : userPlayTimeList) {
+                    // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
+                    if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())) {
 
-                    // 유저 정보 가져오기
-                    User currentUser = userRepository.findById(userId).orElseThrow(
-                            () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
-                    );
+                        // 게임 종료시간 업데이트
+                        userPlayTime.updateUserPlayTime(endTime);
 
-                    // startGame 과 endGame 의 차이 구하기
-                    Duration duration = Duration.between(userPlayTime.getPlayStartTime(), userPlayTime.getPlayEndTime());
+                        Long userId = currentGameRoomUser.getUserId();
+                        log.info(">>>>>>> [GameService - endGame] userId {}", userId);
 
-                    // 분 단위로 변환
-                    Long difference = duration.getSeconds()/60;
-                    log.info(">>>>>>> [GameService - endGame] 실질적인 플레이타임 {}", difference);
+                        // 유저 정보 가져오기
+                        User currentUser = userRepository.findById(userId).orElseThrow(
+                                () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
+                        );
 
-                    // 해당 history 에 실질적인 플레이타임 업데이트
-                    History history = currentUser.getHistory().updatePlaytime(difference);
-                    historyRepository.save(history);
-                    historyService.getTrophyOfTime(currentUser);
+                        // startGame 과 endGame 의 차이 구하기
+                        Duration duration = Duration.between(userPlayTime.getPlayStartTime(), userPlayTime.getPlayEndTime());
 
-                    playTimeRepository.delete(userPlayTime);
+                        // 분 단위로 변환
+                        Long difference = duration.getSeconds() / 60;
+                        log.info(">>>>>>> [GameService - endGame] 실질적인 플레이타임 {}", difference);
 
-                    history = currentUser.getHistory().updateTrials(1L);
-                    historyRepository.save(history);
-                    historyService.getTrophyOfTrial(currentUser);
+                        // 해당 history 에 실질적인 플레이타임 업데이트
+//                        History history = currentUser.getHistory().updatePlaytime(difference);
+                        historyRepository.save(currentUser.getHistory().updatePlaytime(difference));
+                        historyService.getTrophyOfTime(currentUser);
+
+                        playTimeRepository.delete(userPlayTime);
+
+//                        history = currentUser.getHistory().updateTrials(1L);
+                        historyRepository.save(currentUser.getHistory().updateTrials(1L));
+                        historyService.getTrophyOfTrial(currentUser);
+                    }
                 }
             }
-
         }
 
         // end 로 구독하고 있는 User 에게 end 메세지 전송
@@ -323,7 +326,6 @@ public class GameService {
         log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
         log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
         log.info(">>>>>>> [GameService - getToggleSubmit] 제출이면 false, 아니면 true : {}", requestDto.isSubmitted());
-
         // 1. 받아온 유저의 게임 정보가 gameFlow 에 있다면 -> 기존에서 변경
         GameFlow gameFlow;
         if (gameFlowRepository.existsByRoomIdAndRoundAndWebSessionId(
@@ -331,61 +333,38 @@ public class GameService {
                 requestDto.getRound(),
                 requestDto.getWebSessionId()
         )) {
-
             // roomId, round, webSessionId 로 조회
             gameFlow = gameFlowRepository.findByRoomIdAndRoundAndWebSessionId(
                     requestDto.getRoomId(),
                     requestDto.getRound(),
                     requestDto.getWebSessionId()
             );
-
             // 1-1. isSubmitted 의 상태가 true 라면 (취소) -> 제출 상태만 update
             if (gameFlow.isSubmitted()) {
-//                gameFlow.update(!requestDto.isSubmitted());
-                GameFlow gameFlowUpdate = GameFlow.builder()
-                        .id(gameFlow.getId())
-                        .isSubmitted(!requestDto.isSubmitted()).build();
-                gameFlowRepository.save(gameFlowUpdate);
-
+                gameFlow.update(!requestDto.isSubmitted());
                 log.info(">>>>>>> [GameService - getToggleSubmit] {} 에서 {}로 상태 변경", requestDto.isSubmitted(), !requestDto.isSubmitted());
             }
-
             // 1-2. isSubmitted 의 상태가 false 라면 (제출) -> 관련 내용 update
             else {
-
                 // 1-2-1. image 가 없다면 -> keyword
                 if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
-//                    gameFlow.update(!requestDto.isSubmitted(),
-//                            requestDto.getKeyword());
-                    GameFlow gameFlowUpdate = GameFlow.builder()
-                            .id(gameFlow.getId())
-                            .isSubmitted(!requestDto.isSubmitted())
-                            .keyword(requestDto.getKeyword()).build();
-                    gameFlowRepository.save(gameFlowUpdate);
+                    gameFlow.update(!requestDto.isSubmitted(),
+                            requestDto.getKeyword());
                     log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 키워드 저장 : {}", requestDto.getKeyword());
                 }
-
                 // 1-2-2. image 가 있다면 -> image
                 else {
-//                    gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
-//                            !requestDto.isSubmitted());
-                    GameFlow gameFlowUpdate = GameFlow.builder()
-                            .id(gameFlow.getId())
-                            .isSubmitted(!requestDto.isSubmitted())
-                            .imagePath(saveImage(requestDto).getPath()).build();
-                    gameFlowRepository.save(gameFlowUpdate);
+                    gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
+                            !requestDto.isSubmitted());
                     log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 이미지 저장 : {}", requestDto.getImage());
                 }
             }
         }
-
         // 2. 받아온 유저의 정보가 gameFlow 에 없다면 -> 새롭게 생성
         else {
-
             GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(requestDto.getWebSessionId()).orElseThrow(
                     () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
             );
-
             // 2-1. image 가 없다면 -> keyword 로 저장
             if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
                 gameFlow = GameFlow.builder()
@@ -399,7 +378,6 @@ public class GameService {
                         .isSubmitted(!requestDto.isSubmitted()).build();
                 log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 키워드 : {}", gameFlow.getKeyword());
             }
-
             // 2-2. image 가 있다면 -> image 로 저장
             else {
                 gameFlow = GameFlow.builder()
@@ -415,9 +393,7 @@ public class GameService {
                 log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 이미지 : {}", gameFlow.getImagePath());
             }
         }
-
         gameFlowRepository.saveAndFlush(gameFlow);
-
         // 제출한 사람 인원수 및 현재 방의 플레이중인 인원수 체크
         Long trueCount = 0L;
         Long nowUserCount = gameRoomUserRepository.countByGameRoomId(gameFlow.getRoomId());
@@ -433,7 +409,6 @@ public class GameService {
         if (gameRoom.getRoundMaxNum() > nowUserCount) {
             trueCount = trueCount - (gameRoom.getRoundMaxNum() - nowUserCount);
         }
-
         // 제출한 인원수 및 게임중인 인원수 메시지 전송
         HashMap<String, Long> message = new HashMap<>();
         message.put("trueCount", trueCount);
@@ -441,15 +416,11 @@ public class GameService {
         sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), message);
         log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 trueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), trueCount);
         log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 maxTrueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), nowUserCount);
-
-
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 라운드 : {}", gameFlow.getRound());
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 닉네임 : {}", gameFlow.getNickname());
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 보내는 사람 세션Id : {}", gameFlow.getWebSessionId());
         log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 제출 여부 : {}", gameFlow.isSubmitted());
-
-
         // 동시성 제어를 위해 분리했던 메소드 다시 결합
         // DB 기준 제출 여부 조회 후 메시지 전송
 //        sendSubmitMessage(requestDto);
@@ -459,7 +430,6 @@ public class GameService {
 //        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
 //                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
 //        );
-
         // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회
         boolean allFlag = true;
         boolean userFlag = true;
@@ -472,16 +442,13 @@ public class GameService {
             }
         }
         log.info(">>>>>>> [GameService - getToggleSubmit] 전체가 다 제출했습니까?! : {}", allFlag);
-
         // 본인에게 본인 제출 여부 메시지 전송
         Map<String, Object> submitMessage = new HashMap<>();
         submitMessage.put("isSubmitted", userFlag);
         sendingOperations.convertAndSend("/queue/game/is-submitted/" + requestDto.getWebSessionId(), submitMessage);
         log.info(">>>>>>> [GameService - getToggleSubmit] 제출할 때 마다 개인에게 메시지 전송 성공! : {}", submitMessage);
-
         // 이미지 포함 여부에 따라 destination 부여
         String destination = requestDto.getImage() == null || requestDto.getImage().length() == 0 ? "word" : "image";
-
         // 전체 제출 여부 확인
         log.info(">>>>>>> [GameService - sendSubmitMessage] gameFlowList.size() {}", gameFlowList.size());
         log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoomUserList.size() {}", gameRoomUserList.size());

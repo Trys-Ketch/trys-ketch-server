@@ -205,6 +205,7 @@ public class GameRoomService {
 
         // 5. 혹시 모를 오류상황으로 현재 User 가 다른 방에 들어가 있다면 gameRoomUser삭제
         if (gameRoomUserRepository.existsByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())))) {
+
             gameRoomUserRepository.deleteByUserId(Long.valueOf(extInfo.get(GamerEnum.ID.key())));
         }
 
@@ -537,7 +538,6 @@ public class GameRoomService {
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(userUUID).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
         );
-
         return gameRoomUser.getGameRoom().getId();
     }
 

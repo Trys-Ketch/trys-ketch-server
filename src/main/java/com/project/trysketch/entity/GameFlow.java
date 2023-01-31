@@ -52,17 +52,23 @@ public class GameFlow {
     @Column(nullable = false)
     private String userImgPath;
 
-    public void update(boolean isSubmitted) {
+    public GameFlow update(boolean isSubmitted) {
+//        this.id = id;
         this.isSubmitted = isSubmitted;
+        return this;
     }
 
-    public void update(boolean isSubmitted, String keyword) {
+    public GameFlow update(boolean isSubmitted, String keyword) {
+//        this.id = id;
         this.isSubmitted = isSubmitted;
         this.keyword = keyword;
+        return this;
     }
 
-    public void update(String imagePath, boolean isSubmitted) {
+    public GameFlow update(String imagePath, boolean isSubmitted) {
+//        this.id = id;
         this.isSubmitted = isSubmitted;
         this.imagePath = imagePath;
+        return this;
     }
 }

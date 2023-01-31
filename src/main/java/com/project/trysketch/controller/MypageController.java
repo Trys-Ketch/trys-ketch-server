@@ -36,6 +36,8 @@ public class MypageController {
         return ResponseEntity.ok(mypageService.getMyPage(request));
     }
 
+    //get 뱃지
+
     // 마이페이지 정보변경
     @PatchMapping("/profile")
     public ResponseEntity<DataMsgResponseDto> patchMyPage(@RequestBody @Valid UserRequestDto userRequestDto, HttpServletRequest request) {
