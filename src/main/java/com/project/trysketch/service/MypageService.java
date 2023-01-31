@@ -2,6 +2,7 @@ package com.project.trysketch.service;
 
 import com.project.trysketch.dto.request.UserRequestDto;
 import com.project.trysketch.dto.response.UserResponseDto;
+import com.project.trysketch.entity.Achievement;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
@@ -14,7 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
-
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -41,8 +44,12 @@ public class MypageService {
                 .imagePath(user.getImgUrl())
                 .build();
 
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("userInfo",userResponseDto);
+//        data.
         return new DataMsgResponseDto(StatusMsgCode.OK,userResponseDto);
     }
+//    public List<Achievement> getAchievementList
 
     // 마이페이지 회원 닉네임, 프로필사진 수정
     @Transactional
@@ -66,4 +73,5 @@ public class MypageService {
 
         return new DataMsgResponseDto(StatusMsgCode.UPDATE_USER_PROFILE, userResponseDto);
     }
+
 }
