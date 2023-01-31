@@ -28,7 +28,7 @@ public class Achievement extends Timestamped {
 
 
     public Achievement(AchievementCode achievementCode, User user) {
-        this.name = achievementCode.getAchievmentName();
+        this.name = achievementCode.getAchievementName();
         this.user = user;
     }
 }

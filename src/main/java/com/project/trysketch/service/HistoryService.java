@@ -51,9 +51,9 @@ public class HistoryService {
         List<Achievement> achievementList = achievementRepository.findAllByUser(user);
 
         Map<Integer, Achievement> achievements = new HashMap<>();
-        achievements.put(5, new Achievement(AchievementCode.PLAYTIME_TROPHY_BRONZE, user));
-        achievements.put(15, new Achievement(AchievementCode.PLAYTIME_TROPHY_SILVER, user));
-        achievements.put(60, new Achievement(AchievementCode.PLAYTIME_TROPHY_GOLD, user));
+        achievements.put(10, new Achievement(AchievementCode.PLAYTIME_TROPHY_BRONZE, user));
+        achievements.put(20, new Achievement(AchievementCode.PLAYTIME_TROPHY_SILVER, user));
+        achievements.put(30, new Achievement(AchievementCode.PLAYTIME_TROPHY_GOLD, user));
 
         // 유저로 찾아온 history 의 playtime 을 가져옴
         Long playtime = history.getPlaytime();
@@ -78,7 +78,7 @@ public class HistoryService {
         Map<Integer, Achievement> achievements = new HashMap<>();
         achievements.put(1, new Achievement(AchievementCode.TRIAL_TROPHY_BRONZE, user));
         achievements.put(5, new Achievement(AchievementCode.TRIAL_TROPHY_SILVER, user));
-        achievements.put(100, new Achievement(AchievementCode.TRIAL_TROPHY_GOLD, user));
+        achievements.put(10, new Achievement(AchievementCode.TRIAL_TROPHY_GOLD, user));
 
         // 유저로 찾아온 history 의 playtime 을 가져옴
         Long trials = history.getTrials();
@@ -102,9 +102,9 @@ public class HistoryService {
 
 
         Map<Integer, Achievement> achievements = new HashMap<>();
-        achievements.put(5, new Achievement(AchievementCode.VISIT_TROPHY_BRONZE, user));
-        achievements.put(10, new Achievement(AchievementCode.VISIT_TROPHY_SILVER, user));
-        achievements.put(100, new Achievement(AchievementCode.VISIT_TROPHY_GOLD, user));
+        achievements.put(1, new Achievement(AchievementCode.VISIT_TROPHY_BRONZE, user));
+        achievements.put(5, new Achievement(AchievementCode.VISIT_TROPHY_SILVER, user));
+        achievements.put(10, new Achievement(AchievementCode.VISIT_TROPHY_GOLD, user));
 
         // 유저로 찾아온 history 의 playtime 을 가져옴
         Long visits = history.getVisits();
@@ -142,9 +142,10 @@ public class HistoryService {
 
                     achievementRepository.save(achievement);
 
-                    Map<String, Boolean> message = new HashMap<>();
-                    message.put("create", true);
+                    Map<String, String> message = new HashMap<>();
+                    message.put("achievement", achievement.getName());
 
+                    // 이미지 패스 추가
                     sendingOperations.convertAndSend("/queue/game/achievement/" + gameRoomUser.getWebSessionId(), message);
                     log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
                 }
