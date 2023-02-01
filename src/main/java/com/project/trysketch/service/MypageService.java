@@ -77,7 +77,7 @@ public class MypageService {
     }
 
     // 뱃지 조회하기
-    public List<AchievementResponseDto> getBadge( HttpServletRequest request) {
+    public List<AchievementResponseDto> getBadge(HttpServletRequest request) {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -29,9 +30,9 @@ public class MypageController {
 
     // 마이페이지에서 좋아요 누른 사진 조회
     @GetMapping("/image-like") // 수정 추가 김재영 01.31
-    public ResponseEntity<Page<ImageLike>> getImage(@PageableDefault(size = 12,sort = "createdAt",direction = Sort.Direction.DESC) Pageable pageable,
-                                                    HttpServletRequest request) {
-        return ResponseEntity.ok(imageService.getImage(request, pageable));
+    public ResponseEntity<DataMsgResponseDto> getImage(@PageableDefault(size = 12,sort = "createdAt",direction = Sort.Direction.DESC) Pageable pageable,
+                                                        HttpServletRequest request) {
+        return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.SUCCESS_GET_IMAGE_LIKE, imageService.getImage(request, pageable)));
     }
     // 마이페이지 회원조회
     @GetMapping
