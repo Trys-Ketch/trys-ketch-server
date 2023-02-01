@@ -60,7 +60,9 @@ public enum StatusMsgCode {
     SUBMIT_IMAGE_DONE(HttpStatus.OK, "이미지 제출이 되었습니다"),
     SUBMIT_KEYWORD_DONE(HttpStatus.OK, "단어 제출이 되었습니다"),
     CREATE_ROOM(HttpStatus.OK, "방을 만들었습니다"),
-    UPDATE_USER_PROFILE(HttpStatus.OK, "프로필이 변경되었습니다");
+    UPDATE_USER_PROFILE(HttpStatus.OK, "프로필이 변경되었습니다"),
+    SUCCESS_CREATE_ACHIEVEMENT(HttpStatus.OK, "업적을 달성했습니다");
+
 
 
 
