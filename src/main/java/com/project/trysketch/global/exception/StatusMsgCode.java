@@ -21,6 +21,7 @@ public enum StatusMsgCode {
     NECESSARY_LOG_IN(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다"),
     NOT_FOUND_NICK(HttpStatus.BAD_REQUEST, "닉네임을 찾을 수 없습니다"),
     HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "활동 이력을 찾울 수 없습니다"),
+    MINMAX_ROUND_TIME(HttpStatus.BAD_REQUEST, "요청한 라운드 시간의 최소/최대치에 도달해 변경이 불가능합니다"),
 
 
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다"),
