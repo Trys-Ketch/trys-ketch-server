@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.dto.request.NaverRequestDto;
 import com.project.trysketch.entity.History;
 import com.project.trysketch.entity.User;
+import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
@@ -57,7 +58,7 @@ public class NaverService {
     String token_uri;
 
     @Transactional
-    public MsgResponseDto naverLogin(String code, String state,HttpServletResponse response) throws JsonProcessingException {
+    public DataMsgResponseDto naverLogin(String code, String state,HttpServletResponse response) throws JsonProcessingException {
         log.info(">>>>>>>>>>>>>>>>>> [NaverService] - naverLogin");
         String randomNickname = userService.RandomNick().getMessage();
 
@@ -74,12 +75,12 @@ public class NaverService {
         History history = naverUser.getHistory().updateVisits(1L);
         historyRepository.save(history);
 
-        historyService.getTrophyOfVisit(naverUser);
+        String achievementName = historyService.getTrophyOfVisit(naverUser);
 
         String createToken = jwtUtil.createToken(naverUser.getEmail(), naverUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
 
-        return new MsgResponseDto(StatusMsgCode.LOG_IN);
+        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementName);
     }
 
 

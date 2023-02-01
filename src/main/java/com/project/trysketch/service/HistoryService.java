@@ -4,6 +4,7 @@ import com.project.trysketch.entity.Achievement;
 import com.project.trysketch.entity.GameRoomUser;
 import com.project.trysketch.entity.History;
 import com.project.trysketch.entity.User;
+import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.utill.AchievementCode;
@@ -91,7 +92,7 @@ public class HistoryService {
     }
 
     // 사이트 로그인 횟수에 따른 업적
-    public void getTrophyOfVisit(User user) {
+    public String getTrophyOfVisit(User user) {
         log.info(">>>>>>>>>>>>>>>>> [HistoryService] - getTrophyOfVisit");
         // 해당 유저의 활동이력 검색
         History history = historyRepository.findByUser(user).orElseThrow(
@@ -111,8 +112,10 @@ public class HistoryService {
 
         for (Integer baseLine : achievements.keySet()) {
             // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-            verifyUserAchievement(achievements, achievementList, visits, baseLine, user.getId());
+
+            return verifyUserLoginAchievement(achievements, achievementList, visits, baseLine);
         }
+        return null;
     }
 
     public void verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine, Long userId) {
@@ -152,6 +155,41 @@ public class HistoryService {
             }
         }
     }
+
+
+    public String verifyUserLoginAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine) {
+        log.info(">>>>>>>>>>>>>>>>> [HistoryService] - verifyUserAchievement");
+
+        // 유저 의 count 가  baseLine 이 기준선을 넘는다면
+        int cnt = 0;
+        if (count > baseLine) {
+            Achievement achievement = achievements.get(baseLine);
+
+            // 해당 유저가 현재 가지고 있었던 업적 가져오기
+            if (currentAchievementList.isEmpty()) {
+                achievementRepository.save(achievement);
+                log.info(">>>>>>>>>>>>>>>>> achievement 처음 만들었다");
+            } else {
+
+                for (Achievement currentAchievement : currentAchievementList) {
+
+                    // 지금 얻으려는 업적과 같다면
+                    if (achievement.getName().equals(currentAchievement.getName())) {
+                        cnt++;
+                    }
+                }
+                if (cnt == 0) {
+                    achievementRepository.save(achievement);
+                    log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
+
+                    return achievement.getName();
+
+                }
+            }
+        }
+        return null;
+    }
+
 
 
 }
