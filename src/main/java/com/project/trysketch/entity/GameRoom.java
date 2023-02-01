@@ -36,7 +36,12 @@ public class GameRoom extends Timestamped {
     private Integer roundMaxNum;
 
     @Column
-    private String level = "easy";
+    @Builder.Default
+    private String difficulty = "easy";         // 게임 난이도
+
+    @Column
+    @Builder.Default
+    private Long timeLimit = 60000L;            // 라운드별 제한 시간
 
     @Column
     @Builder.Default
@@ -58,8 +63,12 @@ public class GameRoom extends Timestamped {
         this.roundMaxNum = gamerNum;
     }
 
-    public void LevelUpdate(String level) {
-        this.level = level;
+    public void difficultyUpdate(String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public void timeLimitUpdate(Long timeLimit) {
+        this.timeLimit = timeLimit;
     }
 
     public void GameRoomUpdate(Long hostId, String hostNick, boolean isPlaying) {
