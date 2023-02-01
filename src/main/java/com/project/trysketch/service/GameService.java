@@ -112,7 +112,7 @@ public class GameService {
     }
 
     // 방에 입장시 타임 리미트, 난이도 조절
-    public void joinGameRoom(GameFlowRequestDto requestDto) {
+    public void getGameMode(GameFlowRequestDto requestDto) {
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
         log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 token : {}", requestDto.getRoomId(), requestDto.getToken());

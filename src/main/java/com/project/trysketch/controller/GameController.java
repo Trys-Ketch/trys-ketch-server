@@ -38,10 +38,10 @@ public class GameController {
 
     // 2. 방에 입장시(생성 포함) 타임리미트, 난이도 전달
     @MessageMapping("/game/gameroom-data")
-    public void joinGameRoom(GameFlowRequestDto requestDto) {
+    public void getGameMode(GameFlowRequestDto requestDto) {
         log.info(">>>>>>>>>>>> GameController - joinGameRoom 실행");
         log.info(">>> 게임에 입장 - 게임 방 번호 : {},", requestDto.getRoomId());
-        gameService.joinGameRoom(requestDto);
+        gameService.getGameMode(requestDto);
     }
 
     // 3. 최초 랜덤 제시어 하나 가져오기
