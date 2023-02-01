@@ -8,20 +8,20 @@ import lombok.Getter;
 public enum AchievementCode {
 
     /* 플레이타임 업적 코드 */
-    PLAYTIME_TROPHY_BRONZE("플레이타임 브론즈"),
-    PLAYTIME_TROPHY_SILVER("플레이타임 실버"),
-    PLAYTIME_TROPHY_GOLD("플레이타임 골드"),
+    PLAYTIME_TROPHY_BRONZE("TSK001"),
+    PLAYTIME_TROPHY_SILVER("TSK002"),
+    PLAYTIME_TROPHY_GOLD("TSK003"),
 
     /* 플레이 횟수 업적 코드 */
-    TRIAL_TROPHY_BRONZE("게임 플레이 횟수 브론즈"),
-    TRIAL_TROPHY_SILVER("게임 플레이 횟수 실버"),
-    TRIAL_TROPHY_GOLD("게임 플레이 횟수 골드"),
+    TRIAL_TROPHY_BRONZE("TSK021"),
+    TRIAL_TROPHY_SILVER("TSK022"),
+    TRIAL_TROPHY_GOLD("TSK023"),
 
     /* 사이트 로그인 횟수 업적 코드 */
-    VISIT_TROPHY_BRONZE("사이트 방문 횟수 브론즈"),
-    VISIT_TROPHY_SILVER("사이트 방문 횟수 실버"),
-    VISIT_TROPHY_GOLD("사이트 방문 횟수 골드");
+    VISIT_TROPHY_BRONZE("TSK041"),
+    VISIT_TROPHY_SILVER("TSK042"),
+    VISIT_TROPHY_GOLD("TSK043");
 
 
-    private final String AchievmentName;
+    private final String AchievementName;
 }

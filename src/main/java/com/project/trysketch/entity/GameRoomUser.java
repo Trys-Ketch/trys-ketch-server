@@ -41,7 +41,8 @@ public class GameRoomUser {
     @Column
     private String imgUrl;
 
-    @OneToOne(mappedBy = "gameRoomUser")
+//    @OneToOne(mappedBy = "gameRoomUser") 원래코드
+    @OneToOne(mappedBy = "gameRoomUser", cascade = CascadeType.REMOVE) // 1.31
     private UserPlayTime userPlayTime;
     
     public void update(boolean readyStatus) {
