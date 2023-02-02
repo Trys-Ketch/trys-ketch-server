@@ -25,6 +25,8 @@ import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 import java.util.UUID;
 
 // 1. 기능    : OAuth2.0 카카오 비즈니스 로직
@@ -56,13 +58,13 @@ public class KakaoService {
         History history = kakaoUser.getHistory().updateVisits(1L);
         historyRepository.save(history);
 
-        String achievementName = historyService.getTrophyOfVisit(kakaoUser);
+        List<String> achievementNameList = historyService.getTrophyOfVisit(kakaoUser);
 
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
 
-        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementName);
+        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
     }
 
     // 1. "인가 코드"로 "액세스 토큰" 요청
