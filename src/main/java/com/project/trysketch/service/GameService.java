@@ -446,6 +446,63 @@ public class GameService {
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
+
+        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
+
+        // 방장이 아닐경우
+        if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
+        }
+        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
+        log.info(">>>>>>> [GameService - changeTimeLimit] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
+
+        Map<String, Object> message = new HashMap<>();
+        Long nowTime = gameRoom.getTimeLimit();         // 현재 방의 라운드 타임 가져오기
+        Long changeTime = 30000L;                       // 한번에 30초씩 업/다운(밀리세컨드)
+
+        log.info(">>>>>>> [GameService - changeTimeLimit] #{}번 방 / 현재 타임 리미트 : {}",gameRoom.getId() ,gameRoom.getTimeLimit());
+        switch (destination) {
+            case "increase-time" -> {
+                nowTime = nowTime + changeTime;         // 30초 증가
+                // 요청한 시간이 2분 30초(밀리 세컨드) 이하일 시 변경 가능하다. 즉, "2분 30초 초과" 이면 변경 불가능
+                if (nowTime <= 150000L) {
+                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 증가 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), nowTime);
+                    message.put("timeLimit", nowTime);
+                    gameRoom.timeLimitUpdate(nowTime);  // 변경된 타임리미트로 방 정보 변경
+                    sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
+                } else {
+                    throw new CustomException(StatusMsgCode.MINMAX_ROUND_TIME);
+                }
+            }
+            case "decrease-time" -> {
+                nowTime = nowTime - changeTime;         // 30초 감소
+                // 요청한 시간이 1분(밀리 세컨드) 이상일 시 변경 가능하다. 즉, "1분 미만" 이면 변경 불가능
+                if (nowTime >= 60000L) {
+                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 감소 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), nowTime);
+                    message.put("timeLimit", nowTime);
+                    gameRoom.timeLimitUpdate(nowTime);  // 변경된 타임리미트로 방 정보 변경
+                    sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
+                } else {
+                    throw new CustomException(StatusMsgCode.MINMAX_ROUND_TIME);
+                }
+            }
+        }
+    }
+
+    // 난이도 변경
+    @Transactional
+    public void changeDifficulty(GameFlowRequestDto requestDto) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeDifficulty] >>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info(">>>>>>> [GameService - changeDifficulty] RoomId : {}", requestDto.getRoomId());
+        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 현재 방 정보 가져오기
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
         log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
 
         // 방장이 아닐경우
@@ -454,7 +511,6 @@ public class GameService {
         }
         log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
         log.info(">>>>>>> [GameService - changeDifficulty] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
-
         Map<String, Object> message = new HashMap<>();
 
         log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 / 현재 난이도 : {}",gameRoom.getId() ,requestDto.getDifficulty());
