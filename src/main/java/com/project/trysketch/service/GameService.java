@@ -9,6 +9,8 @@ import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +21,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
-
+import java.util.concurrent.TimeUnit;
 
 
 // 1. 기능   : 프로젝트 메인 로직
@@ -44,6 +46,7 @@ public class GameService {
     private final int nounSize = 1335;
     private final String directoryName = "static";
 
+    private final RedissonClient redissonClient;
 
     // convertAndSend 는 객체를 인자로 넘겨주면 자동으로 Message 객체로 변환 후 도착지로 전송한다.
 
@@ -109,6 +112,32 @@ public class GameService {
 
         // 게임 시작
         return new MsgResponseDto(StatusMsgCode.START_GAME);
+    }
+
+    // 방에 입장시 타임 리미트, 난이도 조절
+    public void getGameMode(GameFlowRequestDto requestDto) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 token : {}", requestDto.getRoomId(), requestDto.getToken());
+        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 검증결과 / 유저 아이디 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 검증결과 / 유저 닉네임 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 현재 방 정보 가져오기
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 웹세션 ID : {}", requestDto.getRoomId(), requestDto.getWebSessionId());
+
+        Map<String, Object> message = new HashMap<>();
+
+        // message 에 난이도와 타임리미트 추가
+        message.put("difficulty", gameRoom.getDifficulty());
+        message.put("timeLimit", gameRoom.getTimeLimit());
+
+        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 : 현재 게임 난이도 {}", gameRoom.getId(), gameRoom.getDifficulty());
+        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 : 현재 타임 리미트 {}", gameRoom.getId(), gameRoom.getTimeLimit());
+
+        sendingOperations.convertAndSend("/queue/game/gameroom-data/" + requestDto.getWebSessionId(), message);
     }
 
     // 게임 종료
@@ -183,17 +212,17 @@ public class GameService {
             // 현재 방의 모든 유저의 playTime 정보 가져오기
             List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
 
-            // 게임이 시작된 시간을 유저마다 저장
-            for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
-                for (UserPlayTime userPlayTime : userPlayTimeList) {
-                    // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
-                    if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())) {
+        // 게임이 시작된 시간을 유저마다 저장
+        for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
+            for (UserPlayTime userPlayTime : userPlayTimeList){
+                // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
+                if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())){
 
-                        // 게임 종료시간 업데이트
-                        userPlayTime.updateUserPlayTime(endTime);
+                    // 게임 종료시간 업데이트
+                    userPlayTime.updateUserPlayTime(endTime);
 
-                        Long userId = currentGameRoomUser.getUserId();
-                        log.info(">>>>>>> [GameService - endGame] userId {}", userId);
+                    Long userId = currentGameRoomUser.getUserId();
+                    log.info(">>>>>>> [GameService - endGame] userId {}", userId);
 
                         // 유저 정보 가져오기
                         User currentUser = userRepository.findById(userId).orElseThrow(
@@ -233,7 +262,7 @@ public class GameService {
 
     // 강제 종료( 비정상적인 종료 )
     @Transactional
-      public MsgResponseDto shutDownGame(Long gameRoomId) {
+    public MsgResponseDto shutDownGame(Long gameRoomId) {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>> [GameService - shutDownGame] RoomId : {}", gameRoomId);
 
@@ -285,180 +314,357 @@ public class GameService {
         // 해당 gameRoom 의 전체 유저 리스트 조회
         List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+
+        Map<String, Object> message = new HashMap<>();
+        Map<String, Long> sendCount = new HashMap<>();
+        Map<Integer, String> keywordList = new HashMap<>();
+
+        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 현재 방의 난이도 : {}",gameRoom.getId() ,gameRoom.getDifficulty());
+        // 난이도 easy 이냐 hard 이냐에 따라 가져오는 키워드가 다르다
+        switch (gameRoom.getDifficulty()) {
+            case "easy" -> {
+                log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / easy 난이도 키워드 생성",gameRoom.getId());
+                for (int i = 0; i < gameRoomUserList.size(); i++) {
+                    // 명사 리스트중 1개
+                    int nuId = (int) (Math.random() * nounSize + 1);
+                    Noun noun = nounRepository.findById(nuId).orElse(null);
+
+                    keywordList.put(i, noun.getNoun());
+                }
+            }
+            case "hard" -> {
+                log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / hard 난이도 키워드 생성",gameRoom.getId());
+                for (int i = 0; i < gameRoomUserList.size(); i++) {
+                    // 형용사 리스트중 1개
+                    int adId = (int) (Math.random() * adSize + 1);
+                    Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
+
+                    // 명사 리스트중 1개
+                    int nuId = (int) (Math.random() * nounSize + 1);
+                    Noun noun = nounRepository.findById(nuId).orElse(null);
+
+                    keywordList.put(i, adjective.getAdjective() + " " + noun.getNoun());
+                }
+            }
+        }
+
+        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 키워드 전송 시작",gameRoom.getId());
         // GameRoomUser 돌면서 키워드 전송
         for (int i = 0; i < gameRoomUserList.size(); i++) {
-
             String webSessionId = gameRoomUserList.get(i).getWebSessionId();
 
-            // 형용사 리스트중 1개
-            int adId = (int) (Math.random() * adSize + 1);
-            Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
-
-            // 명사 리스트중 1개
-            int nuId = (int) (Math.random() * nounSize + 1);
-            Noun noun = nounRepository.findById(nuId).orElse(null);
-
-            Map<String, Object> message = new HashMap<>();
-            Map<String, Long> sendCount = new HashMap<>();
-
             // 제출한 인원수 및 게임중인 인원수 메시지 전송
-            Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
-            sendCount.put("trueCount", 0L);
-            sendCount.put("maxTrueCount", maxCount);
-            log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
-
-            message.put("keyword", adjective.getAdjective() + " " + noun.getNoun());
+            message.put("keyword", keywordList.get(i));
             message.put("keywordIndex", i + 1);
+            message.put("timeLimit", gameRoom.getTimeLimit());
 
-            sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
-            sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
+            sendingOperations.convertAndSend("/queue/game/ingame-data/" + webSessionId, message);
+        }
+
+        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 키워드 전송 완료",gameRoom.getId());
+        Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
+
+        sendCount.put("trueCount", 0L);
+        sendCount.put("maxTrueCount", maxCount);
+
+        log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
+        sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
+
+        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 카운트 전송 완료",gameRoom.getId());
+//        // GameRoomUser 돌면서 키워드 전송
+//        for (int i = 0; i < gameRoomUserList.size(); i++) {
+//
+//            String webSessionId = gameRoomUserList.get(i).getWebSessionId();
+//
+//            // 형용사 리스트중 1개
+//            int adId = (int) (Math.random() * adSize + 1);
+//            Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
+//
+//            // 명사 리스트중 1개
+//            int nuId = (int) (Math.random() * nounSize + 1);
+//            Noun noun = nounRepository.findById(nuId).orElse(null);
+//
+//            Map<String, Object> message = new HashMap<>();
+//            Map<String, Long> sendCount = new HashMap<>();
+//
+//            // 제출한 인원수 및 게임중인 인원수 메시지 전송
+//            Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
+//            sendCount.put("trueCount", 0L);
+//            sendCount.put("maxTrueCount", maxCount);
+//            log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
+//
+//            message.put("keyword", adjective.getAdjective() + " " + noun.getNoun());
+//            message.put("keywordIndex", i + 1);
+//
+//            sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
+//            sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
+//        }
+    }
+
+    // 타임 리미트 변경
+    @Transactional
+    public void changeTimeLimit(GameFlowRequestDto requestDto, String destination) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeTimeLimit] >>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info(">>>>>>> [GameService - changeTimeLimit] RoomId : {}", requestDto.getRoomId());
+        log.info(">>>>>>> [GameService - changeTimeLimit] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - changeTimeLimit] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 현재 방 정보 가져오기
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
+
+        // 방장이 아닐경우
+        if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
+        }
+        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
+        log.info(">>>>>>> [GameService - changeTimeLimit] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
+
+        Map<String, Object> message = new HashMap<>();
+        Long nowTime = gameRoom.getTimeLimit();         // 현재 방의 라운드 타임 가져오기
+        Long changeTime = 30000L;                       // 한번에 30초씩 업/다운(밀리세컨드)
+
+        log.info(">>>>>>> [GameService - changeTimeLimit] #{}번 방 / 현재 타임 리미트 : {}",gameRoom.getId() ,gameRoom.getTimeLimit());
+        switch (destination) {
+            case "increase-time" -> {
+                nowTime = nowTime + changeTime;         // 30초 증가
+                // 요청한 시간이 2분 30초(밀리 세컨드) 이하일 시 변경 가능하다. 즉, "2분 30초 초과" 이면 변경 불가능
+                if (nowTime <= 150000L) {
+                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 증가 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), nowTime);
+                    message.put("timeLimit", nowTime);
+                    gameRoom.timeLimitUpdate(nowTime);  // 변경된 타임리미트로 방 정보 변경
+                    sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
+                } else {
+                    throw new CustomException(StatusMsgCode.MINMAX_ROUND_TIME);
+                }
+            }
+            case "decrease-time" -> {
+                nowTime = nowTime - changeTime;         // 30초 감소
+                // 요청한 시간이 1분(밀리 세컨드) 이상일 시 변경 가능하다. 즉, "1분 미만" 이면 변경 불가능
+                if (nowTime >= 60000L) {
+                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 감소 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), nowTime);
+                    message.put("timeLimit", nowTime);
+                    gameRoom.timeLimitUpdate(nowTime);  // 변경된 타임리미트로 방 정보 변경
+                    sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
+                } else {
+                    throw new CustomException(StatusMsgCode.MINMAX_ROUND_TIME);
+                }
+            }
+        }
+    }
+
+    // 난이도 변경
+    @Transactional
+    public void changeDifficulty(GameFlowRequestDto requestDto) {
+        // 유저 검증부
+        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeDifficulty] >>>>>>>>>>>>>>>>>>>>>>>>");
+        log.info(">>>>>>> [GameService - changeDifficulty] RoomId : {}", requestDto.getRoomId());
+        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+
+        // 현재 방 정보 가져오기
+        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+        );
+        log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
+
+        // 방장이 아닐경우
+        if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
+            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
+        }
+        log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
+        log.info(">>>>>>> [GameService - changeDifficulty] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
+
+        Map<String, Object> message = new HashMap<>();
+
+        log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 / 현재 난이도 : {}",gameRoom.getId() ,requestDto.getDifficulty());
+        // 들어온 요청에 따라 easy 또는 hard 로 변경
+        switch (requestDto.getDifficulty()) {
+            case "easy" -> {
+                log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 : easy 로 변경", requestDto.getRoomId());
+                message.put("difficulty", "easy");
+                gameRoom.difficultyUpdate("easy");      // gameRoom 의 난이도를 easy 로 변경
+                sendingOperations.convertAndSend("/topic/game/difficulty/" + requestDto.getRoomId(), message);
+            }
+            case "hard" -> {
+                log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 : hard 로 변경", requestDto.getRoomId());
+                message.put("difficulty", "hard");
+                gameRoom.difficultyUpdate("hard");      // gameRoom 의 난이도를 hard 로 변경
+                sendingOperations.convertAndSend("/topic/game/difficulty/" + requestDto.getRoomId(), message);
+            }
         }
     }
 
     // 라운드 끝났을 때, 기존 데이터에 따른 제출 여부 확인과 GameFlow DB 저장
     // requestDto 필요한 정보
     // token, roomId, round, keyword, keywordIndex, image, webSessionId, isSubmitted
-    @Transactional
+
     public void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
-        // 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getToggleSubmit] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
-        log.info(">>>>>>> [GameService - getToggleSubmit] 제출이면 false, 아니면 true : {}", requestDto.isSubmitted());
-        // 1. 받아온 유저의 게임 정보가 gameFlow 에 있다면 -> 기존에서 변경
-        GameFlow gameFlow;
-        if (gameFlowRepository.existsByRoomIdAndRoundAndWebSessionId(
-                requestDto.getRoomId(),
-                requestDto.getRound(),
-                requestDto.getWebSessionId()
-        )) {
-            // roomId, round, webSessionId 로 조회
-            gameFlow = gameFlowRepository.findByRoomIdAndRoundAndWebSessionId(
-                    requestDto.getRoomId(),
-                    requestDto.getRound(),
-                    requestDto.getWebSessionId()
-            );
-            // 1-1. isSubmitted 의 상태가 true 라면 (취소) -> 제출 상태만 update
-            if (gameFlow.isSubmitted()) {
-                gameFlow.update(!requestDto.isSubmitted());
-                log.info(">>>>>>> [GameService - getToggleSubmit] {} 에서 {}로 상태 변경", requestDto.isSubmitted(), !requestDto.isSubmitted());
-            }
-            // 1-2. isSubmitted 의 상태가 false 라면 (제출) -> 관련 내용 update
-            else {
-                // 1-2-1. image 가 없다면 -> keyword
-                if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
-                    gameFlow.update(!requestDto.isSubmitted(),
-                            requestDto.getKeyword());
-                    log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 키워드 저장 : {}", requestDto.getKeyword());
-                }
-                // 1-2-2. image 가 있다면 -> image
-                else {
-                    gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
-                            !requestDto.isSubmitted());
-                    log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 이미지 저장 : {}", requestDto.getImage());
-                }
-            }
-        }
-        // 2. 받아온 유저의 정보가 gameFlow 에 없다면 -> 새롭게 생성
-        else {
-            GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(requestDto.getWebSessionId()).orElseThrow(
-                    () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
-            );
-            // 2-1. image 가 없다면 -> keyword 로 저장
-            if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
-                gameFlow = GameFlow.builder()
-                        .roomId(requestDto.getRoomId())
-                        .round(requestDto.getRound())
-                        .keywordIndex(requestDto.getKeywordIndex())
-                        .keyword(requestDto.getKeyword())
-                        .nickname(gamerInfo.get(GamerEnum.NICK.key()))
-                        .webSessionId(requestDto.getWebSessionId())
-                        .userImgPath(gameRoomUser.getImgUrl())
-                        .isSubmitted(!requestDto.isSubmitted()).build();
-                log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 키워드 : {}", gameFlow.getKeyword());
-            }
-            // 2-2. image 가 있다면 -> image 로 저장
-            else {
-                gameFlow = GameFlow.builder()
-                        .roomId(requestDto.getRoomId())
-                        .round(requestDto.getRound())
-                        .keywordIndex(requestDto.getKeywordIndex())
-                        .imagePath(saveImage(requestDto).getPath())
-                        .imagePk(saveImage(requestDto).getId()) // 수정 추가 김재영 01.29
-                        .nickname(gamerInfo.get(GamerEnum.NICK.key()))
-                        .webSessionId(requestDto.getWebSessionId())
-                        .userImgPath(gameRoomUser.getImgUrl())
-                        .isSubmitted(!requestDto.isSubmitted()).build();
-                log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 이미지 : {}", gameFlow.getImagePath());
-            }
-        }
-        gameFlowRepository.saveAndFlush(gameFlow);
-        // 제출한 사람 인원수 및 현재 방의 플레이중인 인원수 체크
-        Long trueCount = 0L;
-        Long nowUserCount = gameRoomUserRepository.countByGameRoomId(gameFlow.getRoomId());
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
-        );
-        List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(gameFlow.getRoomId(), gameFlow.getRound());
-        for (GameFlow findList : gameFlowList) {
-            if (findList.isSubmitted()) {
-                trueCount++;
-            }
-        }
-        if (gameRoom.getRoundMaxNum() > nowUserCount) {
-            trueCount = trueCount - (gameRoom.getRoundMaxNum() - nowUserCount);
-        }
-        // 제출한 인원수 및 게임중인 인원수 메시지 전송
-        HashMap<String, Long> message = new HashMap<>();
-        message.put("trueCount", trueCount);
-        message.put("maxTrueCount", nowUserCount);
-        sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), message);
-        log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 trueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), trueCount);
-        log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 maxTrueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), nowUserCount);
-        log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
-        log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 라운드 : {}", gameFlow.getRound());
-        log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 닉네임 : {}", gameFlow.getNickname());
-        log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 보내는 사람 세션Id : {}", gameFlow.getWebSessionId());
-        log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 제출 여부 : {}", gameFlow.isSubmitted());
-        // 동시성 제어를 위해 분리했던 메소드 다시 결합
-        // DB 기준 제출 여부 조회 후 메시지 전송
+
+        RLock lock = redissonClient.getLock("key 이름");
+        try {
+            boolean isLocked = lock.tryLock(60000, 60000, TimeUnit.MILLISECONDS);
+
+            if (isLocked){
+                try {
+                    // 유저 검증부
+                    HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+                    log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getToggleSubmit] >>>>>>>>>>>>>>>>>>>>>>>>");
+                    log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
+                    log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
+                    log.info(">>>>>>> [GameService - getToggleSubmit] 제출이면 false, 아니면 true : {}", requestDto.isSubmitted());
+                    // 1. 받아온 유저의 게임 정보가 gameFlow 에 있다면 -> 기존에서 변경
+                    GameFlow gameFlow;
+                    if (gameFlowRepository.existsByRoomIdAndRoundAndWebSessionId(
+                            requestDto.getRoomId(),
+                            requestDto.getRound(),
+                            requestDto.getWebSessionId()
+                    )) {
+                        // roomId, round, webSessionId 로 조회
+                        gameFlow = gameFlowRepository.findByRoomIdAndRoundAndWebSessionId(
+                                requestDto.getRoomId(),
+                                requestDto.getRound(),
+                                requestDto.getWebSessionId()
+                        );
+                        // 1-1. isSubmitted 의 상태가 true 라면 (취소) -> 제출 상태만 update
+                        if (gameFlow.isSubmitted()) {
+                            gameFlow.update(!requestDto.isSubmitted());
+                            log.info(">>>>>>> [GameService - getToggleSubmit] {} 에서 {}로 상태 변경", requestDto.isSubmitted(), !requestDto.isSubmitted());
+                        }
+                        // 1-2. isSubmitted 의 상태가 false 라면 (제출) -> 관련 내용 update
+                        else {
+                            // 1-2-1. image 가 없다면 -> keyword
+                            if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
+                                gameFlow.update(!requestDto.isSubmitted(),
+                                        requestDto.getKeyword());
+                                log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 키워드 저장 : {}", requestDto.getKeyword());
+                            }
+                            // 1-2-2. image 가 있다면 -> image
+                            else {
+                                gameFlow.update(saveImage(requestDto).getPath(), // 수정 추가 김재영 01.29
+                                        !requestDto.isSubmitted());
+                                log.info(">>>>>>> [GameService - getToggleSubmit] 변경된 이미지 저장 : {}", requestDto.getImage());
+                            }
+                        }
+                    }
+                    // 2. 받아온 유저의 정보가 gameFlow 에 없다면 -> 새롭게 생성
+                    else {
+                        GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(requestDto.getWebSessionId()).orElseThrow(
+                                () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
+                        );
+                        // 2-1. image 가 없다면 -> keyword 로 저장
+                        if (requestDto.getImage() == null || requestDto.getImage().length() == 0) {
+                            gameFlow = GameFlow.builder()
+                                    .roomId(requestDto.getRoomId())
+                                    .round(requestDto.getRound())
+                                    .keywordIndex(requestDto.getKeywordIndex())
+                                    .keyword(requestDto.getKeyword())
+                                    .nickname(gamerInfo.get(GamerEnum.NICK.key()))
+                                    .webSessionId(requestDto.getWebSessionId())
+                                    .userImgPath(gameRoomUser.getImgUrl())
+                                    .isSubmitted(!requestDto.isSubmitted()).build();
+                            log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 키워드 : {}", gameFlow.getKeyword());
+                        }
+                        // 2-2. image 가 있다면 -> image 로 저장
+                        else {
+                            gameFlow = GameFlow.builder()
+                                    .roomId(requestDto.getRoomId())
+                                    .round(requestDto.getRound())
+                                    .keywordIndex(requestDto.getKeywordIndex())
+                                    .imagePath(saveImage(requestDto).getPath())
+                                    .imagePk(saveImage(requestDto).getId()) // 수정 추가 김재영 01.29
+                                    .nickname(gamerInfo.get(GamerEnum.NICK.key()))
+                                    .webSessionId(requestDto.getWebSessionId())
+                                    .userImgPath(gameRoomUser.getImgUrl())
+                                    .isSubmitted(!requestDto.isSubmitted()).build();
+                            log.info(">>>>>>> [GameService - getToggleSubmit] 처음으로 제출하는 유저의 이미지 : {}", gameFlow.getImagePath());
+                        }
+                    }
+                    gameFlowRepository.saveAndFlush(gameFlow);
+                    // 제출한 사람 인원수 및 현재 방의 플레이중인 인원수 체크
+                    Long trueCount = 0L;
+                    Long nowUserCount = gameRoomUserRepository.countByGameRoomId(gameFlow.getRoomId());
+                    GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
+                            () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
+                    );
+                    List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(gameFlow.getRoomId(), gameFlow.getRound());
+                    for (GameFlow findList : gameFlowList) {
+                        if (findList.isSubmitted()) {
+                            trueCount++;
+                        }
+                    }
+                    if (gameRoom.getRoundMaxNum() > nowUserCount) {
+                        trueCount = trueCount - (gameRoom.getRoundMaxNum() - nowUserCount);
+                    }
+                    // 제출한 인원수 및 게임중인 인원수 메시지 전송
+                    HashMap<String, Long> message = new HashMap<>();
+                    message.put("trueCount", trueCount);
+                    message.put("maxTrueCount", nowUserCount);
+                    sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), message);
+                    log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 trueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), trueCount);
+                    log.info(">>>>>>> [GameService - getToggleSubmit] #{} 번 방의 {} 번째 라운드의 현재 maxTrueCount : {}", gameFlow.getRoomId(), gameFlow.getRound(), nowUserCount);
+                    log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
+                    log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 라운드 : {}", gameFlow.getRound());
+                    log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 닉네임 : {}", gameFlow.getNickname());
+                    log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 보내는 사람 세션Id : {}", gameFlow.getWebSessionId());
+                    log.info(">>>>>>> [GameService - getToggleSubmit] GameFlow -> 제출 여부 : {}", gameFlow.isSubmitted());
+                    // 동시성 제어를 위해 분리했던 메소드 다시 결합
+                    // DB 기준 제출 여부 조회 후 메시지 전송
 //        sendSubmitMessage(requestDto);
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendSubmitMessage] >>>>>>>>>>>>>>>>>>>>>>>>");
+                    log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendSubmitMessage] >>>>>>>>>>>>>>>>>>>>>>>>");
 //        List<GameFlow> gameFlowList = gameFlowRepository.findAllByRoomIdAndRound(requestDto.getRoomId(), requestDto.getRound());
-        List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
+                    List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(requestDto.getRoomId());
 //        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
 //                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
 //        );
-        // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회
-        boolean allFlag = true;
-        boolean userFlag = true;
-        for (GameFlow gameflow : gameFlowList) {
-            if (gameflow.getWebSessionId().equals(requestDto.getWebSessionId())) {
-                userFlag = gameflow.isSubmitted();
+                    // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회
+                    boolean allFlag = true;
+                    boolean userFlag = true;
+                    for (GameFlow gameflow : gameFlowList) {
+                        if (gameflow.getWebSessionId().equals(requestDto.getWebSessionId())) {
+                            userFlag = gameflow.isSubmitted();
+                        }
+                        if (!gameflow.isSubmitted()) {
+                            allFlag = false;
+                        }
+                    }
+                    log.info(">>>>>>> [GameService - getToggleSubmit] 전체가 다 제출했습니까?! : {}", allFlag);
+                    // 본인에게 본인 제출 여부 메시지 전송
+                    Map<String, Object> submitMessage = new HashMap<>();
+                    submitMessage.put("isSubmitted", userFlag);
+                    sendingOperations.convertAndSend("/queue/game/is-submitted/" + requestDto.getWebSessionId(), submitMessage);
+                    log.info(">>>>>>> [GameService - getToggleSubmit] 제출할 때 마다 개인에게 메시지 전송 성공! : {}", submitMessage);
+                    // 이미지 포함 여부에 따라 destination 부여
+                    String destination = requestDto.getImage() == null || requestDto.getImage().length() == 0 ? "word" : "image";
+                    // 전체 제출 여부 확인
+                    log.info(">>>>>>> [GameService - sendSubmitMessage] gameFlowList.size() {}", gameFlowList.size());
+                    log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoomUserList.size() {}", gameRoomUserList.size());
+                    log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoom.getRoundMaxNum() {}", gameRoom.getRoundMaxNum());
+                    if (gameFlowList.size() == gameRoom.getRoundMaxNum() && allFlag) {
+                        // 전체가 제출 했다면 모두에게 메시지 전송
+                        Map<String, Object> allSubmitMessage = new HashMap<>();
+                        allSubmitMessage.put("completeSubmit", true);
+                        sendingOperations.convertAndSend("/topic/game/submit-" + destination + "/" + requestDto.getRoomId(), allSubmitMessage);
+                        log.info(">>>>>>> [GameService - isAllSubmit] 전체 제출 후 메시지 전송 성공! : {}", allSubmitMessage);
+                    }
+
+
+                }catch (Exception e) {
+
+                } finally {
+                    lock.unlock();
+                }
             }
-            if (!gameflow.isSubmitted()) {
-                allFlag = false;
-            }
-        }
-        log.info(">>>>>>> [GameService - getToggleSubmit] 전체가 다 제출했습니까?! : {}", allFlag);
-        // 본인에게 본인 제출 여부 메시지 전송
-        Map<String, Object> submitMessage = new HashMap<>();
-        submitMessage.put("isSubmitted", userFlag);
-        sendingOperations.convertAndSend("/queue/game/is-submitted/" + requestDto.getWebSessionId(), submitMessage);
-        log.info(">>>>>>> [GameService - getToggleSubmit] 제출할 때 마다 개인에게 메시지 전송 성공! : {}", submitMessage);
-        // 이미지 포함 여부에 따라 destination 부여
-        String destination = requestDto.getImage() == null || requestDto.getImage().length() == 0 ? "word" : "image";
-        // 전체 제출 여부 확인
-        log.info(">>>>>>> [GameService - sendSubmitMessage] gameFlowList.size() {}", gameFlowList.size());
-        log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoomUserList.size() {}", gameRoomUserList.size());
-        log.info(">>>>>>> [GameService - sendSubmitMessage] gameRoom.getRoundMaxNum() {}", gameRoom.getRoundMaxNum());
-        if (gameFlowList.size() == gameRoom.getRoundMaxNum() && allFlag) {
-            // 전체가 제출 했다면 모두에게 메시지 전송
-            Map<String, Object> allSubmitMessage = new HashMap<>();
-            allSubmitMessage.put("completeSubmit", true);
-            sendingOperations.convertAndSend("/topic/game/submit-" + destination + "/" + requestDto.getRoomId(), allSubmitMessage);
-            log.info(">>>>>>> [GameService - isAllSubmit] 전체 제출 후 메시지 전송 성공! : {}", allSubmitMessage);
+        }catch (Exception e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -639,7 +845,7 @@ public class GameService {
 //                            () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
 //                    message.put("image", unsubmissionImg.getUnsubmissionImg());
 //                } else{
-                    message.put("image", gameFlow.getImagePath());
+                message.put("image", gameFlow.getImagePath());
 //                }
                 log.info(">>>>>>> [GameService - getPreviousImage] 메시지 : {}", message);
             }
@@ -712,17 +918,17 @@ public class GameService {
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 가져오기
 //                    if(gameFlow.getImagePath().equals("미제출")){
-                        // 게임중 방 나가서 제출 못했을 경우, 미제출 이미지 보여주기
+                    // 게임중 방 나가서 제출 못했을 경우, 미제출 이미지 보여주기
 //                        UnsubmissionImg unsubmissionImg = unsubmissionImgRepository.findById(1).orElseThrow(
 //                            () -> new CustomException(StatusMsgCode.IMAGE_NOT_FOUND));
 //                        gameResult.add(unsubmissionImg.getUnsubmissionImg());
 //                        gameResultMap.put("imgPath", unsubmissionImg.getUnsubmissionImg()); // 수정 추가 김재영 01.29
 //                    } else{
 //                        gameResult.add(gameFlow.getImagePath());
-                        gameResultMap.put("imgPath", gameFlow.getImagePath()); // 수정 추가 김재영 01.29
+                    gameResultMap.put("imgPath", gameFlow.getImagePath()); // 수정 추가 김재영 01.29
 
 //                        gameResult.add(gameFlow.getImagePk().toString());
-                        gameResultMap.put("imgId", String.valueOf(gameFlow.getImagePk())); // 수정 추가 김재영 01.29
+                    gameResultMap.put("imgId", String.valueOf(gameFlow.getImagePk())); // 수정 추가 김재영 01.29
 //                    }
                 } else {
                     // 홀수 round 일 때 -> 제시어 가져오기

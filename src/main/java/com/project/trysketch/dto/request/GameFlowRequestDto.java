@@ -21,4 +21,6 @@ public class GameFlowRequestDto {
     private String webSessionId; // Socket 연결 시 생성되는 유저의 UUID
     private boolean isSubmitted; // 유저의 제출 여부
     private String image;        // 이미지 byte code
+    private String difficulty;   // 난이도 조절
+    private Long timeLimit;      // 라운드 시간 조절
 }
