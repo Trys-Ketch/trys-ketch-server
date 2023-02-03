@@ -44,11 +44,7 @@ public class GameService {
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
-
-    public static<T> void addToList(List<String> target, Stream<String> source) {
-        source.collect(Collectors.toCollection(() -> target));
-    }
-
+    
     // convertAndSend 는 객체를 인자로 넘겨주면 자동으로 Message 객체로 변환 후 도착지로 전송한다.
 
     // 게임 시작
