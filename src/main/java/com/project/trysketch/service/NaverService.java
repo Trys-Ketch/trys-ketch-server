@@ -83,7 +83,7 @@ public class NaverService {
         if (achievementNameList.size() == 0){
             return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
         }else {
-            return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN, achievementNameList);
         }
     }
 

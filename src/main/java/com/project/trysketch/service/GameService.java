@@ -44,7 +44,7 @@ public class GameService {
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
-    
+
     // convertAndSend 는 객체를 인자로 넘겨주면 자동으로 Message 객체로 변환 후 도착지로 전송한다.
 
     // 게임 시작
@@ -165,7 +165,7 @@ public class GameService {
         log.info(">>>>>>> [GameService - endGame] gameRoomUser.getUserId() {}", gameRoomUser.getUserId());
         if (gameRoom.getHostId().equals(gameRoomUser.getUserId())) {
             hostWebSessionId = gameRoomUser.getWebSessionId();
-        }else {
+        } else {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
         log.info(">>>>>>> [GameService - endGame] hostWebSessionId {}", hostWebSessionId);
@@ -199,7 +199,7 @@ public class GameService {
         }
         log.info(">>>>>>> [GameService - endGame] gameRoomUser ready 상태 false 로 변경");
 
-        if (gameRoomUser.getUserId() < 10000){
+        if (gameRoomUser.getUserId() < 10000) {
             // 게임 종료시간
             LocalDateTime endTime = LocalDateTime.of(
                     LocalDateTime.now().getYear(),
@@ -212,19 +212,19 @@ public class GameService {
             // 현재 방의 모든 유저의 playTime 정보 가져오기
             List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
             log.info(">>>>>>> [GameService - endGame] playtime 가져왔다");
-            log.info(">>>>>>> [GameService - endGame] playtime 의 size : {}",userPlayTimeList.size());
-            log.info(">>>>>>> [GameService - endGame] 현재방의 인원수 : {}",gameRoomUserList.size());
-        // 게임이 시작된 시간을 유저마다 저장
-        for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
-            for (UserPlayTime userPlayTime : userPlayTimeList){
-                // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
-                if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())){
+            log.info(">>>>>>> [GameService - endGame] playtime 의 size : {}", userPlayTimeList.size());
+            log.info(">>>>>>> [GameService - endGame] 현재방의 인원수 : {}", gameRoomUserList.size());
+            // 게임이 시작된 시간을 유저마다 저장
+            for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
+                for (UserPlayTime userPlayTime : userPlayTimeList) {
+                    // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
+                    if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())) {
 
-                    // 게임 종료시간 업데이트
-                    userPlayTime.updateUserPlayTime(endTime);
+                        // 게임 종료시간 업데이트
+                        userPlayTime.updateUserPlayTime(endTime);
 
-                    Long userId = currentGameRoomUser.getUserId();
-                    log.info(">>>>>>> [GameService - endGame] userId {}", userId);
+                        Long userId = currentGameRoomUser.getUserId();
+                        log.info(">>>>>>> [GameService - endGame] userId {}", userId);
 
                         // 유저 정보 가져오기
                         User currentUser = userRepository.findById(userId).orElseThrow(
@@ -239,33 +239,32 @@ public class GameService {
                         log.info(">>>>>>> [GameService - endGame] 실질적인 플레이타임 {}", difference);
 
                         // 해당 history 에 실질적인 플레이타임 업데이트
-//                        History history = currentUser.getHistory().updatePlaytime(difference);
                         historyRepository.save(currentUser.getHistory().updatePlaytime(difference));
-//                        responseList.add(historyService.getTrophyOfTime(currentUser));
-                        List<String> a = historyService.getTrophyOfTime(currentUser);
-//                        List<String> aP = new ArrayList<>();
-//                        for (String str : a) {
-//                            if (str != null) {
-//                                aP.add(str);
-//                            }
-//                        }
+
+                        // 유저가 획득한 playtime 관련 업적 리스트
+                        List<String> timeTrophyList = historyService.getTrophyOfTime(currentUser);
+
+                        // 해당 플레이타임 삭제
                         playTimeRepository.delete(userPlayTime);
                         log.info(">>>>>>> [GameService - endGame] playtime 지웠다");
-//                        history = currentUser.getHistory().updateTrials(1L);
-                        historyRepository.save(currentUser.getHistory().updateTrials(1L));
-                        List<String> b = historyService.getTrophyOfTrial(currentUser);
 
-                        List<String> responseList = Stream.concat(a.stream(),b.stream()).collect(Collectors.toList());
-                        if (responseList.size() != 0){
+                        // 해당 history 에 실질적인 판수 업데이트
+                        historyRepository.save(currentUser.getHistory().updateTrials(1L));
+
+
+                        List<String> trialTrophyList = historyService.getTrophyOfTrial(currentUser);
+
+                        // 플레이타임 list 와 판수 list 를 하나로 만들기
+                        List<String> responseList = Stream.concat(timeTrophyList.stream(), trialTrophyList.stream()).collect(Collectors.toList());
+
+                        // 얻는 업적이 있을 경우
+                        if (responseList.size() != 0) {
                             Map<String, Object> message = new HashMap<>();
-                            message.put("achievement",responseList);
-                            // 이미지 패스 추가
+                            message.put("achievement", responseList);
                             sendingOperations.convertAndSend("/queue/game/achievement/" + gameRoomUser.getWebSessionId(), message);
                         }
-
                     }
                 }
-
             }
         }
 

@@ -80,11 +80,6 @@ public class GoogleService {
         historyRepository.save(history);
 
         List<String> achievementNameList = historyService.getTrophyOfVisit(googleUser);
-        if (achievementNameList != null) {
-            log.info(">>>>>>>>>>>>>>>>> [GoogleService - googleLogin] achievementNameList size : {}", achievementNameList.size());
-        }else {
-            log.info(">>>>>>>>>>>>>>>>> [GoogleService - googleLogin] achievementNameList 은 null 임");
-        }
 
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
@@ -92,7 +87,7 @@ public class GoogleService {
         if (achievementNameList.size() == 0){
             return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
         }else {
-            return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN, achievementNameList);
         }
 
     }
