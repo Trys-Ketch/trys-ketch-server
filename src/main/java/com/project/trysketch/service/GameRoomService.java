@@ -174,7 +174,7 @@ public class GameRoomService {
         roomIdInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
         // 8. SSE event 생성
-        sseEmitters.changeRoom(getrooms());
+//        sseEmitters.changeRoom(getrooms());
 
         return new DataMsgResponseDto(StatusMsgCode.OK,roomIdInfo);
     };
@@ -314,7 +314,7 @@ public class GameRoomService {
 //            gameRoomRepository.save(updateGameRoom);
 
                 // 11. SSE event 생성
-                sseEmitters.changeRoom(getrooms());
+//                sseEmitters.changeRoom(getrooms());
             }
         }
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);

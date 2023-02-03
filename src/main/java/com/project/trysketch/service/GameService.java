@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import javax.imageio.ImageIO;
 import java.awt.image.*;
@@ -33,6 +34,7 @@ public class GameService {
     private final AdjectiveRepository adjectiveRepository;
     private final NounRepository nounRepository;
     private final GameFlowRepository gameFlowRepository;
+    private final GameFlowCountRespository gameFlowCountRespository;
     private final PlayTimeRepository playTimeRepository;
     private final UserRepository userRepository;
     private final HistoryRepository historyRepository;
@@ -177,6 +179,9 @@ public class GameService {
 
         // GameRoom 에서 진행된 모든 GameFlow 삭제
         gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
+
+        // GameFlowCount 삭제
+        gameFlowCountRespository.deleteAllByRoomId(gameRoom.getId());
 
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
@@ -518,7 +523,7 @@ public class GameService {
         log.info(">>>>>>> [GameService - getToggleSubmit] gameRoomUser id : {}", gameRoomUser.getId());
 
         // 3. 접속한 유저의 제출 여부
-        boolean userFlag = false;
+        boolean userFlag;
 
         // 4. gameFlow 가 없다면 -> gameFlow 생성
         if (!gameFlowRepository.existsByRoomIdAndRoundAndWebSessionId(
@@ -526,20 +531,23 @@ public class GameService {
                 requestDto.getRound(),
                 requestDto.getWebSessionId()
         )) {
-            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlow 가 없다면 -> gameFlow 생성 if문 입장");
+            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlow 가 없다면 -> gameFlow 생성 if 문 입장");
             // gameFlow 생성부
             // 4-1 image 가 없다면 -> keyword 로 저장
             GameFlow gameFlow = buildGameFlow(requestDto, gamerInfo, gameRoomUser);
-            gameFlowRepository.save(gameFlow);
+            gameFlowRepository.saveAndFlush(gameFlow);
+            // gameFlowCount 생성부
+            setGameFlowCount(requestDto);
             userFlag = true;
         }else { // 4-2 gameFlow 취소 : gameFlow 가 있다면 -> gameFlow 삭제
-            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlow 가 없다면 -> gameFlow 생성 else문 입장");
+            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlow 가 있다면 -> gameFlow 삭제 else 문 입장");
             GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndWebSessionId(
                     requestDto.getRoomId(),
                     requestDto.getRound(),
                     requestDto.getWebSessionId()
             );
             gameFlowRepository.delete(gameFlow);
+            setGameFlowCount(requestDto);
             userFlag = false;
         }
         log.info(">>>>>>> [GameService - getToggleSubmit] userFlag : {}",userFlag);
@@ -578,8 +586,36 @@ public class GameService {
 
         log.info(">>>>>>> [GameService - sendSubmitMessage] gameFlowList.size() if문 밖 {}", gameFlowList.size());
         // 9. 클라이언트로 해당 방의 전체 유저 제출 여부 메시지 전송
-        if (gameFlowList.size() == gameRoom.getRoundMaxNum()) {
-            log.info(">>>>>>> [GameService - sendSubmitMessage] 9. gameFlowList.size() if문 안 {}", gameFlowList.size());
+
+//        synchronized (this) {
+//            sendAllSubmitMessage(gameRoom.getRoundMaxNum(), requestDto);
+//        }
+
+        Long hostId = gameRoom.getHostId();
+        GameRoomUser hostUser = gameRoomUserRepository.findByUserId(hostId);
+        String hostWebSessionId = hostUser.getWebSessionId();
+
+        if (hostWebSessionId.equals(requestDto.getWebSessionId())) {
+            MessageSendingThread tr = new MessageSendingThread(
+                    gameRoom.getRoundMaxNum(),
+                    requestDto,
+                    gameFlowCountRespository,
+                    sendingOperations);
+            tr.start();
+        }
+
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getToggleSubmit] 완료 >>>>>>>>>>>>>>>>>>>>>>>>");
+    }
+
+    @Transactional
+    public void sendAllSubmitMessage(Integer roundMaxNum, GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendAllSubmitMessage] >>>>>>>>>>>>>>>>>>>>>>>>");
+        GameFlowCount gameFlowCount = gameFlowCountRespository.findByRoomIdAndRound(
+                requestDto.getRoomId(),
+                requestDto.getRound()
+        );
+        log.info(">>>>>>> [GameService - sendAllSubmitMessage] ================gameFlowCount.getGameFlowCount() if문 밖 {}", gameFlowCount.getGameFlowCount());
+        if (gameFlowCount.getGameFlowCount() == roundMaxNum) {
             // 이미지 라운드 인지 키워드 라운드 인지 판별 후 destination 부여
             String destination = requestDto.getImage() == null || requestDto.getImage().length() == 0 ? "word" : "image";
             // 전체가 제출 했다면 모두에게 메시지 전송
@@ -588,9 +624,55 @@ public class GameService {
             sendingOperations.convertAndSend("/topic/game/submit-" + destination + "/" + requestDto.getRoomId(), allSubmitMessage);
             log.info(">>>>>>> [GameService - isAllSubmit] 전체 제출 후 메시지 전송 성공! : {}", allSubmitMessage);
         }
-
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendAllSubmitMessage] 완료 >>>>>>>>>>>>>>>>>>>>>>>>");
     }
+
+    @Transactional
+    public void setGameFlowCount(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - setGameFlowCount] >>>>>>>>>>>>>>>>>>>>>>>>");
+        // gameFlowCount 조회
+        GameFlowCount gameFlowCount = gameFlowCountRespository.findByRoomIdAndRound(
+                requestDto.getRoomId(),
+                requestDto.getRound()
+        );
+        // gameFlowCount 가 있으면 -> 조회 후 업데이트
+        if (gameFlowCount != null) {
+            int gameFlowListSize = gameFlowRepository.countByRoomIdAndRound(
+                    requestDto.getRoomId(),
+                    requestDto.getRound()
+            );
+            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlowListSize : {}", gameFlowListSize);
+            GameFlowCount newGameFlowCount = gameFlowCount.update(gameFlowListSize);
+            gameFlowCountRespository.saveAndFlush(newGameFlowCount);
+        }
+        // gameFlowCount 가 없으면 -> 생성
+        else {
+            GameFlowCount newGameFlowCount = buildGameFlowCount(requestDto);
+            gameFlowCountRespository.saveAndFlush(newGameFlowCount);
+            log.info(">>>>>>> [GameService - getToggleSubmit] getGameFlowCount : {}", newGameFlowCount.getGameFlowCount());
+        }
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - setGameFlowCount] 완료 >>>>>>>>>>>>>>>>>>>>>>>>");
+    }
+
+    @Transactional
+    public GameFlowCount buildGameFlowCount(GameFlowRequestDto requestDto) {
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - buildGameFlowCount] >>>>>>>>>>>>>>>>>>>>>>>>");
+        int gameFlowListSize = gameFlowRepository.countByRoomIdAndRound(
+                requestDto.getRoomId(),
+                requestDto.getRound()
+        );
+        log.info(">>>>>>> [GameService - getToggleSubmit] gameFlowListSize : {}", gameFlowListSize);
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - buildGameFlowCount] 완료 >>>>>>>>>>>>>>>>>>>>>>>>");
+        return GameFlowCount.builder()
+                .gameFlowCount(gameFlowListSize)
+                .roomId(requestDto.getRoomId())
+                .round(requestDto.getRound())
+                .build();
+    }
+
+    @Transactional
     public GameFlow buildGameFlow(GameFlowRequestDto requestDto, Map<String, String> gamerInfo, GameRoomUser gameRoomUser) throws IOException {
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - buildGameFlow] >>>>>>>>>>>>>>>>>>>>>>>>");
 
         // 이미지가 있다면, 이미지 저장
         Image image = null;
@@ -778,6 +860,7 @@ public class GameService {
         }
 //        log.info(">>>>>>> [GameService - getToggleSubmit] 전체가 다 제출했습니까?! : {}", allFlag);
         // 본인에게 본인 제출 여부 메시지 전송
+
         Map<String, Object> submitMessage = new HashMap<>();
         submitMessage.put("isSubmitted", userFlag);
         sendingOperations.convertAndSend("/queue/game/is-submitted/" + requestDto.getWebSessionId(), submitMessage);
@@ -801,41 +884,80 @@ public class GameService {
 
     // 받아온 그림 S3에 저장 후 imagePath 반환
     // 수정 리턴값 변경 String → Image 김재영 01.29
+//    @Transactional
+//    public Image saveImage(GameFlowRequestDto requestDto) throws IOException {
+//        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 실행 >>>>>>>>>>>>>>>>>>>>>>>>");
+//        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 이미지 파일 있니? : {}", !requestDto.getImage().isEmpty());
+//        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] image.length() : {}", requestDto.getImage().length());
+//
+//        // 유저 검증부
+//        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+//        String nickname = gamerInfo.get(GamerEnum.NICK.key());
+//        log.info(">>>>>>> [GameService - saveImage] token 으로 부터 나온 nickname : {}", nickname);
+//
+//        log.info(">>>>>>> [GameService - saveImage] 이미지 자르기 시작");
+//        // data로 들어온  'data:image/png;base64,iVBORw0KGgoAAA..... 문자열 자르기
+//        String[] strings = requestDto.getImage().split(",");
+//        String base64Image = strings[1];
+//        String extension = switch (strings[0]) {
+//            case "data:image/jpeg;base64" -> "jpeg";
+//            case "data:image/png;base64" -> "png";
+//            default -> "jpg";
+//        };
+//        log.info(">>>>>>> [GameService - saveImage] 이미지 자르기 끝끝");
+//
+//        log.info(">>>>>>> [GameService - saveImage] 배열로 파싱 시작");
+//        // 자른 base64 코드를 byte 배열로 파싱
+//        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
+//        String path = "/home/ubuntu/projects/image/image." + extension;
+//        File file = new File(path);
+//
+//        log.info(">>>>>>> [GameService - saveImage] 배열로 파싱 끝");
+//
+//        log.info(">>>>>>> [GameService - saveImage] 클래스 넣어 읽기 시작");
+//        // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
+//        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+//        log.info(">>>>>>> [GameService - saveImage] 클래스 넣어 읽기 끝");
+//
+//        log.info(">>>>>>> [GameService - saveImage] 클래스 쓰기 시작");
+//        // 이미지를 해당 포맷으로 path 위치에 저장
+//        ImageIO.write(img, "png", file);
+//        log.info(">>>>>>> [GameService - saveImage] 클래스 쓰기 끝");
+//
+//        // image entity painter( 그린사람 nickname )
+//        // s3 저장 → image DB 저장 → imagePath 반환
+//        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 끝 >>>>>>>>>>>>>>>>>>>>>>>>");
+//        return s3Service.upload(file, directoryName, nickname);
+//    }
     @Transactional
-    public Image saveImage(GameFlowRequestDto requestDto) throws IOException {
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 이미지 파일 있니? : {}", !requestDto.getImage().isEmpty());
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] image.length() : {}", requestDto.getImage().length());
+    public Image saveImage(GameFlowRequestDto requestDto) {
+        try {
+            HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+            String nickname = gamerInfo.get(GamerEnum.NICK.key());
 
-        // data로 들어온  'data:image/png;base64,iVBORw0KGgoAAA..... 문자열 자르기
-        String[] strings = requestDto.getImage().split(",");
-        String base64Image = strings[1];
-        String extension = switch (strings[0]) {
-            case "data:image/jpeg;base64" -> "jpeg";
-            case "data:image/png;base64" -> "png";
-            default -> "jpg";
-        };
+            String[] strings = requestDto.getImage().split(",");
+            String base64Image = strings[1];
+            String extension = switch (strings[0]) {
+                case "data:image/jpeg;base64" -> "jpeg";
+                case "data:image/png;base64" -> "png";
+                default -> "jpg";
+            };
+            byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
 
-        // 자른 base64 코드를 byte 배열로 파싱
-        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
-        String path = "/home/ubuntu/projects/image/image." + extension;
-        File file = new File(path);
+            File tempFile = File.createTempFile("image", "." + extension);
+            try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+                outputStream.write(imageBytes);
+            }
 
-        // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
-
-        // 이미지를 해당 포맷으로 path 위치에 저장
-        ImageIO.write(img, "png", file);
-
-        // 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        String nickname = gamerInfo.get(GamerEnum.NICK.key());
-        log.info(">>>>>>> [GameService - saveImage] token 으로 부터 나온 nickname : {}", nickname);
-
-        // image entity painter( 그린사람 nickname )
-        // s3 저장 → image DB 저장 → imagePath 반환
-        return s3Service.upload(file, directoryName, nickname);
+            return s3Service.upload(tempFile, directoryName, nickname);
+        } catch (IOException ex) {
+            // Log the exception and return a suitable response
+            return null;
+        } finally {
+            // Clean up the temporary file
+        }
     }
+
 
     // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회 후 메시지 전송
     @Transactional
