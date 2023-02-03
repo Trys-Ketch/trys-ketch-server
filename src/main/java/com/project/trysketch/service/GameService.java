@@ -1,9 +1,11 @@
 package com.project.trysketch.service;
 
 import com.project.trysketch.dto.request.GameFlowRequestDto;
+import com.project.trysketch.dto.response.GameRoomResponseDto;
 import com.project.trysketch.entity.*;
 import com.project.trysketch.global.dto.MsgResponseDto;
 import com.project.trysketch.dto.GamerEnum;
+import com.project.trysketch.global.utill.sse.SseEmitters;
 import com.project.trysketch.repository.*;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
@@ -40,6 +42,7 @@ public class GameService {
     private final UserService userService;
     private final HistoryService historyService;
     private final SimpMessageSendingOperations sendingOperations;
+    private final SseEmitters sseEmitters;
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
@@ -107,6 +110,9 @@ public class GameService {
         message.put("isIngame", true);
         sendingOperations.convertAndSend("/topic/game/start/" + requestDto.getRoomId(), message);
 
+        // SSE event 생성
+        sseEmitters.changeRoom(getRooms(-1));
+
         // 게임 시작
         return new MsgResponseDto(StatusMsgCode.START_GAME);
     }
@@ -115,15 +121,15 @@ public class GameService {
     public void getGameMode(GameFlowRequestDto requestDto) {
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 token : {}", requestDto.getRoomId(), requestDto.getToken());
-        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 검증결과 / 유저 아이디 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 검증결과 / 유저 닉네임 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.NICK.key()));
+        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 token : {}", requestDto.getRoomId(), requestDto.getToken());
+        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 검증결과 / 유저 아이디 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.ID.key()));
+        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 검증결과 / 유저 닉네임 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
-        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 / 요청한 유저의 웹세션 ID : {}", requestDto.getRoomId(), requestDto.getWebSessionId());
+        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 웹세션 ID : {}", requestDto.getRoomId(), requestDto.getWebSessionId());
 
         Map<String, Object> message = new HashMap<>();
 
@@ -131,8 +137,8 @@ public class GameService {
         message.put("difficulty", gameRoom.getDifficulty());
         message.put("timeLimit", gameRoom.getTimeLimit());
 
-        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 : 현재 게임 난이도 {}", gameRoom.getId(), gameRoom.getDifficulty());
-        log.info(">>>>>>> [GameService - joinGameRoom] #{}번 방 : 현재 타임 리미트 {}", gameRoom.getId(), gameRoom.getTimeLimit());
+        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 : 현재 게임 난이도 {}", gameRoom.getId(), gameRoom.getDifficulty());
+        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 : 현재 타임 리미트 {}", gameRoom.getId(), gameRoom.getTimeLimit());
 
         sendingOperations.convertAndSend("/queue/game/gameroom-data/" + requestDto.getWebSessionId(), message);
     }
@@ -252,6 +258,9 @@ public class GameService {
         Map<String, Boolean> message = new HashMap<>();
         message.put("end", true);
         sendingOperations.convertAndSend("/topic/game/end/" + requestDto.getRoomId(), message);
+
+        // SSE event 생성
+        sseEmitters.changeRoom(getRooms(0));
 
         // 게임 종료
         return new MsgResponseDto(StatusMsgCode.END_GAME);
@@ -1127,6 +1136,33 @@ public class GameService {
         }
 
         return new MsgResponseDto(StatusMsgCode.OK);
+    }
+
+
+    // ===================== 모든 gameRoom 호출하는 메서드 ===============================
+
+    // 방 생성 및 퇴장 시 해당 유저 반영 못하므로 +1, -1 할 수 있도록 매개변수로 받음
+    public List<GameRoomResponseDto> getRooms(int num){
+        // gameRoomResponseDto list 생성
+        List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
+
+        // 모든 gameRoom 불러와서 dto에 담기 -> list에 저장
+        List<GameRoom> gameRooms = gameRoomRepository.findAll();
+        for (GameRoom room : gameRooms){
+
+            GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
+                    .id(room.getId())
+                    .title(room.getTitle())
+                    .hostNick(room.getHostNick())
+                    .GameRoomUserCount(room.getGameRoomUserList().size() + num)
+                    .isPlaying(room.isPlaying())
+                    .createdAt(room.getCreatedAt())
+                    .modifiedAt(room.getModifiedAt())
+                    .randomCode(room.getRandomCode())
+                    .build();
+            gameRoomList.add(gameRoomResponseDto);
+        }
+        return gameRoomList;
     }
 
 }
