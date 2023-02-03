@@ -27,6 +27,8 @@ import org.springframework.web.client.RestTemplate;
 import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 import java.util.UUID;
 
 // 1. 기능    : OAuth2.0 구글 비즈니스 로직
@@ -62,6 +64,7 @@ public class GoogleService {
     private String tokenUri;
 
     public DataMsgResponseDto googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+        log.info(">>>>>>>>>>>>>>>>> [GoogleService - googleLogin] >>>>>>>>>>>>>>>>>>>>>>>>");
         String randomNickname = userService.RandomNick().getMessage();
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
@@ -76,13 +79,17 @@ public class GoogleService {
         History history = googleUser.getHistory().updateVisits(1L);
         historyRepository.save(history);
 
-        String achievementName = historyService.getTrophyOfVisit(googleUser);
+        List<String> achievementNameList = historyService.getTrophyOfVisit(googleUser);
 
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+        if (achievementNameList.size() == 0){
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
+        }else {
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN, achievementNameList);
+        }
 
-        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementName);
     }
 
     // "인가 코드" 로 "액세스 토큰" 요청

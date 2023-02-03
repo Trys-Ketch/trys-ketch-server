@@ -28,6 +28,7 @@ public enum StatusMsgCode {
     ALREADY_CLICKED_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요를 눌렀습니다"),
     ALREADY_CANCEL_LIKE(HttpStatus.BAD_REQUEST, "이미 좋아요 취소를 눌렀습니다"),
     IMAGE_LIKE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지 좋아요를 찾을 수 없습니다"),
+    IMAGE_SAVE_FAILED(HttpStatus.BAD_REQUEST,"이미지 저장에 실패하였습니다"),
 
 
     ALREADY_PLAYING(HttpStatus.BAD_REQUEST, "게임이 이미 시작되었습니다"),

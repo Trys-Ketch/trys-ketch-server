@@ -21,7 +21,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
-
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 // 1. 기능   : 프로젝트 메인 로직
@@ -46,7 +47,6 @@ public class GameService {
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
-
 
     // convertAndSend 는 객체를 인자로 넘겨주면 자동으로 Message 객체로 변환 후 도착지로 전송한다.
 
@@ -171,7 +171,7 @@ public class GameService {
         log.info(">>>>>>> [GameService - endGame] gameRoomUser.getUserId() {}", gameRoomUser.getUserId());
         if (gameRoom.getHostId().equals(gameRoomUser.getUserId())) {
             hostWebSessionId = gameRoomUser.getWebSessionId();
-        }else {
+        } else {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
         log.info(">>>>>>> [GameService - endGame] hostWebSessionId {}", hostWebSessionId);
@@ -183,9 +183,11 @@ public class GameService {
 
         // GameRoom 에서 진행된 모든 GameFlow 삭제
         gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
+        log.info(">>>>>>> [GameService - endGame] gameFlow 다 삭제했다!");
 
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
+        log.info(">>>>>>> [GameService - endGame] 방 상태 변경 false");
         gameRoom.update(0);
 
         // 현재 방의 유저 정보 가져오기
@@ -201,8 +203,9 @@ public class GameService {
                 gameRoomUserRepository.save(gameRoomUsers);
             }
         }
+        log.info(">>>>>>> [GameService - endGame] gameRoomUser ready 상태 false 로 변경");
 
-        if (gameRoomUser.getUserId() < 10000){
+        if (gameRoomUser.getUserId() < 10000) {
             // 게임 종료시간
             LocalDateTime endTime = LocalDateTime.of(
                     LocalDateTime.now().getYear(),
@@ -214,18 +217,20 @@ public class GameService {
 
             // 현재 방의 모든 유저의 playTime 정보 가져오기
             List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
+            log.info(">>>>>>> [GameService - endGame] playtime 가져왔다");
+            log.info(">>>>>>> [GameService - endGame] playtime 의 size : {}", userPlayTimeList.size());
+            log.info(">>>>>>> [GameService - endGame] 현재방의 인원수 : {}", gameRoomUserList.size());
+            // 게임이 시작된 시간을 유저마다 저장
+            for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
+                for (UserPlayTime userPlayTime : userPlayTimeList) {
+                    // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
+                    if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())) {
 
-        // 게임이 시작된 시간을 유저마다 저장
-        for (GameRoomUser currentGameRoomUser : gameRoomUserList) {
-            for (UserPlayTime userPlayTime : userPlayTimeList){
-                // GameRoomUser 와 현재 for 문의 userPlayTime 의 주인이 같다면
-                if (currentGameRoomUser.equals(userPlayTime.getGameRoomUser())){
+                        // 게임 종료시간 업데이트
+                        userPlayTime.updateUserPlayTime(endTime);
 
-                    // 게임 종료시간 업데이트
-                    userPlayTime.updateUserPlayTime(endTime);
-
-                    Long userId = currentGameRoomUser.getUserId();
-                    log.info(">>>>>>> [GameService - endGame] userId {}", userId);
+                        Long userId = currentGameRoomUser.getUserId();
+                        log.info(">>>>>>> [GameService - endGame] userId {}", userId);
 
                         // 유저 정보 가져오기
                         User currentUser = userRepository.findById(userId).orElseThrow(
@@ -240,15 +245,30 @@ public class GameService {
                         log.info(">>>>>>> [GameService - endGame] 실질적인 플레이타임 {}", difference);
 
                         // 해당 history 에 실질적인 플레이타임 업데이트
-//                        History history = currentUser.getHistory().updatePlaytime(difference);
                         historyRepository.save(currentUser.getHistory().updatePlaytime(difference));
-                        historyService.getTrophyOfTime(currentUser);
 
+                        // 유저가 획득한 playtime 관련 업적 리스트
+                        List<String> timeTrophyList = historyService.getTrophyOfTime(currentUser);
+
+                        // 해당 플레이타임 삭제
                         playTimeRepository.delete(userPlayTime);
+                        log.info(">>>>>>> [GameService - endGame] playtime 지웠다");
 
-//                        history = currentUser.getHistory().updateTrials(1L);
+                        // 해당 history 에 실질적인 판수 업데이트
                         historyRepository.save(currentUser.getHistory().updateTrials(1L));
-                        historyService.getTrophyOfTrial(currentUser);
+
+
+                        List<String> trialTrophyList = historyService.getTrophyOfTrial(currentUser);
+
+                        // 플레이타임 list 와 판수 list 를 하나로 만들기
+                        List<String> responseList = Stream.concat(timeTrophyList.stream(), trialTrophyList.stream()).collect(Collectors.toList());
+
+                        // 얻는 업적이 있을 경우
+                        if (responseList.size() != 0) {
+                            Map<String, Object> message = new HashMap<>();
+                            message.put("achievement", responseList);
+                            sendingOperations.convertAndSend("/queue/game/achievement/" + gameRoomUser.getWebSessionId(), message);
+                        }
                     }
                 }
             }
@@ -380,34 +400,6 @@ public class GameService {
         sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
 
         log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 카운트 전송 완료",gameRoom.getId());
-//        // GameRoomUser 돌면서 키워드 전송
-//        for (int i = 0; i < gameRoomUserList.size(); i++) {
-//
-//            String webSessionId = gameRoomUserList.get(i).getWebSessionId();
-//
-//            // 형용사 리스트중 1개
-//            int adId = (int) (Math.random() * adSize + 1);
-//            Adjective adjective = adjectiveRepository.findById(adId).orElse(null);
-//
-//            // 명사 리스트중 1개
-//            int nuId = (int) (Math.random() * nounSize + 1);
-//            Noun noun = nounRepository.findById(nuId).orElse(null);
-//
-//            Map<String, Object> message = new HashMap<>();
-//            Map<String, Long> sendCount = new HashMap<>();
-//
-//            // 제출한 인원수 및 게임중인 인원수 메시지 전송
-//            Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
-//            sendCount.put("trueCount", 0L);
-//            sendCount.put("maxTrueCount", maxCount);
-//            log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
-//
-//            message.put("keyword", adjective.getAdjective() + " " + noun.getNoun());
-//            message.put("keywordIndex", i + 1);
-//
-//            sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), sendCount);
-//            sendingOperations.convertAndSend("/queue/game/keyword/" + webSessionId, message);
-//        }
     }
 
     // 타임 리미트 변경
@@ -514,6 +506,7 @@ public class GameService {
     // token, roomId, round, keyword, keywordIndex, image, webSessionId, isSubmitted
     @Transactional
     public void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
+
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getToggleSubmit] >>>>>>>>>>>>>>>>>>>>>>>>");
@@ -664,34 +657,59 @@ public class GameService {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 이미지 파일 있니? : {}", !requestDto.getImage().isEmpty());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] image.length() : {}", requestDto.getImage().length());
 
-        // data로 들어온  'data:image/png;base64,iVBORw0KGgoAAA..... 문자열 자르기
-        String[] strings = requestDto.getImage().split(",");
-        String base64Image = strings[1];
-        String extension = switch (strings[0]) {
-            case "data:image/jpeg;base64" -> "jpeg";
-            case "data:image/png;base64" -> "png";
-            default -> "jpg";
-        };
+//        // data로 들어온  'data:image/png;base64,iVBORw0KGgoAAA..... 문자열 자르기
+//        String[] strings = requestDto.getImage().split(",");
+//        String base64Image = strings[1];
+//        String extension = switch (strings[0]) {
+//            case "data:image/jpeg;base64" -> "jpeg";
+//            case "data:image/png;base64" -> "png";
+//            default -> "jpg";
+//        };
+//
+//        // 자른 base64 코드를 byte 배열로 파싱
+//        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
+//        String path = "/home/ubuntu/projects/image/image." + extension;
+//        File file = new File(path);
+//
+//        // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
+//        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+//
+//        // 이미지를 해당 포맷으로 path 위치에 저장
+//        ImageIO.write(img, "png", file);
+//
+//        // 유저 검증부
+//        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+//        String nickname = gamerInfo.get(GamerEnum.NICK.key());
+//        log.info(">>>>>>> [GameService - saveImage] token 으로 부터 나온 nickname : {}", nickname);
+//
+//        // image entity painter( 그린사람 nickname )
+//        // s3 저장 → image DB 저장 → imagePath 반환
+//        return s3Service.upload(file, directoryName, nickname);
 
-        // 자른 base64 코드를 byte 배열로 파싱
-        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
-        String path = "/home/ubuntu/projects/image/image." + extension;
-        File file = new File(path);
+        try {
+            HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+            String nickname = gamerInfo.get(GamerEnum.NICK.key());
 
-        // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            String[] strings = requestDto.getImage().split(",");
+            String base64Image = strings[1];
+            String extension = switch (strings[0]) {
+                case "data:image/jpeg;base64" -> "jpeg";
+                case "data:image/png;base64" -> "png";
+                default -> "jpg";
+            };
+            byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
 
-        // 이미지를 해당 포맷으로 path 위치에 저장
-        ImageIO.write(img, "png", file);
+            File tempFile = File.createTempFile("image", "." + extension);
+            try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+                outputStream.write(imageBytes);
+            }
 
-        // 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        String nickname = gamerInfo.get(GamerEnum.NICK.key());
-        log.info(">>>>>>> [GameService - saveImage] token 으로 부터 나온 nickname : {}", nickname);
+            return s3Service.upload(tempFile, directoryName, nickname);
+        } catch (IOException ex) {
+            log.error("IOException Error Message : {}",ex.getMessage());
+            throw new CustomException(StatusMsgCode.IMAGE_SAVE_FAILED);
+        }
 
-        // image entity painter( 그린사람 nickname )
-        // s3 저장 → image DB 저장 → imagePath 반환
-        return s3Service.upload(file, directoryName, nickname);
     }
 
     // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회 후 메시지 전송
@@ -1050,41 +1068,9 @@ public class GameService {
                             .isSubmitted(true).build();
                     gameFlowRepository.saveAndFlush(gameFlow);
                 }
-
-
-                // 다음 라운드로 넘어가는 trigger 역할 하는 sendSubmitMessage 메서드 실행
-//                if (j % 2 == 0) {
-//                    // round 가 짝수, 즉 그리기 제출 라운드 일 때
-//                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
-//                            .webSessionId(userUUID)
-//                            .roomId(gameRoomId)
-//                            .round(i)
-//                            .image("미제출")
-//                            .build();
-//                    sendSubmitMessage(requestDto);
-//                } else {
-//                    // round가 홀수, 즉 키워드 제출 라운드 일 때
-//                    GameFlowRequestDto requestDto = GameFlowRequestDto.builder()
-//                            .webSessionId(userUUID)
-//                            .roomId(gameRoomId)
-//                            .round(i)
-//                            .build();
-//                    sendSubmitMessage(requestDto);
-//                }
             }
         }
     }
-    //        (키워드인덱스, round)
-//            1,1   1,2    1,3   1,4   1,5
-//         [제시어, 그림, 제시어, 그림, 제시어],
-//            2,1   2,2    2,3   2,4   2,5
-//         [제시어, 그림, 제시어, 그림, 제시어],
-//            3,1   3,2   3,3    3,4   3,5
-//         [제시어, 그림, 제시어, 그림, 제시어],
-//            4,1   4,2    4,3   4,4   4,5
-//         [제시어, 그림, 제시어, 그림, 제시어],
-//           5,1    5,2   5,3    5,4   5,5
-//         [제시어, 그림, 제시어, 그림, 제시어]
 
     // 게임 결과창 - 다음 또는 이전 키워드 번호 가져오기
     @Transactional

@@ -316,7 +316,6 @@ public class GameRoomService {
                 // 10. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
 //            gameRoomRepository.save(updateGameRoom);
 
-
             }
         }
         // 11. SSE event 생성

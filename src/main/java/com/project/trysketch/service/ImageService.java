@@ -123,7 +123,7 @@ public class ImageService {
 
     // S3에 업로드 된 이미지 조회
     @Transactional(readOnly = true)
-    public Page<ImageLike> getImage(HttpServletRequest request, Pageable pageable) { // 수정 pageable 추가 김재영 01.29
+    public Map<String, Object> getImage(HttpServletRequest request, Pageable pageable) { // 수정 pageable 추가 김재영 01.29
         Claims claims = jwtUtil.authorizeToken(request);
 //        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
         User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
@@ -153,7 +153,7 @@ public class ImageService {
         getAllImageLike.put("image", imageLikeResponseDtoList);
         getAllImageLike.put("lastPage",imageLikePage.getTotalPages());
 
-        return imageLikePage;
+        return getAllImageLike;
 //        List<String> imagePathList = new ArrayList<>();
 //
 //        for (ImageLike imageLike : imageLikeList) {
