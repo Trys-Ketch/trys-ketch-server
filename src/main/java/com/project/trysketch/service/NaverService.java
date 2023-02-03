@@ -80,8 +80,11 @@ public class NaverService {
 
         String createToken = jwtUtil.createToken(naverUser.getEmail(), naverUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
-
-        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
+        if (achievementNameList.size() == 0){
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
+        }else {
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
+        }
     }
 
 

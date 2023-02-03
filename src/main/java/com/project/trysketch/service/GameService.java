@@ -19,6 +19,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 // 1. 기능   : 프로젝트 메인 로직
@@ -42,6 +44,10 @@ public class GameService {
     private final int adSize = 117;
     private final int nounSize = 1335;
     private final String directoryName = "static";
+
+    public static<T> void addToList(List<String> target, Stream<String> source) {
+        source.collect(Collectors.toCollection(() -> target));
+    }
 
     // convertAndSend 는 객체를 인자로 넘겨주면 자동으로 Message 객체로 변환 후 도착지로 전송한다.
 
@@ -239,15 +245,31 @@ public class GameService {
                         // 해당 history 에 실질적인 플레이타임 업데이트
 //                        History history = currentUser.getHistory().updatePlaytime(difference);
                         historyRepository.save(currentUser.getHistory().updatePlaytime(difference));
-                        historyService.getTrophyOfTime(currentUser);
-
+//                        responseList.add(historyService.getTrophyOfTime(currentUser));
+                        List<String> a = historyService.getTrophyOfTime(currentUser);
+//                        List<String> aP = new ArrayList<>();
+//                        for (String str : a) {
+//                            if (str != null) {
+//                                aP.add(str);
+//                            }
+//                        }
                         playTimeRepository.delete(userPlayTime);
-                    log.info(">>>>>>> [GameService - endGame] playtime 지웠다");
+                        log.info(">>>>>>> [GameService - endGame] playtime 지웠다");
 //                        history = currentUser.getHistory().updateTrials(1L);
                         historyRepository.save(currentUser.getHistory().updateTrials(1L));
-                        historyService.getTrophyOfTrial(currentUser);
+                        List<String> b = historyService.getTrophyOfTrial(currentUser);
+
+                        List<String> responseList = Stream.concat(a.stream(),b.stream()).collect(Collectors.toList());
+                        if (responseList.size() != 0){
+                            Map<String, Object> message = new HashMap<>();
+                            message.put("achievement",responseList);
+                            // 이미지 패스 추가
+                            sendingOperations.convertAndSend("/queue/game/achievement/" + gameRoomUser.getWebSessionId(), message);
+                        }
+
                     }
                 }
+
             }
         }
 
