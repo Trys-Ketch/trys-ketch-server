@@ -22,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -61,10 +63,14 @@ public class KakaoService {
         List<String> achievementNameList = historyService.getTrophyOfVisit(kakaoUser);
 
         // 4. JWT 토큰 반환
-        String createToken =  jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
+        String createToken = jwtUtil.createToken(kakaoUser.getEmail(), kakaoUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+        if (achievementNameList.size() == 0) {
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
+        } else {
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN, achievementNameList);
+        }
 
-        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
     }
 
     // 1. "인가 코드"로 "액세스 토큰" 요청
@@ -77,9 +83,9 @@ public class KakaoService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", "99896cbca8689b2a7b2513df031382da");
-        
+
         // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
-        
+
         body.add("redirect_uri", "https://trys-ketch.com/login/kakao");                // 프론트의 주소
         body.add("code", code);
 

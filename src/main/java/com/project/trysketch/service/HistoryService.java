@@ -42,7 +42,7 @@ public class HistoryService {
     }
 
     // 게임 플레이 시간에 따른 업적
-    public void getTrophyOfTime(User user) {
+    public List<String> getTrophyOfTime(User user) {
 
         // 해당 유저의 활동이력 검색
         History history = historyRepository.findByUser(user).orElseThrow(
@@ -59,15 +59,21 @@ public class HistoryService {
         // 유저로 찾아온 history 의 playtime 을 가져옴
         Long playtime = history.getPlaytime();
 
-        for (Integer baseLine : achievements.keySet()) {
+        // 반환용 List
+        List<String> responseList = new ArrayList<>();
 
-            // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-            verifyUserAchievement(achievements, achievementList, playtime, baseLine, user.getId());
+        for (Integer baseLine : achievements.keySet()) {
+            // 유저가 지금 얻으려는 업적을 가지고 있는지 검증하고 없다면 저장
+            String newAchievement = verifyUserAchievement(achievements, achievementList, playtime, baseLine, user.getId());
+            if (newAchievement != null) {
+                responseList.add(newAchievement);
+            }
         }
+        return responseList;
     }
 
     // 게임 판수에 따른 업적
-    public void getTrophyOfTrial(User user) {
+    public List<String> getTrophyOfTrial(User user) {
 
         // 해당 유저의 활동이력 검색
         History history = historyRepository.findByUser(user).orElseThrow(
@@ -84,11 +90,17 @@ public class HistoryService {
         // 유저로 찾아온 history 의 playtime 을 가져옴
         Long trials = history.getTrials();
 
-        for (Integer baseLine : achievements.keySet()) {
+        // 반환용 List
+        List<String> responseList = new ArrayList<>();
 
-            // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-            verifyUserAchievement(achievements, achievementList, trials, baseLine, user.getId());
+        for (Integer baseLine : achievements.keySet()) {
+            // 유저가 지금 얻으려는 업적을 가지고 있는지 검증하고 없다면 저장
+            String newAchievement = verifyUserAchievement(achievements, achievementList, trials, baseLine, user.getId());
+            if (newAchievement != null) {
+                responseList.add(newAchievement);
+            }
         }
+        return responseList;
     }
 
     // 사이트 로그인 횟수에 따른 업적
@@ -114,15 +126,16 @@ public class HistoryService {
         List<String> responseList = new ArrayList<>();
 
         for (Integer baseLine : achievements.keySet()) {
-            // 유저가 지금 얻으려는 업적을 가직 있는지 검증하고 없다면 저장
-
+            // 유저가 지금 얻으려는 업적을 가지고 있는지 검증하고 없다면 저장
             String newAchievement = verifyUserLoginAchievement(achievements, achievementList, visits, baseLine);
-            responseList.add(newAchievement);
+            if (newAchievement != null) {
+                responseList.add(newAchievement);
+            }
         }
         return responseList;
     }
 
-    public void verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine, Long userId) {
+    public String verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine, Long userId) {
         log.info(">>>>>>>>>>>>>>>>> [HistoryService] - verifyUserAchievement");
 
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByUserId(userId);
@@ -137,7 +150,6 @@ public class HistoryService {
                 achievementRepository.save(achievement);
                 log.info(">>>>>>>>>>>>>>>>> achievement 처음 만들었다");
             } else {
-
                 for (Achievement currentAchievement : currentAchievementList) {
 
                     // 지금 얻으려는 업적과 같다면
@@ -147,16 +159,13 @@ public class HistoryService {
                 }
                 if (cnt == 0) {
                     achievementRepository.save(achievement);
-
-                    Map<String, String> message = new HashMap<>();
-                    message.put("achievement", achievement.getName());
-
-                    // 이미지 패스 추가
-                    sendingOperations.convertAndSend("/queue/game/achievement/" + gameRoomUser.getWebSessionId(), message);
                     log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
+
+                    return achievement.getName();
                 }
             }
         }
+        return null;
     }
 
 
@@ -175,7 +184,6 @@ public class HistoryService {
 
                 return achievement.getName();
             } else {
-                log.info(">>>>>>>>>>>>>>>>> achievement 추가요★");
                 for (Achievement currentAchievement : currentAchievementList) {
                     // 지금 얻으려는 업적과 같다면
                     if (achievement.getName().equals(currentAchievement.getName())) {
@@ -189,7 +197,6 @@ public class HistoryService {
                     log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
 
                     return achievement.getName();
-
                 }
             }
         }

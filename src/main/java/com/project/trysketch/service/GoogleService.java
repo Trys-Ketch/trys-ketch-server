@@ -64,6 +64,7 @@ public class GoogleService {
     private String tokenUri;
 
     public DataMsgResponseDto googleLogin(String code, HttpServletResponse response) throws JsonProcessingException {
+        log.info(">>>>>>>>>>>>>>>>> [GoogleService - googleLogin] >>>>>>>>>>>>>>>>>>>>>>>>");
         String randomNickname = userService.RandomNick().getMessage();
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
@@ -83,8 +84,12 @@ public class GoogleService {
         // 4. JWT 토큰 반환
         String createToken =  jwtUtil.createToken(googleUser.getEmail(), googleUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+        if (achievementNameList.size() == 0){
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
+        }else {
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN, achievementNameList);
+        }
 
-        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementNameList);
     }
 
     // "인가 코드" 로 "액세스 토큰" 요청
