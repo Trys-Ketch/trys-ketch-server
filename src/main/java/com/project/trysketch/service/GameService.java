@@ -446,63 +446,6 @@ public class GameService {
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
-
-        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
-
-        // 방장이 아닐경우
-        if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
-            throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
-        }
-        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
-        log.info(">>>>>>> [GameService - changeTimeLimit] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
-
-        Map<String, Object> message = new HashMap<>();
-        Long nowTime = gameRoom.getTimeLimit();         // 현재 방의 라운드 타임 가져오기
-        Long changeTime = 30000L;                       // 한번에 30초씩 업/다운(밀리세컨드)
-
-        log.info(">>>>>>> [GameService - changeTimeLimit] #{}번 방 / 현재 타임 리미트 : {}",gameRoom.getId() ,gameRoom.getTimeLimit());
-        switch (destination) {
-            case "increase-time" -> {
-                nowTime = nowTime + changeTime;         // 30초 증가
-                // 요청한 시간이 2분 30초(밀리 세컨드) 이하일 시 변경 가능하다. 즉, "2분 30초 초과" 이면 변경 불가능
-                if (nowTime <= 150000L) {
-                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 증가 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), nowTime);
-                    message.put("timeLimit", nowTime);
-                    gameRoom.timeLimitUpdate(nowTime);  // 변경된 타임리미트로 방 정보 변경
-                    sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
-                } else {
-                    throw new CustomException(StatusMsgCode.MINMAX_ROUND_TIME);
-                }
-            }
-            case "decrease-time" -> {
-                nowTime = nowTime - changeTime;         // 30초 감소
-                // 요청한 시간이 1분(밀리 세컨드) 이상일 시 변경 가능하다. 즉, "1분 미만" 이면 변경 불가능
-                if (nowTime >= 60000L) {
-                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 감소 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), nowTime);
-                    message.put("timeLimit", nowTime);
-                    gameRoom.timeLimitUpdate(nowTime);  // 변경된 타임리미트로 방 정보 변경
-                    sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
-                } else {
-                    throw new CustomException(StatusMsgCode.MINMAX_ROUND_TIME);
-                }
-            }
-        }
-    }
-
-    // 난이도 변경
-    @Transactional
-    public void changeDifficulty(GameFlowRequestDto requestDto) {
-        // 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeDifficulty] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - changeDifficulty] RoomId : {}", requestDto.getRoomId());
-        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
-
-        // 현재 방 정보 가져오기
-        GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
-                () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
-        );
         log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
 
         // 방장이 아닐경우
@@ -511,6 +454,7 @@ public class GameService {
         }
         log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
         log.info(">>>>>>> [GameService - changeDifficulty] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
+
         Map<String, Object> message = new HashMap<>();
 
         log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 / 현재 난이도 : {}",gameRoom.getId() ,requestDto.getDifficulty());
@@ -534,7 +478,7 @@ public class GameService {
     // 라운드 끝났을 때, 기존 데이터에 따른 제출 여부 확인과 GameFlow DB 저장
     // requestDto 필요한 정보
     // token, roomId, round, keyword, keywordIndex, image, webSessionId, isSubmitted
-
+    @Transactional
     public void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
 
         // 유저 검증부
@@ -687,34 +631,59 @@ public class GameService {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 이미지 파일 있니? : {}", !requestDto.getImage().isEmpty());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] image.length() : {}", requestDto.getImage().length());
 
-        // data로 들어온  'data:image/png;base64,iVBORw0KGgoAAA..... 문자열 자르기
-        String[] strings = requestDto.getImage().split(",");
-        String base64Image = strings[1];
-        String extension = switch (strings[0]) {
-            case "data:image/jpeg;base64" -> "jpeg";
-            case "data:image/png;base64" -> "png";
-            default -> "jpg";
-        };
+//        // data로 들어온  'data:image/png;base64,iVBORw0KGgoAAA..... 문자열 자르기
+//        String[] strings = requestDto.getImage().split(",");
+//        String base64Image = strings[1];
+//        String extension = switch (strings[0]) {
+//            case "data:image/jpeg;base64" -> "jpeg";
+//            case "data:image/png;base64" -> "png";
+//            default -> "jpg";
+//        };
+//
+//        // 자른 base64 코드를 byte 배열로 파싱
+//        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
+//        String path = "/home/ubuntu/projects/image/image." + extension;
+//        File file = new File(path);
+//
+//        // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
+//        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+//
+//        // 이미지를 해당 포맷으로 path 위치에 저장
+//        ImageIO.write(img, "png", file);
+//
+//        // 유저 검증부
+//        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+//        String nickname = gamerInfo.get(GamerEnum.NICK.key());
+//        log.info(">>>>>>> [GameService - saveImage] token 으로 부터 나온 nickname : {}", nickname);
+//
+//        // image entity painter( 그린사람 nickname )
+//        // s3 저장 → image DB 저장 → imagePath 반환
+//        return s3Service.upload(file, directoryName, nickname);
 
-        // 자른 base64 코드를 byte 배열로 파싱
-        byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
-        String path = "/home/ubuntu/projects/image/image." + extension;
-        File file = new File(path);
+        try {
+            HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
+            String nickname = gamerInfo.get(GamerEnum.NICK.key());
 
-        // 파싱된 byte 배열을 ByteArrayInputStream 클래스로 넣어 읽기
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
+            String[] strings = requestDto.getImage().split(",");
+            String base64Image = strings[1];
+            String extension = switch (strings[0]) {
+                case "data:image/jpeg;base64" -> "jpeg";
+                case "data:image/png;base64" -> "png";
+                default -> "jpg";
+            };
+            byte[] imageBytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(base64Image);
 
-        // 이미지를 해당 포맷으로 path 위치에 저장
-        ImageIO.write(img, "png", file);
+            File tempFile = File.createTempFile("image", "." + extension);
+            try (OutputStream outputStream = new FileOutputStream(tempFile)) {
+                outputStream.write(imageBytes);
+            }
 
-        // 유저 검증부
-        HashMap<String, String> gamerInfo = userService.gamerInfo(requestDto.getToken());
-        String nickname = gamerInfo.get(GamerEnum.NICK.key());
-        log.info(">>>>>>> [GameService - saveImage] token 으로 부터 나온 nickname : {}", nickname);
+            return s3Service.upload(tempFile, directoryName, nickname);
+        } catch (IOException ex) {
+            log.error("IOException Error Message : {}",ex.getMessage());
+            throw new CustomException(StatusMsgCode.IMAGE_SAVE_FAILED);
+        }
 
-        // image entity painter( 그린사람 nickname )
-        // s3 저장 → image DB 저장 → imagePath 반환
-        return s3Service.upload(file, directoryName, nickname);
     }
 
     // 전체 유저의 제출 여부와 해당 유저의 제출 여부 조회 후 메시지 전송
