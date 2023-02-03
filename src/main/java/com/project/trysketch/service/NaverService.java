@@ -29,6 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -75,12 +76,15 @@ public class NaverService {
         History history = naverUser.getHistory().updateVisits(1L);
         historyRepository.save(history);
 
-        String achievementName = historyService.getTrophyOfVisit(naverUser);
+        List<String> achievementNameList = historyService.getTrophyOfVisit(naverUser);
 
         String createToken = jwtUtil.createToken(naverUser.getEmail(), naverUser.getNickname());
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
-
-        return new DataMsgResponseDto(StatusMsgCode.LOG_IN,achievementName);
+        if (achievementNameList.size() == 0){
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
+        }else {
+            return new DataMsgResponseDto(StatusMsgCode.LOG_IN, achievementNameList);
+        }
     }
 
 
