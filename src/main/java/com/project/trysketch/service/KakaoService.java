@@ -13,6 +13,7 @@ import com.project.trysketch.dto.request.OAuthRequestDto;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.repository.HistoryRepository;
 import com.project.trysketch.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -45,14 +46,28 @@ public class KakaoService {
     private final UserService userService;
     private final HistoryService historyService;
 
+
+    @Value("${kakao.oauth2.client.redirect.uri}")
+    String redirect_uri;
+
+    @Value("${kakao.oauth2.client.id}")
+    String client_id;
+
+    @Value("${kakao.oauth2.client.provider.user-info-uri}")
+    String user_info_uri;
+
+    @Value("${kakao.oauth2.client.provider.token-uri}")
+    String token_uri;
+
+
     public DataMsgResponseDto kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
         String randomNickname = userService.RandomNick().getMessage();
 
         // 1. "인가 코드"로 "액세스 토큰" 요청
-        String accessToken = getToken(code);                                                        // 포스트맨 확인위해 주석처리 필요
+        String accessToken = getToken(code);                                                   // 포스트맨 확인위해서는 주석처리 필요
 
         // 2. 토큰으로 카카오 API 호출 : "액세스 토큰"으로 "카카오 사용자 정보" 가져오기
-        OAuthRequestDto kakaoUserInfo = getKakaoUserInfo(accessToken, randomNickname);           // 포스트맨 확인위해 accessToken에서 code로 바꿔야함
+        OAuthRequestDto kakaoUserInfo = getKakaoUserInfo(accessToken, randomNickname);         // 포스트맨 확인위해서는 accessToken에서 code로 바꿔야함
 
         // 3. 필요시에 회원가입
         User kakaoUser = registerKakaoUserIfNeeded(kakaoUserInfo);
@@ -82,18 +97,15 @@ public class KakaoService {
         // HTTP Body 생성
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
-        body.add("client_id", "99896cbca8689b2a7b2513df031382da");
-
-        // body.add("redirect_uri", "http://localhost:8080/api/user/kakao/callback");  // 포스트맨 실험
-
-        body.add("redirect_uri", "https://trys-ketch.com/login/kakao");                // 프론트의 주소
+        body.add("client_id", client_id);
+        body.add("redirect_uri", redirect_uri);     // 포스트맨 실험위해서는 다른 주소 들어가야 함
         body.add("code", code);
 
         // HTTP 요청 보내기
         HttpEntity<MultiValueMap<String, String>> kakaoTokenRequest = new HttpEntity<>(body, headers);
         RestTemplate rt = new RestTemplate();
         ResponseEntity<String> response = rt.exchange(
-                "https://kauth.kakao.com/oauth/token",
+                token_uri,
                 HttpMethod.POST,
                 kakaoTokenRequest,
                 String.class
@@ -117,7 +129,7 @@ public class KakaoService {
         HttpEntity<MultiValueMap<String, String>> kakaoUserInfoRequest = new HttpEntity<>(headers);
         RestTemplate rt = new RestTemplate();
         ResponseEntity<String> response = rt.exchange(
-                "https://kapi.kakao.com/v2/user/me",
+                user_info_uri,
                 HttpMethod.POST,
                 kakaoUserInfoRequest,
                 String.class
