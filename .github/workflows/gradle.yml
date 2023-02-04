@@ -14,10 +14,10 @@ on:
     branches: [ "develop" ]
 
 env:
-  PROJECT_NAME: trysketch                  # 프로젝트 이름은 직접 정하면 됩니다
-  BUCKET_NAME: my-ec2-actions              # aws S3 버킷이름
-  CODE_DEPLOY_APP_NAME: codeDeploy         # aws codedeploy 애플리케이션 이름
-  DEPLOYMENT_GROUP_NAME: my-codeDeploy     # aws codedeploy 배포 그룹 이름
+  PROJECT_NAME: trysketch                                # 프로젝트 이름은 직접 정하면 됩니다
+  BUCKET_NAME: trysketch-actions-s3-bucket               # aws S3 버킷이름
+  CODE_DEPLOY_APP_NAME: trysketch-codedeploy             # aws codedeploy 애플리케이션 이름
+  DEPLOYMENT_GROUP_NAME: codedeploy-deployment-group     # aws codedeploy 배포 그룹 이름
 
 jobs:
   build:
