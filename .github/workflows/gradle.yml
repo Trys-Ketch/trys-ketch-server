@@ -49,6 +49,9 @@ jobs:
       run: ./gradlew clean build
       shell: bash             
       
+    - name: Make Directory
+      run: mkdir -p deploy
+      
     - name: Copy Jar
       run: cp ./build/libs/*.jar ./deploy
     
