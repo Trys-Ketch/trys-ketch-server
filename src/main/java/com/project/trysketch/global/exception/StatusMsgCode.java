@@ -63,6 +63,7 @@ public enum StatusMsgCode {
     SUBMIT_KEYWORD_DONE(HttpStatus.OK, "단어 제출이 되었습니다"),
     CREATE_ROOM(HttpStatus.OK, "방을 만들었습니다"),
     UPDATE_USER_PROFILE(HttpStatus.OK, "프로필이 변경되었습니다"),
+    SUCCESS_GET_IMAGE_LIKE(HttpStatus.OK, "좋아요한 이미지 조회 완료"),
     SUCCESS_CREATE_ACHIEVEMENT(HttpStatus.OK, "업적을 달성했습니다");
 
 

@@ -125,7 +125,6 @@ public class ImageService {
     @Transactional(readOnly = true)
     public Map<String, Object> getImage(HttpServletRequest request, Pageable pageable) { // 수정 pageable 추가 김재영 01.29
         Claims claims = jwtUtil.authorizeToken(request);
-//        User user = userRepository.findByNickname(claims.get("nickname").toString()).orElseThrow(
         User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );

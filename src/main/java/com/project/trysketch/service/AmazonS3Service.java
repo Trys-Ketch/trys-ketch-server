@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
@@ -34,6 +36,7 @@ public class AmazonS3Service {
     public String bucket;
 
     // 이미지 업로드 (S3, DB)
+    @Transactional
     public Image upload(File file, String dirName, String nickname) { // 수정 리턴값 변경 String → Image 김재영 01.29
         Image image = null;
         if (file != null) {
@@ -45,7 +48,8 @@ public class AmazonS3Service {
     }
 
     // S3로 파일 업로드 (파일이름 지정, 로컬파일 삭제 + 파일 업로드 메서드 호출)
-    private String upload(File uploadFile, String dirName) {
+    @Transactional
+    public String upload(File uploadFile, String dirName) {
         String fileName = dirName + "/" + UUID.randomUUID();     // S3에 저장될 파일 이름
         String uploadImageUrl = putS3(uploadFile, fileName);     // s3로 업로드
         removeNewFile(uploadFile);                               // 로컬에 저장된 파일 지우기
@@ -53,19 +57,22 @@ public class AmazonS3Service {
     }
 
     // S3로 실제 파일 업로드
-    private String putS3(File uploadFile, String fileName) {
+    @Transactional
+    public String putS3(File uploadFile, String fileName) {
         amazonS3Client.putObject(new PutObjectRequest(bucket, fileName, uploadFile).withCannedAcl(CannedAccessControlList.PublicRead));
         return amazonS3Client.getUrl(bucket, fileName).toString();
     }
 
     // S3 이미지 삭제
+    @Transactional
     public void delete(String fileName) {
         DeleteObjectRequest request = new DeleteObjectRequest(bucket, fileName);
         amazonS3Client.deleteObject(request);
     }
 
     // 로컬에 저장된 이미지 지우기
-    private void removeNewFile(File targetFile) {
+    @Transactional
+    public void removeNewFile(File targetFile) {
         if (targetFile.delete()) {
             log.info("File delete success");
             return;
