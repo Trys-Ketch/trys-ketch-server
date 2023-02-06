@@ -10,8 +10,6 @@ name: Java CI with Gradle
 on:
   push:
     branches: [ "develop" ]
-  pull_request:
-    branches: [ "develop" ]
 
 env:
   PROJECT_NAME: trysketch                                # 프로젝트 이름은 직접 정하면 됩니다
