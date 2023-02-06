@@ -49,18 +49,6 @@ jobs:
       run: ./gradlew clean build
       shell: bash             
       
-    - name: Make Directory
-      run: mkdir -p deploy
-      
-    - name: Copy Jar
-      run: cp ./build/libs/*.jar ./deploy
-    
-    - name: Copy appspec.yml
-      run: cp appspec.yml ./deploy
-    
-    - name: Copy script
-      run: cp ./scripts/*.sh ./deploy      
-      
     - name: Make Zip File                   #압축하여 zip 파일 생성
       run: zip -qq -r ./$GITHUB_SHA.zip .   
       shell: bash
