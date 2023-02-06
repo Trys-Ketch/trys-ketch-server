@@ -28,7 +28,7 @@ public class GameFlowCount {
     private Long roomId;
 
     public GameFlowCount update(int gameFlowListSize) {
-        this.gameFlowCount = gameFlowListSize;
+        this.gameFlowCount += gameFlowListSize;
         return this;
     }
 }
