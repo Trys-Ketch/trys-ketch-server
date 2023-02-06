@@ -48,7 +48,6 @@ public class AmazonS3Service {
     }
 
     // S3로 파일 업로드 (파일이름 지정, 로컬파일 삭제 + 파일 업로드 메서드 호출)
-    @Transactional
     public String upload(File uploadFile, String dirName) {
         String fileName = dirName + "/" + UUID.randomUUID();     // S3에 저장될 파일 이름
         String uploadImageUrl = putS3(uploadFile, fileName);     // s3로 업로드
@@ -57,7 +56,6 @@ public class AmazonS3Service {
     }
 
     // S3로 실제 파일 업로드
-    @Transactional
     public String putS3(File uploadFile, String fileName) {
         amazonS3Client.putObject(new PutObjectRequest(bucket, fileName, uploadFile).withCannedAcl(CannedAccessControlList.PublicRead));
         return amazonS3Client.getUrl(bucket, fileName).toString();
@@ -71,7 +69,6 @@ public class AmazonS3Service {
     }
 
     // 로컬에 저장된 이미지 지우기
-    @Transactional
     public void removeNewFile(File targetFile) {
         if (targetFile.delete()) {
             log.info("File delete success");

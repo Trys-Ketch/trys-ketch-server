@@ -110,7 +110,7 @@ public class GameService {
         sendingOperations.convertAndSend("/topic/game/start/" + requestDto.getRoomId(), message);
 
         // SSE event 생성
-        sseEmitters.changeRoom(getRooms(-1));
+        sseEmitters.changeRoom(getRooms(0));
 
         // 게임 시작
         return new MsgResponseDto(StatusMsgCode.START_GAME);

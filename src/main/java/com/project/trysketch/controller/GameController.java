@@ -76,7 +76,7 @@ public class GameController {
 
     // 7. 제출 여부 확인하고 DB 저장
     @MessageMapping("/game/toggle-ready")
-    public synchronized void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
+    public void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
         log.info(">>>>>>>>>>>> GameController - getToggleSubmit 실행");
         log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
