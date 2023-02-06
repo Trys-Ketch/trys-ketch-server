@@ -91,7 +91,7 @@ public class GameController {
         log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
         log.info(">>>>>> {} : 받을 제시어", requestDto.getKeyword());
-        gameService.checkSubmit(requestDto, word);
+        gameService.checkLastRound(requestDto, word);
     }
 
     // 9. 그림 제출하는 라운드 끝났을 때
@@ -100,7 +100,7 @@ public class GameController {
         log.info(">>>>>>>>>>>> GameController - postImage 실행");
         log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
-        gameService.checkSubmit(requestDto, image);
+        gameService.checkLastRound(requestDto, image);
     }
 
     // 10. 게임 결과 페이지
