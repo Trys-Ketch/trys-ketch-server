@@ -153,6 +153,12 @@ public class ImageService {
         getAllImageLike.put("lastPage",imageLikePage.getTotalPages());
 
         return getAllImageLike;
+//        List<String> imagePathList = new ArrayList<>();
+//
+//        for (ImageLike imageLike : imageLikeList) {
+//            imagePathList.add(imageLike.getImage().getPath());
+//        }
+//        return imagePathList;
     }
     // 스케줄러 통해서 관리. 좋아요 안 눌린 이미지 삭제
     @Transactional

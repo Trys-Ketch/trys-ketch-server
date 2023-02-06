@@ -174,7 +174,7 @@ public class GameRoomService {
         roomIdInfo.put("roomId", String.valueOf(gameRoom.getId()));
 
         // 8. SSE event 생성
-//        sseEmitters.changeRoom(getrooms());
+        sseEmitters.changeRoom(gameService.getRooms(1));
 
         return new DataMsgResponseDto(StatusMsgCode.OK,roomIdInfo);
     };
@@ -225,6 +225,9 @@ public class GameRoomService {
         // 8. HashMap 형식으로 방 번호를 response 로 반환
         HashMap<String, Object> roomIdInfo = new HashMap<>();
         roomIdInfo.put("roomId", enterGameRoom.getId());
+
+        // 9. SSE event 생성
+        sseEmitters.changeRoom(gameService.getRooms(1));
 
         return new DataMsgResponseDto(StatusMsgCode.OK, roomIdInfo);
     }
@@ -313,10 +316,10 @@ public class GameRoomService {
                 // 10. 기존 GameRoom 에 새로 빌드된 GameRoom 정보 업데이트
 //            gameRoomRepository.save(updateGameRoom);
 
-                // 11. SSE event 생성
-//                sseEmitters.changeRoom(getrooms());
             }
         }
+        // 11. SSE event 생성
+        sseEmitters.changeRoom(gameService.getRooms(-1));
         return new MsgResponseDto(StatusMsgCode.SUCCESS_EXIT_GAME);
     }
 
@@ -477,29 +480,6 @@ public class GameRoomService {
 //        return hostMap;
 //    }
 
-    // ===================== 모든 gameRoom 호출하는 메서드 ===============================
-    public List<GameRoomResponseDto> getrooms(){
-        // gameRoomResponseDto list 생성
-        List<GameRoomResponseDto> gameRoomList = new ArrayList<>();
-
-        // 모든 gameRoom 불러와서 dto에 담기 -> list에 저장
-        List<GameRoom> gameRooms = gameRoomRepository.findAll();
-        for (GameRoom room : gameRooms){
-
-            GameRoomResponseDto gameRoomResponseDto = GameRoomResponseDto.builder()
-                    .id(room.getId())
-                    .title(room.getTitle())
-                    .hostNick(room.getHostNick())
-                    .GameRoomUserCount(room.getGameRoomUserList().size())
-                    .isPlaying(room.isPlaying())
-                    .createdAt(room.getCreatedAt())
-                    .modifiedAt(room.getModifiedAt())
-                    .randomCode(room.getRandomCode())
-                    .build();
-            gameRoomList.add(gameRoomResponseDto);
-        }
-        return gameRoomList;
-    }
 
 
     // ===================== 본인을 포함한 현재 방의 전체 유저 =====================

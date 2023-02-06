@@ -39,7 +39,7 @@ public class GameController {
     // 2. 방에 입장시(생성 포함) 타임리미트, 난이도 전달
     @MessageMapping("/game/gameroom-data")
     public void getGameMode(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - joinGameRoom 실행");
+        log.info(">>>>>>>>>>>> GameController - getGameMode 실행");
         log.info(">>> 게임에 입장 - 게임 방 번호 : {},", requestDto.getRoomId());
         gameService.getGameMode(requestDto);
     }
@@ -76,7 +76,7 @@ public class GameController {
 
     // 7. 제출 여부 확인하고 DB 저장
     @MessageMapping("/game/toggle-ready")
-    public void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
+    public synchronized void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
         log.info(">>>>>>>>>>>> GameController - getToggleSubmit 실행");
         log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
         log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());

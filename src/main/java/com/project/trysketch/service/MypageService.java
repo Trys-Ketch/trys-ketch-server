@@ -1,10 +1,8 @@
 package com.project.trysketch.service;
 
 import com.project.trysketch.dto.request.UserRequestDto;
-import com.project.trysketch.dto.response.AchievementResponseDto;
 import com.project.trysketch.dto.response.UserResponseDto;
 import com.project.trysketch.entity.Achievement;
-import com.project.trysketch.entity.GameRoomUser;
 import com.project.trysketch.entity.User;
 import com.project.trysketch.global.dto.DataMsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
@@ -77,29 +75,47 @@ public class MypageService {
     }
 
     // 뱃지 조회하기
-    public List<AchievementResponseDto> getBadge(HttpServletRequest request) {
+    public Map<String, List<String>> getBadge( HttpServletRequest request) {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
         );
-        
+
         // 해당 유저의 업적 list 가져오기
         List<Achievement> achievementList = achievementRepository.findAllByUser(user);
 
-        // 반환용 Dto 선언
-        List<AchievementResponseDto> achievementResponseDtoList = new ArrayList<>();
+////         반환용 Dto 선언
+//        List<Map<String, List<String>>> achievementResponseDtoList = new ArrayList<>();
 
-        for (Achievement achievement : achievementList) {
-            AchievementResponseDto achievementResponseDto = AchievementResponseDto.builder()
-                    .achievementName(achievement.getName())
-                    .build();
+        Map<String, List<String>> responseMap = new HashMap<>();
 
-            achievementResponseDtoList.add(achievementResponseDto);
+        List<String> playtimeList = new ArrayList<>();
+        List<String> trialList = new ArrayList<>();
+        List<String> visitList = new ArrayList<>();
+
+        for (Achievement achievement : achievementList){
+            switch (achievement.getName().split("_")[1]) {
+                case "P" -> playtimeList.add(achievement.getName());
+                case "T" -> trialList.add(achievement.getName());
+                case "V" -> visitList.add(achievement.getName());
+            };
         }
+        responseMap.put("playtime", playtimeList);
+        responseMap.put("trial", trialList);
+        responseMap.put("visit", visitList);
 
-        return achievementResponseDtoList;
+
+//        for (Achievement achievement : achievementList) {
+//            AchievementResponseDto achievementResponseDto = AchievementResponseDto.builder()
+//                    .achievementName(achievement.getName())
+//                    .build();
+//
+//            achievementResponseDtoList.add(achievementResponseDto);
+//        }
+
+        return responseMap;
     }
 
 

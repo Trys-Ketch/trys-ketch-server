@@ -51,7 +51,7 @@ public class GameRoom extends Timestamped {
     @Builder.Default
     private boolean isPlaying = false;
 
-    @OneToMany(mappedBy = "gameRoom")
+    @OneToMany(mappedBy = "gameRoom", fetch = FetchType.EAGER)
     @Builder.Default
     private List<GameRoomUser> gameRoomUserList = new ArrayList<>();
 

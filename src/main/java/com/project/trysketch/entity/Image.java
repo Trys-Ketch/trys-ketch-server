@@ -25,7 +25,7 @@ public class Image extends Timestamped {
     @Column(nullable = false)            // 그린사람의 닉네임
     private String painter;
 
-    @OneToMany(mappedBy = "image")
+    @OneToMany(mappedBy = "image", fetch = FetchType.EAGER)
     private List<ImageLike> imageLikes = new ArrayList<>();
 
 
