@@ -135,16 +135,16 @@
 |😱 문제| 레디스에서 키값으로 조회하기 위해서 사용했던 @Indexed 어노테이션을 사용<br/>이 어노테이션을 붙여 줘야지만 key 값으로 검색이 가능하며, 비회원 정보의 검증을 하기 위해서 추가<br/>`예)`새로운 비회원이 생기면 guest:10001 이라는 하나의 파일이 생기고 동시에 guest:10001:idx 라는 새로운<br/>파일이 생기는데 이 파일이 만료시 삭제가 되지 않는 문제 발생|
 |🤔 원인| @Indexed 로 인해 같이 생성된 참조값들은 만료시 자동으로 삭제가 되지 않는것이 문제였다.|
 |😭 시도| • 강제 지정 (redistemplate.expire)<br/>참조값이 생성될 때 생기는 이름은 동일한 패턴이기 때문에 RedisTemplate 에서 만료시간을 해당 파일이<br/>생성되면 바로 같이 지정하는 방식을 사용하면 가능하지만 이는 근본적인 해결법이 아니여서 다른 방법을<br/>더 찾아보기로 결정<br/>• @Id 만을 사용<br/>레디스를 통해 비회원정보 검증하는 부분이 존재하기 때문에 @Id 어노테이션 만으로는 찾는 비회원정보를<br/>찾을수가 없어서 @Indexed 를 사용하는 것은 유지 |
-|😄 해결| @EnableRedisRepositories(enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP)<br/>위처럼 RedisRepo 에 속성을 추가해서 사용해본 결과 백 서버가 내려간 사이 Redis 에서 삭제가 되는 경우가<br/>아닌 이상 삭제시의 이벤트를 수신해서 참조값도 함께 잘 삭제가 되는것을 확인|
+|😄 해결| @EnableRedisRepositories(enableKeyspaceEvents = EnableKeyspaceEvents.ON_STARTUP)<br/>위처럼 RedisRepo 에 속성을 추가해서 사용해본 결과 Server 가 내려간 사이 Redis 에서 삭제가 되는 경우가<br/>아닌 이상 삭제시의 이벤트를 수신해서 참조값도 함께 잘 삭제가 되는것을 확인|
 
-### SSE
+### SSE 연결 관련 이슈
 
 |요구 사항|핵심 기술을 선택한 이유 및 근거|
 |:---|:---|
 |😱 문제|emitter의 객체 시간을 길게 설정할 때, 데이터를 제대로 전송하지 못할 때 발생하는<br/>IOException : Broken PIpe 에러가 발생|
-|🤔 원인|JPA 사용시 open in view 설정이 기본으로 true로 설정됨. true로 설정되면 HTTP Connection이 열려있는 동안<br/>DB Connection도 같이 열려있게 됨.|
-|😭 시도|보통은 HTTP 호출이 끝나고 DB 커넥션도 종료되나, SSE 사용시에는 객체가 만료되기 전까지 계속해서 DB<br/>커넥션이 열려 고갈되는 것이 문제였음|
-|😄 해결|객체의 시간을 짧게 설정 해봄 → 객체의 만료시간이 지날 때마다 재연결되고 이는 결국 리소스의 낭비로<br/>이어져 SSE를 사용하는 목적에 맞지않음<br/>open in view 설정을 끄고, fetch join 타입을 따로 설정하여 해결|
+|🤔 원인|JPA 사용시 open in view 설정이 기본으로 true로 설정됨. true로 설정되면 HTTP Connection이 열려있는 동안<br/>DB Connection도 같이 열려있게 됨.<br/>보통은 HTTP 호출이 끝나고 DB 커넥션도 종료되나, SSE 사용시에는 객체가 만료되기 전까지 계속해서 DB<br/>커넥션이 열려 고갈되는 것이 문제였음<br/>|
+|😭 시도|객체의 시간을 짧게 설정 해봄 → 객체의 만료시간이 지날 때마다 재연결되고 이는 결국 리소스의 낭비로<br/>이어져 SSE를 사용하는 목적에 맞지않음<br/>|
+|😄 해결|open in view 설정을 끄고, fetch join 타입을 따로 설정하여 해결|
 
 ### 게임 중 발생하는 동시성 제어(synchronized, DB Lock)
 
@@ -152,8 +152,9 @@
 |:---|:---|
 |😱 문제| 제한 시간을 넘어 미처 제출하지 못한 유저의 키워드나 이미지가 일괄 자동 제출 되었을 때 DB에 제대로<br/>데이터가 쌓이지 않거나 다음 라운드로 진행되지 않는 이슈가 발생함.|
 |🤔 원인| 현재 로직상 save -> find의 구조를 가지고 있기에 자동제출 기능 구현 시 동시에 동일한 자원에 접근하려<br/>하는 것을 원인으로 판단.|
-|😭 시도| • synchronized<br/>제출 로직의 Controller method 에 synchronized 적용하여 스레드 간 데이터 동기화, 의도대로 동작은 했으나<br/>성능 상 속도 저하 이슈 발생함.<br/>• Thread Scheduler<br/>제출 인원을 확인하는 로직을 독립시켜서 thread를 만들고, 일정 시간 동안 주기적으로 돌아가게끔 구현함.<br/>그러나 DB에 읽기 되는 순서를 제어 하지 못해 동일한 문제 발생함.<br/>• Pessimistic Lock<br/>제출 인원을 하나의 column으로 갖는 table을 생성하고,row level rock 적용함. update용 find method 를<br/>구현하고, 해당 method에 @Lock 어노테이션과 모드를 설정함. 제출 인원을 수정할 때 write lock이 걸리고<br/>transaction이 끝나야 lock이 풀리는 것을 이용함.|
+|😭 시도| • synchronized<br/>제출로직의 Controller method 에 synchronized 적용하여 스레드 간 데이터 동기화함. 의도대로 동작 했으나,<br/>성능 상 속도 저하 이슈 발생함.<br/>• Thread Scheduler<br/>제출 인원을 확인하는 로직을 독립시켜서 thread를 만들고, 일정 시간 동안 주기적으로 돌아가게끔 구현함.<br/>그러나 DB에 읽기 되는 순서를 제어 하지 못해 동일한 문제 발생함.<br/>• Optimistic Lock<br/>제출 로직 특성 상 빈번한 충돌이 예측 가능했기 때문에 롤백 비용을 고려하여 Optimistic Lock 미적용.<br/>• Pessimistic Lock<br/>제출 인원을 하나의 column으로 갖는 table을 생성하고, row level lock 적용, update용 find method를 구현 및,<br/>해당 method에 @Lock 어노테이션과 모드를 설정함.<br/>제출 인원을 수정할 때 write lock이 걸리고 transaction이 끝나야 lock이 풀리는 것을 이용함. |
 |😄 해결| 게임의 최대 인원이 8명으로 테스트 했을 때, 비교적 성능 이슈가 없던 Pessimistic Lock을 사용하기로 결정|
+
 </details>
 
 <br/>
