@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.index.Indexed;
+
 import java.io.Serializable;
 
 // 1. 기능   : 비회원 구성요소
@@ -15,7 +16,7 @@ public class Guest implements Serializable {
     // Jpa 의 Entity 에 해당하는 어노테이션 즉, value 는 Key 를 만들 때 사용하는 것으로
     // Key 는 value + @Id 로 형성된다.
     @Id
-    private Long id;                // 비회원 ID
+    private Long id;
 
     @Indexed                        // key 식별시 사용하는 고유값
     private String guestId;         // redis 에서 key 값(고유번호)
