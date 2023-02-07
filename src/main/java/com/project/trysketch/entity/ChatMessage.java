@@ -9,15 +9,14 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ChatMessage {
-    public enum MessageType {
-        ENTER, TALK, LEAVE
-    }
+    public enum MessageType { LEAVE }
 
     private MessageType type;   // 메시지 타입
     private String roomId;      // 방번호
-    private String userId;      // 메시지 보낸 사람 ID
-    private String nickname;    // 메시지 보낸 사람 닉네임
-    private String content;     // 메시지
+    private String userId;      // 메시지 보낸사람의 ID
+    private String nickname;    // 메시지 보낸사람의 닉네임
+    private String content;     // 메시지 내용
+
 
     @Builder
     public ChatMessage(MessageType type, String roomId, String userId, String nickname, String content) {

@@ -1,6 +1,7 @@
 package com.project.trysketch.entity;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -9,14 +10,13 @@ import javax.persistence.Id;
 // 2. 작성자 : 서혁수
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
+@NoArgsConstructor
 public class RandomNick {
 
     @Id
-    @Column(name = "num")
-    private int num;
+    private int num;                // 랜덤닉네임 번호
 
     @Column
-    private String nickname;
+    private String nickname;        // 랜덤 닉네임
 
 }
