@@ -2,7 +2,6 @@ package com.project.trysketch.entity;
 
 import com.project.trysketch.global.utill.Timestamped;
 import lombok.*;
-
 import javax.persistence.Entity;
 import javax.persistence.*;
 
@@ -19,21 +18,17 @@ public class History extends Timestamped {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 플레이 타임 ( 게임 시작 - 게임 끝 )
     @Column
-    private Long playtime;
+    private Long playtime;      // 플레이 타임 ( 게임 시작 - 게임 끝 )
 
-    // 플레이 횟수
     @Column
-    private Long trials;
+    private Long trials;        // 플레이 횟수
 
-    // 로그인 횟수
     @Column
-    private Long visits;
+    private Long visits;        // 로그인 횟수
 
-    // 1:1 연관관계 - User
     @OneToOne
-    private User user;
+    private User user;          // 활동 이력의 주인
 
     public History updatePlaytime(Long playtime) {
         this.playtime += playtime;
