@@ -6,8 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 // 1. 기능   : 방에 들어가있는 유저 엔티티
 // 2. 작성자 : 김재영, 서혁수
@@ -25,23 +23,21 @@ public class GameRoomUser {
     @ManyToOne
     private GameRoom gameRoom;
 
-//    @ManyToOne
-    @Column(name = "user_id")
+    @Column(nullable = false)
     private Long userId;
 
-    @Column(name = "nickname")
+    @Column(nullable = false)
     private String nickname;
 
-    @Column(name = "web_session_id")
+    @Column
     private String webSessionId;
 
-    @Column(name = "ready_status")
+    @Column(nullable = false)
     private boolean readyStatus;
 
-    @Column
+    @Column(nullable = false)
     private String imgUrl;
 
-//    @OneToOne(mappedBy = "gameRoomUser") 원래코드
     @OneToOne(mappedBy = "gameRoomUser", cascade = CascadeType.REMOVE) // 1.31
     private UserPlayTime userPlayTime;
     
