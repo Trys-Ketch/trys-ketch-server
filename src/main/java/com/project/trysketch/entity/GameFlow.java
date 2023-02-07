@@ -23,52 +23,32 @@ public class GameFlow {
     private Long id;
 
     @Column(nullable = false)
-    private int round;
+    private int round;           // 게임 라운드
 
     @Column(nullable = false)
-    private int keywordIndex;
+    private int keywordIndex;    // 키워드 순번
 
     @Column
-    private String keyword;
+    private String keyword;      // 키워드
 
     @Column
-    private String imagePath;
+    private String imagePath;    // 그림 이미지
 
     @Column
-    private Long imagePk; // 수정 추가 김재영 01.29
+    private Long imagePk;        // 그림 이미지 PK
 
     @Column(nullable = false)
-    private String nickname;
+    private String nickname;     // 닉네임
 
     @Column(nullable = false)
-    private Long roomId;
+    private Long roomId;         // 방 번호
 
     @Column(nullable = false)
-    private String webSessionId;
+    private String webSessionId; // webSessionId
 
     @Column(nullable = false)
-    private boolean isSubmitted;
+    private boolean isSubmitted; // 제거
 
     @Column(nullable = false)
-    private String userImgPath;
-
-    public GameFlow update(boolean isSubmitted) {
-//        this.id = id;
-        this.isSubmitted = isSubmitted;
-        return this;
-    }
-
-    public GameFlow update(boolean isSubmitted, String keyword) {
-//        this.id = id;
-        this.isSubmitted = isSubmitted;
-        this.keyword = keyword;
-        return this;
-    }
-
-    public GameFlow update(String imagePath, boolean isSubmitted) {
-//        this.id = id;
-        this.isSubmitted = isSubmitted;
-        this.imagePath = imagePath;
-        return this;
-    }
+    private String userImgPath;  // 유저 프로필 이미지
 }
