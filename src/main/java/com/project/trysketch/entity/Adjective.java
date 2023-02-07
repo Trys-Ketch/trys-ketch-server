@@ -1,6 +1,5 @@
 package com.project.trysketch.entity;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import javax.persistence.Column;
@@ -11,14 +10,13 @@ import javax.persistence.Id;
 // 2. 작성자 : 서혁수
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PUBLIC)
+@NoArgsConstructor
 public class Adjective {
 
     @Id
-    @Column(name = "num")
-    private int num;
+    private int num;                // 형용사 번호
 
     @Column
-    private String adjective;
+    private String adjective;       // 형용사
 
 }
