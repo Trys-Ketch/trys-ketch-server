@@ -15,11 +15,11 @@ public class ImageLike {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(nullable = false)                         // 좋아요 눌린 이미지
+    @JoinColumn(nullable = false)              // 좋아요 눌린 이미지
     private Image image;
 
     @ManyToOne
-    @JoinColumn(name = "USER_ID", nullable = false)       // 좋아요 누른 유저
+    @JoinColumn(nullable = false)             // 좋아요 누른 유저
     private User user;
 
 
