@@ -4,12 +4,11 @@ import com.project.trysketch.dto.request.UserRequestDto;
 import com.project.trysketch.dto.response.UserResponseDto;
 import com.project.trysketch.entity.Achievement;
 import com.project.trysketch.entity.User;
-import com.project.trysketch.global.dto.DataMsgResponseDto;
+import com.project.trysketch.dto.response.DataMsgResponseDto;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.repository.AchievementRepository;
-import com.project.trysketch.repository.GameRoomUserRepository;
 import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +21,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
+// 1. 기능   : 내 정보 페이지 서비스
+// 2. 작성자 : 김재영, 황미경
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MypageService {
+
     private final UserRepository userRepository;
-    private final GameRoomUserRepository gameRoomUserRepository;
     private final AchievementRepository achievementRepository;
     private final JwtUtil jwtUtil;
 
@@ -51,9 +51,10 @@ public class MypageService {
 
         return new DataMsgResponseDto(StatusMsgCode.OK,userResponseDto);
     }
+
     // 마이페이지 회원 닉네임, 프로필사진 수정
     @Transactional
-    public DataMsgResponseDto patchMyPage(UserRequestDto userRequestDto, HttpServletRequest request) {
+    public UserResponseDto patchMyPage(UserRequestDto userRequestDto, HttpServletRequest request) {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);
@@ -71,11 +72,11 @@ public class MypageService {
                 .imagePath(user.getImgUrl())
                 .build();
 
-        return new DataMsgResponseDto(StatusMsgCode.UPDATE_USER_PROFILE, userResponseDto);
+        return userResponseDto;
     }
 
     // 뱃지 조회하기
-    public Map<String, List<String>> getBadge( HttpServletRequest request) {
+    public Map<String, List<String>> getBadge(HttpServletRequest request) {
 
         // 유저 정보 가져오기
         Claims claims = jwtUtil.authorizeToken(request);
@@ -86,9 +87,6 @@ public class MypageService {
         // 해당 유저의 업적 list 가져오기
         List<Achievement> achievementList = achievementRepository.findAllByUser(user);
 
-////         반환용 Dto 선언
-//        List<Map<String, List<String>>> achievementResponseDtoList = new ArrayList<>();
-
         Map<String, List<String>> responseMap = new HashMap<>();
 
         List<String> playtimeList = new ArrayList<>();
@@ -97,26 +95,16 @@ public class MypageService {
 
         for (Achievement achievement : achievementList){
             switch (achievement.getName().split("_")[1]) {
-                case "P" -> playtimeList.add(achievement.getName());
-                case "T" -> trialList.add(achievement.getName());
-                case "V" -> visitList.add(achievement.getName());
-            };
+                case "P" -> playtimeList.add(achievement.getName());     // playtime
+                case "T" -> trialList.add(achievement.getName());        // trial
+                case "V" -> visitList.add(achievement.getName());        // visit
+            }
         }
+
         responseMap.put("playtime", playtimeList);
         responseMap.put("trial", trialList);
         responseMap.put("visit", visitList);
 
-
-//        for (Achievement achievement : achievementList) {
-//            AchievementResponseDto achievementResponseDto = AchievementResponseDto.builder()
-//                    .achievementName(achievement.getName())
-//                    .build();
-//
-//            achievementResponseDtoList.add(achievementResponseDto);
-//        }
-
         return responseMap;
     }
-
-
 }

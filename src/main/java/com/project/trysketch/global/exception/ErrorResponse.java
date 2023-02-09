@@ -21,5 +21,4 @@ public class ErrorResponse {
                         .message(statusMsgCode.getDetail())
                         .build());
     }
-
 }

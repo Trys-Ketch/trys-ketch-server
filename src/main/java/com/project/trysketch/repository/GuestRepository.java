@@ -4,7 +4,6 @@ import com.project.trysketch.dto.CacheKey;
 import com.project.trysketch.entity.Guest;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.repository.CrudRepository;
-
 import java.util.Optional;
 
 // 1. 기능   : 비회원 Repository

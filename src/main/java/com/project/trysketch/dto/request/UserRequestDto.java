@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import javax.validation.constraints.Pattern;
 
+// 1. 기능   : 유저 닉네임 입력 요소
+// 2. 작성자 : 서혁수, 황미경
 @Getter
 @AllArgsConstructor
 @Builder

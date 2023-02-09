@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
-// 1. 기능   : 제출 인원 Entity
+// 1. 기능   : 제출 인원
 // 2. 작성자 : 안은솔
 @Getter
 @Entity

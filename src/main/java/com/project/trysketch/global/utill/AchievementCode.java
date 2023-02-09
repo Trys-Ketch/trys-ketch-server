@@ -2,9 +2,10 @@ package com.project.trysketch.global.utill;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public enum AchievementCode {
 
     /* 플레이타임 업적 코드 */
@@ -21,7 +22,5 @@ public enum AchievementCode {
     VISIT_TROPHY_BRONZE("TSK_V_B"),
     VISIT_TROPHY_SILVER("TSK_V_S"),
     VISIT_TROPHY_GOLD("TSK_V_G");
-
-
     private final String AchievementName;
 }

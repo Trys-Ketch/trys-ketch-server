@@ -1,9 +1,7 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.global.dto.MsgResponseDto;
-import com.project.trysketch.global.exception.StatusMsgCode;
+import com.project.trysketch.dto.request.UserRequestDto;
 import com.project.trysketch.entity.Guest;
-import com.project.trysketch.dto.request.GuestNickRequestDto;
 import com.project.trysketch.repository.GuestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,15 +25,18 @@ public class GuestService {
     }
 
     // 비회원 로그인시 헤드 추가 메서드
-    public MsgResponseDto guestLogin(HttpServletResponse response, GuestNickRequestDto requestDto) {
+    public void guestLogin(HttpServletResponse response, UserRequestDto requestDto) {
+
         Long num = guestIncrement("guestCount");    // 자동값 증가 키값 지정 및 시작
         Long guestId = 10000L + num;                    // 10000 번 부터 시작해서 1씩 증가(첫번째 값 10001)
 
         // 새로운 guest 객체에 필요한 정보를 담아서 생성 후 DB에 저장
-        Guest guest = new Guest(guestId
-                , guestId.toString()
-                , requestDto.getNickname()
-                , requestDto.getImgUrl());
+        Guest guest = Guest.builder()
+                .id(guestId)
+                .guestId(guestId.toString())
+                .nickname(requestDto.getNickname())
+                .imgUrl(requestDto.getImgUrl())
+                .build();
         guestRepository.save(guest);
 
         // 쉼표로 구분되는 문자열 형태로 만들어 줌
@@ -46,8 +47,6 @@ public class GuestService {
 
         // 헤더에 헤더값 지정 및 바디 값 넣어주기
         response.addHeader("guest", encodeResult);
-
-        return new MsgResponseDto(StatusMsgCode.LOG_IN);
     }
 
 }

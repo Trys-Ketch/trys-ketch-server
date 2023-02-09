@@ -63,6 +63,8 @@ public class JwtUtil {
                         .signWith(key, signatureAlgorithm)
                         .compact();
     }
+    // compact() : 압축하고 서명하기 위해 호출하고 jws 생성
+    // jws : 서버에서 인증을 근거로 인증정보를 서버의 private key 로 서명 한것을 토큰화 한 것
 
     // 유효 토큰부분 자르기
     public String resolveToken(HttpServletRequest request) {
@@ -70,7 +72,6 @@ public class JwtUtil {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(7);
         }
-
         return null;
     }
 
@@ -91,18 +92,11 @@ public class JwtUtil {
         return false;
     }
 
-    // 토큰에서 사용자 정보 가져오기
-    public Claims getUserInfoFromToken(String token) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-    }
-
-
     // 인증 객체를 실제로 만드는 부분
     public Authentication createAuthentication(String email) {
         UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(email);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
-
 
     // request 에서 유저 정보 가져오기
     public Claims authorizeToken(HttpServletRequest request) {
@@ -136,5 +130,10 @@ public class JwtUtil {
                 throw new CustomException(StatusMsgCode.INVALID_AUTH_TOKEN);
         }
         return null;
+    }
+
+    // 토큰에서 사용자 정보 가져오기
+    public Claims getUserInfoFromToken(String token) {
+        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     }
 }
