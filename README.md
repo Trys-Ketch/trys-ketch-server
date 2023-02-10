@@ -40,7 +40,7 @@
 
 ### 👉🏻 [게임 한판 하러 가시죠 !](https://trys-ketch.com/)
 ### 👉🏻 [눈코캐 팀 노션은 여기입니다 !](https://www.notion.so/eunsolan/TRY-S-KETCH-23948fe736a44c8fbb75f7846c8f3eac)
-### 🎬 **[시연 영상 한번 보고 가시죠 !](https://www.youtube.com/watch?v=pCgOr2gWcyQ)**
+### 🎬 **[시연 영상 한번 보고 가시죠 !](https://youtu.be/pD0Y13e36Ro)**
 
 <br/>
 
@@ -55,7 +55,7 @@
 ## 📒 기술스택
 
 #### FRONT-END
-<img src="https://img.shields.io/badge/HTML-E34F26?style=for-the-badge&logo=HTML5&logoColor=white"/> <img src="https://img.shields.io/badge/styled components-DB7093?style=for-the-badge&logo=styled-components&logoColor=white"/> <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=JavaScript&logoColor=black"/> <img src="https://img.shields.io/badge/Redux Toolkit-764ABC?style=for-the-badge&logo=Redux&logoColor=white"/> <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=WebRTC&logoColor=white"/> <br> <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=black"/> <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=Axios&logoColor=white"/> <img src="https://img.shields.io/badge/GitHub Actions-2088FF?style=for-the-badge&logo=GitHub Actions&logoColor=white"/> <img src="https://img.shields.io/badge/sockjs-333333?style=for-the-badge&logo=sockjs&logoColor=white"/> <img src="https://img.shields.io/badge/stomp-333333?style=for-the-badge&logo=stomp&logoColor=white"/> <img src="https://img.shields.io/badge/Google Analytics-E37400?style=for-the-badge&logo=Google Analytics&logoColor=white"/>
+<img src="https://img.shields.io/badge/HTML-E34F26?style=for-the-badge&logo=HTML5&logoColor=white"/> <img src="https://img.shields.io/badge/styled components-DB7093?style=for-the-badge&logo=styled-components&logoColor=white"/> <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=JavaScript&logoColor=black"/> <img src="https://img.shields.io/badge/Redux Toolkit-764ABC?style=for-the-badge&logo=Redux&logoColor=white"/> <br> <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=black"/> <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=Axios&logoColor=white"/> <img src="https://img.shields.io/badge/GitHub Actions-2088FF?style=for-the-badge&logo=GitHub Actions&logoColor=white"/> <img src="https://img.shields.io/badge/sockjs-333333?style=for-the-badge&logo=sockjs&logoColor=white"/> <img src="https://img.shields.io/badge/stomp-333333?style=for-the-badge&logo=stomp&logoColor=white"/> <img src="https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=WebRTC&logoColor=white"/>
 
 #### BACK-END
 <img src="https://img.shields.io/badge/Spring-6DB33F?style=for-the-badge&logo=Spring&logoColor=white"/> <img src="https://img.shields.io/badge/Spring Boot-6DB33F?style=for-the-badge&logo=Spring Boot&logoColor=white"/> <img src="https://img.shields.io/badge/Spring Security-6DB33F?style=for-the-badge&logo=Spring Security&logoColor=white"/> 
@@ -70,7 +70,7 @@
 <br/>
 
 ## 🏗️ 서비스 아키텍처
-![서비스 아키텍쳐](https://user-images.githubusercontent.com/116439064/215262310-f5df37f4-2094-4f49-9d65-e11ed70ea709.png)
+![서비스 아키텍쳐](https://user-images.githubusercontent.com/116439064/217725641-eb30cbce-c3eb-493d-a274-22f9d85d007b.png)
 
 <br/>
 
@@ -78,16 +78,17 @@
 <details>
 <summary>우리는 이렇게 생각하고 결정했습니다 !</summary>
 
-| 요구 사항|선택지|핵심 기술을 선택한 이유 및 근거|
-|:---|:---|:---|
-| WebRTC를 이용한<br/>사용자 음성 연결 |Mesh(p2p),</br>SFU|- SFU는 하나의 서버를 더 구축해야하기 때문에 프로젝트의 규모에 맞지 않음<br/>- 영상 없이 음성통신만 구현하면 되기 때문에 클라이언트의 부하가 심하지 않다고 판단</br>- Mesh방식의 코드 샘플이 가장 많아 정보를 찾아보기 편했음</br>|
-|게임 로비에서 실시간<br/>방 정보 조회|Polling,<br/>Long Polling,<br/>SSE,<br/>WebSocket| - 리소스와 실시간성 두가지 측면 고려 필요<br/>- 많은 데이터를 주고받아야하므로 서버의 부하가 적어야함<br/>- polling은 구현이 간단하나 실시간으로 반영되지 않고 실시간으로 반영시키고 싶다면 서버에 짧은 간격으로 요청을 하면 되나 서버의 부하가 심해짐<br/>- Long Polling은 실시간성을 보장받을 수 있으나 구현이 번거로움<br/>- 클라이언트와 서버간 상호작용 불필요, 서버에서 클라이언트로 단방향 통신만<br/>필요한 케이스이므로 리소스 측면 고려하여 SSE방식을 채택 |
-|게임 진행 과정에서<br/>간단한 그림 그리기|Canvas API,<br/>WebGL|- WebGL은 복잡한 3D 렌더링에 더 선호되고 Canvas API는 일반적으로 2D<br/>렌더링에 더 선호됨<br/>- 간단한 그림을 그리는 기능을 구현하기 위해 WebGL은 너무나 많은 러닝커브를 필요로 함<br/>- 따라서 제로베이스에서 금방 구현할 수 있는 Canvas API를 채택하였음|
-|그림 이미지<br/>파일 관리|Spring Scheduler,<br/>Spring Batch,<br/>Scheduler quartz| - 그림을 DB에 저장하여 게임 중 데이터 손실을 방지하며 필요없는 데이터를<br/>주기적으로 없애기 위해 스케줄링 필요<br/>- 이벤트 일정에 변동이 없으며 이벤트 시 동작하는 로직이 단순하고 프로젝트 규모에 맞게 간단하게 구현 가능한 Spring Scheduler 사용 |
-|비회원 정보 관리|MySQL,<br/>Redis,<br/>Memcached|- Redis는 데이터 입력과 삭제가 MySQL에 비해서 10배정도 빠름<br/>- 관계형 데이터베이스와 같이 쿼리 연산을 지원하지 않지만, 대신 데이터의<br/>고속 읽기와 쓰기에 최적화 되어 있음<br/>- Redis는 Memcached 와 달리 단순한 key/value 자료구조 외에도 다양한 자료구조 지원<br/>- 하나의 비회원 정보에 “고유번호, 닉네임, 이미지URL” 여러개의 값을 저장이 가능<br/>- Redis 자체적으로 만료 시간 설정 가능|
+| 요구 사항| 선택지                                                      |핵심 기술을 선택한 이유 및 근거|
+|:---|:---------------------------------------------------------|:---|
+| WebRTC를 이용한<br/>사용자 음성 연결 | - Mesh(p2p)</br>- SFU                                   |- SFU는 하나의 서버를 더 구축해야하기 때문에 프로젝트의 규모에 맞지 않음<br/>- 영상 없이 음성통신만 구현하면 되기 때문에 클라이언트의 부하가 심하지 않다고 판단</br>- Mesh방식의 코드 샘플이 가장 많아 정보를 찾아보기 편했음</br>|
+|게임 로비에서 실시간<br/>방 정보 조회| - Polling<br/>- Long Polling<br/>- SSE<br/>- WebSocket        | - 리소스와 실시간성 두가지 측면 고려 필요<br/>- 많은 데이터를 주고받아야하므로 서버의 부하가 적어야함<br/>- polling은 구현이 간단하나 실시간으로 반영되지 않고 실시간으로 반영시키고 싶다면 서버에 짧은 간격으로 요청을 하면 되나 서버의 부하가 심해짐<br/>- Long Polling은 실시간성을 보장받을 수 있으나 구현이 번거로움<br/>- 클라이언트와 서버간 상호작용 불필요, 서버에서 클라이언트로 단방향 통신만<br/>필요한 케이스이므로 리소스 측면 고려하여 SSE방식을 채택 |
+|게임 진행 과정에서<br/>간단한 그림 그리기| - Canvas API<br/>- WebGL                                    |- WebGL은 복잡한 3D 렌더링에 더 선호되고 Canvas API는 일반적으로 2D<br/>렌더링에 더 선호됨<br/>- 간단한 그림을 그리는 기능을 구현하기 위해 WebGL은 너무나 많은 러닝커브를 필요로 함<br/>- 따라서 제로베이스에서 금방 구현할 수 있는 Canvas API를 채택하였음|
+|그림 이미지<br/>파일 관리| - Spring Scheduler<br/>- Spring Batch<br/>- Scheduler quartz | - 그림을 DB에 저장하여 게임 중 데이터 손실을 방지하며 필요없는 데이터를<br/>주기적으로 없애기 위해 스케줄링 필요<br/>- 이벤트 일정에 변동이 없으며 이벤트 시 동작하는 로직이 단순하고 프로젝트 규모에 맞게 간단하게 구현 가능한 Spring Scheduler 사용 |
+|비회원 정보 관리|- MySQL,<br/>- Redis,<br/>- Memcached                          |- Redis는 데이터 입력과 삭제가 MySQL에 비해서 10배정도 빠름<br/>- 관계형 데이터베이스와 같이 쿼리 연산을 지원하지 않지만, 대신 데이터의<br/>고속 읽기와 쓰기에 최적화 되어 있음<br/>- Redis는 Memcached 와 달리 단순한 key/value 자료구조 외에도 다양한 자료구조 지원<br/>- 하나의 비회원 정보에 “고유번호, 닉네임, 이미지URL” 여러개의 값을 저장이 가능<br/>- Redis 자체적으로 만료 시간 설정 가능|
 
 </details>
 
+<br/>
 
 ## 🛠️ 트러블슈팅
 
@@ -144,16 +145,16 @@
 |😱 문제|emitter의 객체 시간을 길게 설정할 때, 데이터를 제대로 전송하지 못할 때 발생하는<br/>IOException : Broken PIpe 에러가 발생|
 |🤔 원인|JPA 사용시 open in view 설정이 기본으로 true로 설정됨. true로 설정되면 HTTP Connection이 열려있는 동안<br/>DB Connection도 같이 열려있게 됨.<br/>보통은 HTTP 호출이 끝나고 DB 커넥션도 종료되나, SSE 사용시에는 객체가 만료되기 전까지 계속해서 DB<br/>커넥션이 열려 고갈되는 것이 문제였음<br/>|
 |😭 시도|객체의 시간을 짧게 설정 해봄 → 객체의 만료시간이 지날 때마다 재연결되고 이는 결국 리소스의 낭비로<br/>이어져 SSE를 사용하는 목적에 맞지않음<br/>|
-|😄 해결|open in view 설정을 끄고, fetch join 타입을 따로 설정하여 해결|
+|😄 해결|DB 커넥션을 계속 물고 있지 않도록 OSIV 설정을 끔. → 이러한 경우 프록시 객체를 초기화 시키지 못한다는<br/> 다른 에러가 발생 → @OneToMany의 fetch join 타입을 Eager로 설정하여 해결|
 
 ### 게임 중 발생하는 동시성 제어(synchronized, DB Lock)
 
 |요구 사항| 핵심 기술을 선택한 이유 및 근거|
 |:---|:---|
 |😱 문제| 제한 시간을 넘어 미처 제출하지 못한 유저의 키워드나 이미지가 일괄 자동 제출 되었을 때 DB에 제대로<br/>데이터가 쌓이지 않거나 다음 라운드로 진행되지 않는 이슈가 발생함.|
-|🤔 원인| 현재 로직상 save -> find의 구조를 가지고 있기에 자동제출 기능 구현 시 동시에 동일한 자원에 접근하려<br/>하는 것을 원인으로 판단.|
+|🤔 원인| 현재 로직상 save → find의 구조를 가지고 있기에 자동제출 기능 구현 시 동시에 동일한 자원에 접근하려<br/>하는 것을 원인으로 판단.|
 |😭 시도| • synchronized<br/>제출로직의 Controller method 에 synchronized 적용하여 스레드 간 데이터 동기화함. 의도대로 동작 했으나,<br/>성능 상 속도 저하 이슈 발생함.<br/>• Thread Scheduler<br/>제출 인원을 확인하는 로직을 독립시켜서 thread를 만들고, 일정 시간 동안 주기적으로 돌아가게끔 구현함.<br/>그러나 DB에 읽기 되는 순서를 제어 하지 못해 동일한 문제 발생함.<br/>• Optimistic Lock<br/>제출 로직 특성 상 빈번한 충돌이 예측 가능했기 때문에 롤백 비용을 고려하여 Optimistic Lock 미적용.<br/>• Pessimistic Lock<br/>제출 인원을 하나의 column으로 갖는 table을 생성하고, row level lock 적용, update용 find method를 구현 및,<br/>해당 method에 @Lock 어노테이션과 모드를 설정함.<br/>제출 인원을 수정할 때 write lock이 걸리고 transaction이 끝나야 lock이 풀리는 것을 이용함. |
-|😄 해결| 게임의 최대 인원이 8명으로 테스트 했을 때, 비교적 성능 이슈가 없던 Pessimistic Lock을 사용하기로 결정|
+|😄 해결|게임의 최대 인원이 8명으로 테스트 했을 때, 비교적 성능 이슈가 없던 Pessimistic Lock을 사용하는 것이<br/>적절하다고 판단되어 도입함.|
 
 </details>
 
