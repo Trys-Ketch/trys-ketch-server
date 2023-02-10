@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import javax.persistence.*;
 
 // 1. 기능   : 방에 들어가있는 유저 엔티티
@@ -21,33 +20,33 @@ public class GameRoomUser {
 
     @JoinColumn(name = "gameroom_id")
     @ManyToOne
-    private GameRoom gameRoom;
+    private GameRoom gameRoom;      // 게임방
 
     @Column(nullable = false)
-    private Long userId;
+    private Long userId;            // 유저 ID
 
     @Column(nullable = false)
-    private String nickname;
+    private String nickname;        // 유저 닉네임
 
     @Column
-    private String webSessionId;
+    private String webSessionId;    // webSessionId
 
     @Column(nullable = false)
-    private boolean readyStatus;
+    private boolean readyStatus;    // 레디상태
 
     @Column(nullable = false)
-    private String imgUrl;
+    private String imgUrl;          // 유저 프로필사진 URL
 
-    @OneToOne(mappedBy = "gameRoomUser", cascade = CascadeType.REMOVE) // 1.31
-    private UserPlayTime userPlayTime;
-    
+    @OneToOne(mappedBy = "gameRoomUser", cascade = CascadeType.REMOVE)
+    private UserPlayTime userPlayTime;      // 해당 유저의 플레이타임
+
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
     }
 
-    public void update(boolean readyStatus, String userUUID) {
+    public void update(boolean readyStatus, String webSessionId) {
         this.readyStatus = readyStatus;
-        this.webSessionId = userUUID;
+        this.webSessionId = webSessionId;
     }
 
 }

@@ -40,29 +40,6 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String password;                    // Password 설정
 
-    // 단일 Topic 사용을 위한 Bean 설정
-//    @Bean
-//    public ChannelTopic channelTopic() {
-//        return new ChannelTopic("chatroom");
-//    }
-//
-//    // Redis 에 발행(publish)된 메시지 처리를 위한 리스너 설정
-//    @Bean
-//    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory,
-//                                                              MessageListenerAdapter listenerAdapter,
-//                                                              ChannelTopic channelTopic) {
-//        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-//        container.setConnectionFactory(connectionFactory);
-//        container.addMessageListener(listenerAdapter, channelTopic);
-//        return container;
-//    }
-//
-//    // 실제 메시지를 처리하는 subscriber 설정 추가
-//    @Bean
-//    public MessageListenerAdapter listenerAdapter(ChatSubscriber subscriber) {
-//        return new MessageListenerAdapter(subscriber, "sendMessage");
-//    }
-
     // Redis 와 연결
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -87,13 +64,6 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
 
-        // Hash 를 사용할 경우 시리얼라이저
-//        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
-
-        // 모든 경우
-        // redisTemplate.setDefaultSerializer(new StringRedisSerializer());
-
         return redisTemplate;
     }
 
@@ -116,5 +86,4 @@ public class RedisConfig {
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
     }
-
 }

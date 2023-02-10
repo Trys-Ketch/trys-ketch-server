@@ -1,5 +1,7 @@
 package com.project.trysketch.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
@@ -10,6 +12,8 @@ import java.io.Serializable;
 // 2. 작성자 : 서혁수
 @Getter
 @RedisHash(value = "guest", timeToLive = 36000L)
+@AllArgsConstructor
+@Builder
 public class Guest implements Serializable {
     // RedisHash : Hash Collection 명시
     // Jpa 의 Entity 에 해당하는 어노테이션 즉, value 는 Key 를 만들 때 사용하는 것으로
@@ -23,12 +27,5 @@ public class Guest implements Serializable {
     private String nickname;        // 유저 닉네임
 
     private String imgUrl;          // 유저 랜덤 이미지
-
-    public Guest(Long id, String guestId, String nickname, String imgUrl) {
-        this.id = id;
-        this.guestId = guestId;
-        this.nickname = nickname;
-        this.imgUrl = imgUrl;
-    }
 
 }

@@ -19,9 +19,9 @@ public class WebRtcConfig implements WebSocketConfigurer {
     // 요청은 클라이언트 접속, close, 메시지 발송 등에 대해 특정 메서드를 호출한다
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(signalingSocketHandler(), "/signal")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+        registry.addHandler(signalingSocketHandler(), "/signal")   // 연결될 Endpoint
+                .setAllowedOriginPatterns("*")                            // CORS 설정
+                .withSockJS();                                            // SockJS 설정
     }
 
     @Bean

@@ -48,4 +48,6 @@ public class History extends Timestamped {
     public void updateUser(User user) {
         this.user = user;
     }
+
+
 }

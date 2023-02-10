@@ -36,10 +36,10 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
+
         // 모든 static 리소스 접근 허가
         return (web -> web.ignoring().requestMatchers(PathRequest
                 .toStaticResources().atCommonLocations()));
-//                .toH2Console()));     // h2 사용시 이것을 사용
     }
 
     @Bean
@@ -61,18 +61,9 @@ public class WebSecurityConfig {
                 .and()
                 .cors()
 
-                // 시큐리티 자체 지원 로그아웃 기능
-/*                .and()
-                .logout()
-                .logoutUrl("/api/auth/logout")
-                .logoutSuccessUrl("/api/auth/signIn")
-                .deleteCookies("Authorization")
-                .logoutSuccessHandler((request, response, authentication) -> response.sendRedirect("/api/auth/signIn"))*/
-
                 .and()
                 .addFilterBefore(new JwtAuthFilter(jwtUtil),
                         UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
@@ -83,22 +74,21 @@ public class WebSecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         // 접근 가능한 출처
-        config.addAllowedOrigin("http://localhost:3000");
-        // config.addAllowedOriginPattern("*");
-        config.addAllowedOrigin("https://localhost:3000");
-        config.addAllowedOrigin("https://trys-ketch.com");
+        config.addAllowedOrigin("http://localhost:3000");  // 프론트 로컬 도메인
+        config.addAllowedOrigin("https://localhost:3000"); // 프론트 로컬 도메인 https
+        config.addAllowedOrigin("https://trys-ketch.com"); // 메인 도메인
 
         // 브라우저에서 인증 관련 정보들을 요청에 담을 수 있도록 허가
         config.setAllowCredentials(true);
 
-        // 본 요청에 허용할 HTTP method
+        // 본 요청에 허용할 HTTP method ex) Get, Post...
         config.addAllowedMethod("*");
 
         // 본 요청에 허용할 HTTP header
         config.addAllowedHeader("*");
 
         // 클라이언트가 접근 가능한 헤더 지정 (토큰 사용 가능하게)
-        config.addExposedHeader("Authorization"); // ********
+        config.addExposedHeader("Authorization");
         config.addExposedHeader("guest");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

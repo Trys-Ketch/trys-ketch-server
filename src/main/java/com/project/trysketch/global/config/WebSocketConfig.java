@@ -14,35 +14,35 @@ import org.springframework.web.socket.config.annotation.WebSocketTransportRegist
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-@EnableWebSocketMessageBroker // 문자 채팅용
+@EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
     // 웹 소켓 연결을 위한 엔드포인트 설정 및 stomp sub/pub 엔드포인트 설정
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // stomp 접속 주소 url => /ws/chat
+
         registry.addEndpoint("/ws")      // 연결될 Endpoint
                 .setAllowedOriginPatterns("*")  // CORS 설정
                 .withSockJS()                   // SockJS 설정
                 .setHeartbeatTime(1000);        // 연결상태 확인 주기
-        log.info(">>>>>>>[ws] 웹소켓 연결 : {}", registry);
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
+
         // 메시지를 구독하는 요청 url => 즉 메시지 받을 때
         registry.enableSimpleBroker("/queue", "/topic");
 
         // 메시지를 발행하는 요청 url => 즉 메시지 보낼 때
         registry.setApplicationDestinationPrefixes("/app");
-        log.info(">>>>>>>[ws] 메시지 브로커 : {}", registry);
     }
 
     // 웹 소켓 버퍼 사이즈 증축
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
-        registration.setMessageSizeLimit(160 * 64 * 1024); // default : 64 * 1024
-        registration.setSendTimeLimit(100 * 10000); // default : 10 * 10000
-        registration.setSendBufferSizeLimit(3* 512 * 1024); // default : 512 * 1024
-    }
 
+        registration.setMessageSizeLimit(160 * 64 * 1024);   // default : 64 * 1024
+        registration.setSendTimeLimit(100 * 10000);          // default : 10 * 10000
+        registration.setSendBufferSizeLimit(3 * 512 * 1024); // default : 512 * 1024
+    }
 }
