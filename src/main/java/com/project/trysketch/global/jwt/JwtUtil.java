@@ -27,11 +27,14 @@ import java.util.Date;
 public class JwtUtil {
 
     // 헤더에 설정 사항
-    public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String ACCESS_TOKEN_HEADER = "Authorization";
+    public static final String REFRESH_TOKEN_HEADER = "RefreshToken";
     private static final String BEARER_PREFIX = "Bearer ";
 
     // 만료시간
-    private static final long TOKEN_TIME = 60 * 60 * 11 * 1000L;        // 11시간
+    private static final long AC_TOKEN_TIME = 30 * 60 * 1000L;             // 30분
+    private static final long RF_TOKEN_TIME = 7 * 24 * 60 * 60 * 1000L;    // 1주일
+    // 60 * 60 * 11 * 1000L;        // 11시간
 
     // 시크릿 키
     @Value("${jwt.secret.key}")
@@ -52,13 +55,13 @@ public class JwtUtil {
     }
 
     // 토큰 생성
-    public String createToken(String userEmail, String nickname) {
+    public String createAcToken(String userEmail, String nickname) {
         Date date = new Date();
         return BEARER_PREFIX +
                 Jwts.builder()
                         .claim("email", userEmail)
                         .claim("nickname", nickname)
-                        .setExpiration(new Date(date.getTime() + TOKEN_TIME))
+                        .setExpiration(new Date(date.getTime() + AC_TOKEN_TIME))
                         .setIssuedAt(date)
                         .signWith(key, signatureAlgorithm)
                         .compact();
@@ -66,9 +69,21 @@ public class JwtUtil {
     // compact() : 압축하고 서명하기 위해 호출하고 jws 생성
     // jws : 서버에서 인증을 근거로 인증정보를 서버의 private key 로 서명 한것을 토큰화 한 것
 
+    public String createRfToken(String userEmail, String nickname) {
+        Date date = new Date();
+        return BEARER_PREFIX +
+                Jwts.builder()
+                        .claim("email", userEmail)
+                        .claim("nickname", nickname)
+                        .setExpiration(new Date(date.getTime() + RF_TOKEN_TIME))
+                        .setIssuedAt(date)
+                        .signWith(key, signatureAlgorithm)
+                        .compact();
+    }
+
     // 유효 토큰부분 자르기
     public String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
+        String bearerToken = request.getHeader(ACCESS_TOKEN_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(7);
         }

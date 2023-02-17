@@ -30,20 +30,25 @@ public class UserController {
 
     // OAuth2.0 카카오톡 로그인
     @GetMapping("/kakao/callback")
-    public ResponseEntity<DataMsgResponseDto> kakaoLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(socialLoginService.socialLogin(kakao, code, null, response));
+    public ResponseEntity<DataMsgResponseDto> kakaoLogin(@RequestParam String code, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+        return ResponseEntity.ok(socialLoginService.socialLogin(kakao, code, null, response, request));
     }
 
     // OAuth2.0 네이버 로그인
     @GetMapping("/naver/callback")
-    public ResponseEntity<DataMsgResponseDto> naverLogin(@RequestParam String code, @RequestParam String state, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(socialLoginService.socialLogin(naver, code, state, response));
+    public ResponseEntity<DataMsgResponseDto> naverLogin(@RequestParam String code, @RequestParam String state, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+        return ResponseEntity.ok(socialLoginService.socialLogin(naver, code, state, response, request));
     }
 
     // OAuth2.0 구글 로그인
     @GetMapping("/google/callback")
-    public ResponseEntity<DataMsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response) throws JsonProcessingException {
-        return ResponseEntity.ok(socialLoginService.socialLogin(google, code, null, response));
+    public ResponseEntity<DataMsgResponseDto> googleLogin(@RequestParam String code, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
+        return ResponseEntity.ok(socialLoginService.socialLogin(google, code, null, response, request));
+    }
+
+    @GetMapping("issue/token")
+    public void issueToken (HttpServletRequest request, HttpServletResponse response) {
+        userService.issuedToken(request, response);
     }
 
     // 비회원 로그인
@@ -65,11 +70,17 @@ public class UserController {
         return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK, userService.getRandomThumbImg()));
     }
 
-    // ======================== 회원 & 비회원 정보 조회 ========================
     // 회원 & 비회원 정보 조회
     @GetMapping("/user-info")
     public ResponseEntity<DataMsgResponseDto> userInfo(HttpServletRequest request) {
         return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK, userService.getUserInfo(request)));
+    }
+
+    // 로그아웃
+    @GetMapping("/logout")
+    public ResponseEntity<DataMsgResponseDto> logout(HttpServletRequest request, HttpServletResponse response) {
+        userService.logout(request, response);
+        return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK));
     }
 }
 

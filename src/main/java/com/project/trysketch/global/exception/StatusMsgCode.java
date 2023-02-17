@@ -19,6 +19,7 @@ public enum StatusMsgCode {
     NOT_FOUND_NICK(HttpStatus.BAD_REQUEST, "닉네임을 찾을 수 없습니다"),
     HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "활동 이력을 찾울 수 없습니다"),
     MINMAX_ROUND_TIME(HttpStatus.BAD_REQUEST, "요청한 라운드 시간의 최소/최대치에 도달해 변경이 불가능합니다"),
+    EXPIRED_REFRESH_TOKEN(HttpStatus.FORBIDDEN, "만료된 토큰 입니다"),
 
     /* 이미지 관련 Status 메시지 코드 */
     IMAGE_NOT_FOUND(HttpStatus.BAD_REQUEST, "이미지를 찾을 수 없습니다"),

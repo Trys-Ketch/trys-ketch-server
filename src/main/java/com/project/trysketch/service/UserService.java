@@ -1,22 +1,20 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.entity.ThumbImg;
+import com.project.trysketch.entity.*;
 import com.project.trysketch.dto.GamerEnum;
-import com.project.trysketch.entity.Guest;
-import com.project.trysketch.repository.GuestRepository;
-import com.project.trysketch.repository.ThumbImgRepository;
-import com.project.trysketch.entity.RandomNick;
-import com.project.trysketch.repository.RandomNickRepository;
+import com.project.trysketch.repository.*;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
-import com.project.trysketch.entity.User;
-import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -28,12 +26,13 @@ import java.util.HashMap;
 @Slf4j
 @RequiredArgsConstructor
 public class UserService {
-
     private final UserRepository userRepository;
     private final RandomNickRepository randomNickRepository;
     private final GuestRepository guestRepository;
     private final ThumbImgRepository thumbImgRepository;
     private final JwtUtil jwtUtil;
+    private final GuestService guestService;
+    private final RefreshTokenRepository refreshTokenRepository;
     private static int IMG_MAXMUM = 3;
     private static int IMG_NUM = 0;
 
@@ -144,5 +143,72 @@ public class UserService {
             throw new CustomException(StatusMsgCode.NECESSARY_LOG_IN);
         }
         return extInfo;
+    }
+
+    // 토큰 재발급 메서드
+    public void issuedToken(HttpServletRequest request, HttpServletResponse response) {
+        log.info(">>>>>> UserService 의 issuedToken 시작");
+        Cookie[] cookies = request.getCookies();        // 클라이언트가 주는 모든 쿠키 가져오기
+        String tokenIndex = "";
+
+        // 쿠키 리스트 null 즉, 가져온 쿠키가 없으면 에러 발생
+        if (cookies == null) {
+            throw new CustomException(StatusMsgCode.EXPIRED_REFRESH_TOKEN);
+        }
+
+        // 쿠키 중 RefreshToken 가져오기
+        for (Cookie cookie : cookies) {
+            String name = cookie.getName();
+            String value = cookie.getValue();
+            if (name.equals("RefreshToken")) {
+                tokenIndex = value;
+                break;
+            }
+        }
+
+        // access token 발급
+        if (tokenIndex != null) {
+            RefreshToken refreshToken = refreshTokenRepository.findById(tokenIndex).orElseThrow(
+                    () -> new CustomException(StatusMsgCode.EXPIRED_REFRESH_TOKEN)
+            );
+
+            log.info(">>>>>> UserService 의 issuedToken / RefreshToken 찾음");
+            log.info(">>>>>> UserService 의 issuedToken / RefreshToken : {}", refreshToken.getToken());
+
+            Claims claims = jwtUtil.authorizeSocketToken(refreshToken.getToken());
+            String token = jwtUtil.createAcToken(claims.get("email").toString(), claims.get("nickname").toString());
+            response.addHeader(JwtUtil.ACCESS_TOKEN_HEADER, token);
+            log.info(">>>>>> UserService 의 issuedToken / 새로 발급된 AccessToken : {}", token);
+        } else {
+            throw new CustomException(StatusMsgCode.EXPIRED_REFRESH_TOKEN);
+        }
+    }
+
+    // 로그아웃
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        Cookie[] cookies = request.getCookies();
+
+        // 쿠키 중 RefreshToken 있으면 가져와서 삭제
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                String name = cookie.getName();
+                String value = cookie.getValue();
+                if (name.equals("RefreshToken")) {
+                    // RefreshToken DB 에서 삭제 및 쿠키는 maxAge(파기시간) 를 0으로 줘서 쿠키 삭제
+                    log.info(">>>>> SocialLoginService 의 UserService 메서드 / 로그아웃 요청으로 인해서 삭제 진행");
+                    refreshTokenRepository.deleteById(value);
+                    ResponseCookie rfCookie = ResponseCookie.from(JwtUtil.REFRESH_TOKEN_HEADER, value)
+                            .path("/")
+                            .domain("trys-ketch.com")
+                            .sameSite("None")
+                            .httpOnly(true)
+                            .secure(true)
+                            .maxAge(0)
+                            .build();
+                    response.setHeader("Set-Cookie", rfCookie.toString());
+                    break;
+                }
+            }
+        }
     }
 }
