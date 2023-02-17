@@ -4,7 +4,6 @@ import com.project.trysketch.dto.request.UserRequestDto;
 import com.project.trysketch.entity.Guest;
 import com.project.trysketch.repository.GuestRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletResponse;

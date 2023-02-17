@@ -121,8 +121,6 @@ public class GameRoomService {
                 .readyStatus(true)
                 .build();
 
-        log.info(">>>>>>>>>> 접속한 유저의 정보를 토대로 gameRoomUser 생성 {}", gameRoomUser);
-        log.info(">>>>>>>>>> true 여야 함 {}", gameRoomUser.isReadyStatus());
 
         // 게임 방 DB에 저장 및 입장중인 유저 정보 저장
         gameRoomRepository.save(gameRoom);
@@ -150,7 +148,7 @@ public class GameRoomService {
             int index = rnd.nextInt(2); // 0~1 중 랜덤
 
             switch (index) {
-                case 0 -> key.append((char) ((rnd.nextInt(26)) + 97));  //  a~z  (ex. 1+97=98 => (char)98 = 'b')
+                case 0 -> key.append((char) ((rnd.nextInt(26)) + 97));  // a~z  (ex. 1+97=98 => (char)98 = 'b')
                 case 1 -> key.append((rnd.nextInt(10)));                // 0~9
             }
         }
@@ -215,7 +213,6 @@ public class GameRoomService {
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(webSessionId).orElse(null);
         if (gameRoomUser == null) {
             // gameRoomUser 조회 결과가 null 즉, 강퇴로 인해 유저정보가 이미 없어진 상태
-            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 이미 강퇴된 상태면 아무런 로직 실행 없이 null 값을 반환");
             return;
         } else {
             GameRoom currentGameRoom = gameRoomUser.getGameRoom();
@@ -237,9 +234,6 @@ public class GameRoomService {
                     .content(String.format("%s 님이 퇴장하셨습니다.", gameRoomUser.getNickname()))
                     .build();
 
-            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 타입 : {}", chatMessage.getType());
-            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 메시지 내용 : {}", chatMessage.getContent());
-            log.info(">>>>>>> 위치 : GameRoomService 의 exitGameRoom 메서드 / 나가려는 방 : {}", currentGameRoom.getId());
 
             sendingOperations.convertAndSend("/topic/chat/room/" + currentGameRoom.getId(), chatMessage);
 
@@ -275,10 +269,12 @@ public class GameRoomService {
     // ======================== 유저별 웹세션 ID 업데이트 =========================
     @Transactional
     public void updateWebSessionId(Long gameRoomId, String token, String webSessionId) {
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameRoomService - updateWebSessionId] >>>>>>>>>>>>>>>>>>>>>>>>");
         // 받아온 토큰으로부터 유저 또는 guest 정보를 받아온다.
         HashMap<String, String> extInfo = userService.getGamerInfo(token);
         Long gamerId = Long.valueOf(extInfo.get(GamerEnum.ID.key()));
         log.info(">>>>>>>> userId {}", gamerId);
+        log.info(">>>>>>>> webSessionId {}", webSessionId);
         log.info(">>>>>>>> gameRoomId {}", gameRoomId);
 
         // 해당 User 데이터로 GameRoomUser 데이터 가져오기
@@ -370,7 +366,6 @@ public class GameRoomService {
             attendee.add(gameRoomUserMap);
         }
         return attendee;
-
     }
 
     // ======================== 접속한 유저의 webSessionId  =======================
@@ -381,5 +376,4 @@ public class GameRoomService {
         );
         return gameRoomUser.getGameRoom().getId();
     }
-
 }

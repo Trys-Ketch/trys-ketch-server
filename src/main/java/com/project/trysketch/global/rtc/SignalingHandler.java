@@ -68,7 +68,6 @@ public class SignalingHandler extends TextWebSocketHandler {
         try {
             // 웹 소켓으로부터 전달받은 메시지를 deserialization(JSON -> Java Object)
             Message message = Utils.getObject(textMessage.getPayload());
-            log.info(">>> [ws] 시작!!! 세션 객체 {}", session);
 
             // 유저 uuid 와 roomId 와 token 을 저장
             String webSessionId = session.getId(); // 유저 uuid
@@ -82,7 +81,6 @@ public class SignalingHandler extends TextWebSocketHandler {
                 // 방 입장
                 case MSG_TYPE_JOIN_ROOM:
 
-                    log.info(">>> [ws] {} 가 #{}번 방에 들어감", webSessionId, roomId);
 
                     // 세션 저장, user 정보 저장 -> 방 입장
                     sessions.put(webSessionId, session);
@@ -96,7 +94,6 @@ public class SignalingHandler extends TextWebSocketHandler {
 
                     // 본인을 제외한 해당 방의 다른 유저들
                     // 예) [ { id : webSessionId1 }, { id : webSessionId2 }, ...  ]
-                    log.info(">>> [ws] 본인 {} 을 제외한 #{}번 방의 다른 유저들 {}", webSessionId, roomId, gameRoomService.getAllGameRoomUsersExceptMe(roomId, webSessionId));
 
                     // rtc/all_users 라는 타입으로, 본인에게 메시지 전달
                     session.sendMessage(new TextMessage(Utils.getString(Message.builder()
@@ -106,20 +103,17 @@ public class SignalingHandler extends TextWebSocketHandler {
 
                     // 본인을 포함한 현재 방의 전체 유저 정보
                     // 예) [ { userId: 2, nickname: "닉네임", imgUrl: "avatar.png", isHost: true, isReady: true, socketId: "qw5lkvtn"}, { ... } ]
-                    log.info(">>> [ws] 본인 {} 을 포함한 #{}번 방의 다른 유저들 {}", webSessionId, roomId, gameRoomService.getAllGameRoomUsers(roomId));
 
                     // ingame/attendee 라는 타입으로, 해당 방의 전체 유저에게 메시지 전달
                     try {
                         for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
-                            log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
                             webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                                     .type(MSG_TYPE_ATTENDEE)
                                     .attendee(gameRoomService.getAllGameRoomUsers(roomId))
                                     .sender(webSessionId).build())));
                         }
-                        log.info(">>> [ws] 본인의 정보를 해당 방 전체 유저에게 전달 성공!!");
                     } catch (Exception e) {
-                        log.info(">>> 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
+                        log.info(">>> [ws] 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
                     }
                     break;
 
@@ -132,7 +126,6 @@ public class SignalingHandler extends TextWebSocketHandler {
                     Object candidate = message.getCandidate();
                     Object sdp = message.getSdp();
                     String receiver = message.getReceiver();   // 클라이언트에서 보내주는 1명의 receiver
-                    log.info(">>> [ws] receiver {}", receiver);
 
                     // sessions 에서 receiver 를 찾아 메시지 전달
                     sessions.values().forEach(s -> {
@@ -146,7 +139,7 @@ public class SignalingHandler extends TextWebSocketHandler {
                                         .receiver(receiver).build())));
                             }
                         } catch (Exception e) {
-                            log.info(">>> 에러 발생 : offer," +
+                            log.info(">>> [ws] 에러 발생 : offer," +
                                     " candidate, answer 메시지 전달 실패 {}", e.getMessage());
                         }
                     });
@@ -155,52 +148,42 @@ public class SignalingHandler extends TextWebSocketHandler {
                 // 유저 게임 준비
                 case MSG_TYPE_TOGGLE_READY:
 
-                    log.info(">>> [ws] #{}번 방 유저, {} 타입으로 들어옴", roomId, message.getType());
 
                     // 접속한 유저의 roomId와 webSessionId 를 service 에 넘겨서 status 변경
                     // 해당 유저의 readyStatus 가 true 였다면 false 로, false 였다면 true 로 DB 업데이트
                     boolean userReadyStatus = gameRoomService.updateReadyStatus(roomId, webSessionId);
-                    log.info(">>> [ws] #{}번 방에 있는 {}, 게임 준비 상태 {} ", roomId, webSessionId, userReadyStatus);
 
                     // 본인을 포함한 현재 방의 전체 유저 정보
                     // 예) [ { userId: 2, nickname: "닉네임", imgUrl: "avatar.png", isHost: true, isReady: true, socketId: "qw5lkvtn"}, { ... } ]
                     // ingame/attendee 라는 타입으로, 해당 방의 전체 유저에게 메시지 전달
                     try {
                         for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
-                            log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
                             webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                                     .type(MSG_TYPE_ATTENDEE)
                                     .attendee(gameRoomService.getAllGameRoomUsers(roomId))
                                     .sender(webSessionId).build())));
                         }
-                        log.info(">>> [ws] 본인의 ready 변경 상태를 해당 방 전체 유저에게 전달 성공!!");
                     } catch (Exception e) {
-                        log.info(">>> 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
+                        log.info(">>> [ws] 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
                     }
                     break;
 
                 // 강퇴
                 case MSG_TYPE_KICK:
                     // 방장의 강퇴 기능 구현
-                    log.info(">>> [ws] 강퇴 요청이 들어온 방의 번호 : #{}번 방", roomId);
-                    log.info(">>> [ws] 방장이 강퇴 요청 / 강퇴 요청한 방장의 UUID : {}", webSessionId);
 
                     String kickId = message.getKickId();
-                    log.info(">>> [ws] 방장이 강퇴 요청 / 강퇴 당하는 유저의 UUID : {}", kickId);
 
                     // 강퇴 당하는 사람에게만 메시지 발송
                     try {
                         for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
                             // 방 안의 전체 각각의 유저별로 강퇴 당하는 사람 찾아서 메시지 발송
                             if (webSocketSession.getId().equals(kickId)) {
-//                                gameService.submitLeftRound(kickId);
                                 gameRoomService.exitGameRoom(kickId, roomId);
-                                log.info(">>> [ws] 강퇴 실행, Kick for 문 안에서 submitLeftRound 와 exitGameRoom 처리 완료");
 
                                 webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                                         .type(MSG_TYPE_BE_KICKED)
                                         .sender(kickId).build())));
-                                log.info(">>> [ws] 강퇴 당한 사람에게 메시지 전달 성공");
                                 break;
                             }
                         }
@@ -216,7 +199,6 @@ public class SignalingHandler extends TextWebSocketHandler {
                                         .attendee(gameRoomService.getAllGameRoomUsers(roomId))
                                         .sender(webSocketSession.getId()).build())));
 
-                                log.info(">>> [ws] user_exit 메시지 받고 있는 webSessionId 리스트 {}", webSocketSession.getId());
                                 webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                                         .type(MSG_TYPE_USER_EXIT)
                                         .sender(webSocketSession.getId()).build())));
@@ -236,15 +218,13 @@ public class SignalingHandler extends TextWebSocketHandler {
                     // ingame/attendee 라는 타입으로, 해당 방의 전체 유저에게 메시지 전달
                     try {
                         for (WebSocketSession webSocketSession : getRoomSessionList(roomId)) {
-                            log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", roomId, webSocketSession);
                             webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                                     .type(MSG_TYPE_ATTENDEE)
                                     .attendee(gameRoomService.getAllGameRoomUsers(roomId))
                                     .sender(webSessionId).build())));
                         }
-                        log.info(">>> [ws] 현재 방 전체 사람들에게 상태 전송 성공 !!!");
                     } catch (Exception e) {
-                        log.info(">>> 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
+                        log.info(">>> [ws] 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
                     }
 
                     break;
@@ -254,7 +234,7 @@ public class SignalingHandler extends TextWebSocketHandler {
                     log.info(">>> [ws] 잘못된 메시지 타입 {}", message.getType());
             }
         } catch (IOException e) {
-            log.info(">>> 에러 발생 : 양방향 데이터 통신 실패 {}", e.getMessage());
+            log.info(">>> [ws] 에러 발생 : 양방향 데이터 통신 실패 {}", e.getMessage());
         }
     }
 
@@ -283,19 +263,16 @@ public class SignalingHandler extends TextWebSocketHandler {
         if (gameRoomId != null) {
             try {
                 for (WebSocketSession webSocketSession : getRoomSessionList(gameRoomId)) {
-                    log.info(">>> [ws] #{}번 방에 있는 전체 유저의 세션 객체 리스트 {}", gameRoomId, webSocketSession);
                     webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                             .type(MSG_TYPE_ATTENDEE)
                             .attendee(gameRoomService.getAllGameRoomUsers(gameRoomId))
                             .sender(webSessionId).build())));
-                    log.info(">>> [ws] user_exit 메시지 받고 있는 webSessionId 리스트 {}", webSocketSession.getId());
                     webSocketSession.sendMessage(new TextMessage(Utils.getString(Message.builder()
                             .type(MSG_TYPE_USER_EXIT)
                             .sender(webSessionId).build())));
                 }
-                log.info(">>> [ws] 본인의 방 나가기 상태를 해당 방 전체 유저에게 전달 성공!!");
             } catch (Exception e) {
-                log.info(">>> 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
+                log.info(">>> [ws] 에러 발생 : 해당 방 전체 유저에게 메시지 전달 실패 {}", e.getMessage());
             }
         }
 
@@ -305,7 +282,7 @@ public class SignalingHandler extends TextWebSocketHandler {
     // 소켓 통신 에러
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
-        log.info(">>> 에러 발생 : 소켓 통신 에러 {}", exception.getMessage());
+        log.info(">>> [ws] 에러 발생 : 소켓 통신 에러 {}", exception.getMessage());
     }
 
     // 본인을 포함한 현재 방의 세션 객체 리스트 반환
@@ -320,7 +297,7 @@ public class SignalingHandler extends TextWebSocketHandler {
                     }
                 }
             } catch (Exception e) {
-                log.info(">>> 에러 발생 : 본인을 포함한 현재 방의 세션 객체 리스트 생성 실패 {}", e.getMessage());
+                log.info(">>> [ws] 에러 발생 : 본인을 포함한 현재 방의 세션 객체 리스트 생성 실패 {}", e.getMessage());
             }
         });
         return sessionList;

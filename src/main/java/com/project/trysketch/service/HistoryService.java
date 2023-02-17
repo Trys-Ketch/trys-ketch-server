@@ -100,7 +100,6 @@ public class HistoryService {
     // 사이트 로그인 횟수에 따른 업적
     public List<String> getTrophyOfVisit(User user) {
 
-        log.info(">>>>>>>>>>>>>>>>> [HistoryService] - getTrophyOfVisit");
         // 해당 유저의 활동이력 검색
         History history = historyRepository.findByUser(user).orElseThrow(
                 () -> new CustomException(StatusMsgCode.HISTORY_NOT_FOUND)
@@ -132,8 +131,6 @@ public class HistoryService {
     // 업적 검증부
     public String verifyUserAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine) {
 
-        log.info(">>>>>>>>>>>>>>>>> [HistoryService] - verifyUserAchievement");
-
         // 유저 의 count 가  baseLine 이 기준선을 넘는다면
         int cnt = 0;
         if (count >= baseLine) {
@@ -142,8 +139,6 @@ public class HistoryService {
             // 해당 유저가 현재 가지고 있었던 업적 가져오기
             if (currentAchievementList.isEmpty()) {
                 achievementRepository.save(achievement);
-                log.info(">>>>>>>>>>>>>>>>> achievement 처음 만들었다");
-
                 return achievement.getName();
             } else {
                 for (Achievement currentAchievement : currentAchievementList) {
@@ -155,48 +150,10 @@ public class HistoryService {
                 }
                 if (cnt == 0) {
                     achievementRepository.save(achievement);
-                    log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
-
                     return achievement.getName();
                 }
             }
         }
         return null;
     }
-
-//    public String verifyUserLoginAchievement(Map<Integer, Achievement> achievements, List<Achievement> currentAchievementList, Long count, Integer baseLine) {
-//        log.info(">>>>>>>>>>>>>>>>> [HistoryService] - verifyUserAchievement");
-//
-//        // 유저 의 count 가  baseLine 이 기준선을 넘는다면
-//        int cnt = 0;
-//        if (count > baseLine) {
-//            Achievement achievement = achievements.get(baseLine);
-//
-//            // 해당 유저가 현재 가지고 있었던 업적 가져오기
-//            if (currentAchievementList.isEmpty()) {
-//                achievementRepository.save(achievement);
-//                log.info(">>>>>>>>>>>>>>>>> achievement 처음 만들었다");
-//
-//                return achievement.getName();
-//            } else {
-//                for (Achievement currentAchievement : currentAchievementList) {
-//                    // 지금 얻으려는 업적과 같다면
-//                    if (achievement.getName().equals(currentAchievement.getName())) {
-//                        log.info(">>>>>>>>>>>>>>>>> 얻을려는 achievement : {}", achievement.getName());
-//                        log.info(">>>>>>>>>>>>>>>>> 가지고있는 achievement : {}", currentAchievement.getName());
-//                        cnt++;
-//                    }
-//                }
-//                if (cnt == 0) {
-//                    achievementRepository.save(achievement);
-//                    log.info(">>>>>>>>>>>>>>>>> achievement 또 하나 만들었다");
-//
-//                    return achievement.getName();
-//                }
-//            }
-//        }
-//        return null;
-//    }
-
-
 }

@@ -29,104 +29,78 @@ public class GameController {
     // 1. 게임시작
     @MessageMapping("/game/start")
     public void startGame(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - startGame 실행");
-        log.info(">>> 게임이 시작되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
         gameService.startGame(requestDto);
     }
 
     // 2. 방에 입장시(생성 포함) 타임리미트, 난이도 전달
     @MessageMapping("/game/gameroom-data")
     public void getGameMode(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - getGameMode 실행");
-        log.info(">>> 게임에 입장 - 게임 방 번호 : {},", requestDto.getRoomId());
         gameService.getGameMode(requestDto);
     }
 
     // 3. 최초 랜덤 제시어 하나 가져오기
     @MessageMapping("/game/ingame-data")
     public void getInGameData(GameFlowRequestDto requestDto){
-        log.info(">>>>>>>>>>>> GameController - getRandomKeyword 실행");
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
-        log.info(">>>>>> {} : 내가 누구냐",requestDto.getToken());
         gameService.getInGameData(requestDto);
     }
 
     // 4. 난이도 조절 버튼
     @MessageMapping("/game/difficulty")
     public void changeDifficulty(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - difficulty 실행");
         gameService.changeDifficulty(requestDto);
     }
 
     // 5. 시간 조절 버튼 - 30초 증가
     @MessageMapping("/game/increase-time")
     public void increaseRoundTime(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - increase-time 실행");
         gameService.changeTimeLimit(requestDto, increase);
     }
 
     // 6. 시간 조절 버튼 - 30초 감소
     @MessageMapping("/game/decrease-time")
     public void decreaseRoundTime(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - decrease-time 실행");
         gameService.changeTimeLimit(requestDto, decrease);
     }
 
     // 7. 제출 여부 확인하고 DB 저장
     @MessageMapping("/game/toggle-ready")
     public void getToggleSubmit(GameFlowRequestDto requestDto) throws IOException {
-        log.info(">>>>>>>>>>>> GameController - getToggleSubmit 실행");
-        log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
         gameService.getToggleSubmit(requestDto);
     }
 
     // 8. 단어 제출하는 라운드 끝났을 때
     @MessageMapping("/game/submit-word")
     public void postVocabulary(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - postVocabulary 실행");
-        log.info(">>>>>> {} : 라운드 시작", requestDto.getRound());
-        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
-        log.info(">>>>>> {} : 받을 제시어", requestDto.getKeyword());
         gameService.checkLastRound(requestDto, word);
     }
 
     // 9. 그림 제출하는 라운드 끝났을 때
     @MessageMapping("/game/submit-image")
     public void postImage(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - postImage 실행");
-        log.info(">>>>>> {} : 받을 제시어 순번", requestDto.getKeywordIndex());
-        log.info(">>>>>> {} : 게임 방 번호", requestDto.getRoomId());
         gameService.checkLastRound(requestDto, image);
     }
 
     // 10. 게임 결과 페이지
     @MessageMapping("/game/result")
     public void getGameFlow(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - getGameFlow 실행");
         gameService.getGameFlow(requestDto);
     }
 
     // 11. 게임 결과창 - 다음 키워드 가져오기
     @MessageMapping("/game/next-keyword-index")
     public void nextKeywordIndex(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - nextResultIndex 실행");
         gameService.getKeywordIndex(requestDto, next);
     }
 
     // 12. 게임 결과창 - 이전 키워드 가져오기
     @MessageMapping("/game/prev-keyword-index")
     public void prevKeywordIndex(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - prevResultIndex 실행");
         gameService.getKeywordIndex(requestDto, prev);
     }
 
     // 13. 게임 종료
     @MessageMapping("/game/end")
     public void endGame(GameFlowRequestDto requestDto) {
-        log.info(">>>>>>>>>>>> GameController - endGame 실행");
-        log.info(">>> 게임이 정상 종료되었습니다 - 게임 방 번호 : {},", requestDto.getRoomId());
         gameService.endGame(requestDto);
     }
 }

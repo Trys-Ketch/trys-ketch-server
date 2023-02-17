@@ -37,7 +37,6 @@ public class ImageService {
     // 이미지 좋아요
     public DataMsgResponseDto likeImage(Long imageId, HttpServletRequest request) {
 
-        log.info(">>>>>>>>>>>>>>>>> [ImageService] - likeImage");
         Claims claims = jwtUtil.authorizeToken(request);
         User user = userRepository.findByEmail(claims.get("email").toString()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
@@ -54,12 +53,10 @@ public class ImageService {
 
         if (imageLike == null) {
             // 좋아요 하지 않았으면 좋아요 추가
-            log.info(">>>>>>>>>>>>>>>>> if 문 통과");
             imageLikeRepository.save(new ImageLike(image, user));
             checkLikeMap.put("isLike",true);
             return new DataMsgResponseDto(StatusMsgCode.LIKE_IMAGE, checkLikeMap);
         }else {  // 이미 좋아요 했다면 좋아요 취소
-            log.info(">>>>>>>>>>>>>>>>> else 문 통과");
             imageLikeRepository.deleteById(imageLike.getId());
             checkLikeMap.put("isLike",false);
             return new DataMsgResponseDto(StatusMsgCode.CANCEL_LIKE, checkLikeMap);
@@ -107,8 +104,7 @@ public class ImageService {
         for (Image image : imageList) {
             if (image.getImageLikes().size() == 0) {
                 imageRepository.delete(image);
-                String path = image.getPath(); // https://beautifulseoul-bucket.s3.ap-northeast-2.amazonaws.com/static/b7375503-1c18-487b-bf61-1976e8d36584
-//                String filename = path.substring(62);
+                String path = image.getPath();
                 String filename = path.substring(path.indexOf(dirName));
                 s3Service.delete(filename);
             }

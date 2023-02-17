@@ -48,10 +48,7 @@ public class UserService {
         String userToken = request.getHeader("Authorization");                 // 유저 헤더값 추출
         String guestInfo = request.getHeader("guest");                         // 게스트 헤더값 추출
 
-        log.info(">>>>>> UserService 의 validHeader 메서드 / userToken : " + userToken);
-        log.info(">>>>>> UserService 의 validHeader 메서드 / guestInfo : " + guestInfo);
         if (userToken != null) {
-            log.info(">>>>>> UserService 의 validHeader 메서드 / userToken != null 회원 분기 시작");
             Claims claims = jwtUtil.authorizeToken(request);                        // 유저 검증
             return claims.get("email").toString();                                  // 이메일 값만을 반환
         } else {
@@ -67,8 +64,6 @@ public class UserService {
 
         // 회원, 비회원 분기처리 시작
         if (token.contains("@")) {
-            log.info(">>>>>> UserService 의 gamerInfo 메서드 / 회원 분기 시작");
-            log.info(">>>>>> UserService 의 gamerInfo 메서드 / 회원 Token : {}", token);
 
             // 문자열 안에 @ 가 있으면 request 로 받아온다. 유저가 사용한다고 판단하고 시작
             // request 를 통해 받아온 값은 email 이기 때문에 @ 을 포함하고 있다.
@@ -80,8 +75,6 @@ public class UserService {
             result.put(GamerEnum.NICK.key(), user.getNickname());                   // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.IMG.key(), user.getImgUrl());                      // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
         } else if (token.startsWith("Bearer ")) {
-            log.info(">>>>>> UserService 의 gamerInfo 메서드 / 세션 분기 시작");
-            log.info(">>>>>> UserService 의 gamerInfo 메서드 / 세션 Token : {}", token);
 
             // 3. 문자열의 시작이 Bearer 이면 문자열 형태로 받아오는 webSession 에서 사용된다고 판단하고 시작
             Claims claims = jwtUtil.authorizeSocketToken(token);                    // 검증 및 정보 가져오기
@@ -94,25 +87,18 @@ public class UserService {
             result.put(GamerEnum.NICK.key(), user.getNickname());                   // 회원 닉네임을 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.IMG.key(), user.getImgUrl());                      // 회원 img url 을 key 값으로 value 추출 해서 result 에 주입
         } else {
-            log.info(">>>>>> UserService 의 gamerInfo 메서드 / 비회원 세션 분기 시작");
             
             // 4. 위의 분기에 해당하지 않을 경우에는 guest 라고 판단하고 시작
             token = URLDecoder.decode(token, StandardCharsets.UTF_8);               // 비회원의 토큰 정보를 얻기 위해서 디코딩
-            log.info(">>>>>>> 디코딩 된 token {}", token);
 
             // 게스트의 원하는 정보를 뽑아서 사용하기 위해서 배열에다가 하나씩 넣어준다.
             // guestInfo 예시 형태 : "10001,유저닉네임,이미지 URL"
             String[] guestInfo = token.split(",");
 
-            log.info(">>>>>> UserService 의 gamerInfo 메서드 / 비회원 Token : {}", Arrays.toString(guestInfo));
-
             // 게스트 유정 Redis DB 에 존재하는지 확인(검증)
             Guest guest = guestRepository.findByGuestId(guestInfo[0]).orElseThrow(
                     () -> new CustomException(StatusMsgCode.USER_NOT_FOUND)
             );
-            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestId : " + guest.getId());
-            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestNick : " + guest.getNickname());
-            log.info(">>>>>> UserService 의 비회원 인증 결과 / guestImg : " + guest.getImgUrl());
             result.put(GamerEnum.ID.key(), guest.getGuestId());               // guest Id 를 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.NICK.key(), guest.getNickname());            // guest 닉네임을 key 값으로 value 추출 해서 result 에 주입
             result.put(GamerEnum.IMG.key(), guest.getImgUrl());               // guest img url 을 key 값으로 value 추출 해서 result 에 주입
@@ -178,7 +164,6 @@ public class UserService {
                     () -> new CustomException(StatusMsgCode.EXPIRED_REFRESH_TOKEN)
             );
 
-            log.info(">>>>>> UserService 의 issuedToken / RefreshToken 찾음");
             log.info(">>>>>> UserService 의 issuedToken / RefreshToken : {}", refreshToken.getToken());
 
             Claims claims = jwtUtil.authorizeSocketToken(refreshToken.getToken());

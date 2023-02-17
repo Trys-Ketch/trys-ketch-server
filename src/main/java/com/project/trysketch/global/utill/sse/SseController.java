@@ -30,7 +30,6 @@ public class SseController {
     @CrossOrigin
     @GetMapping(value = "/api/sse/rooms", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> connect() {
-        log.info("[SSE] - Controller 시작 / connect() 메서드 시작");
 
         // Emitter 객체 생성. 5분으로 설정
         SseEmitter emitter = new SseEmitter(5 * 60 * 1000L);
@@ -38,14 +37,10 @@ public class SseController {
 
         // SSE 연결 및 데이터 전송
         try {
-            log.info("[SSE] - Controller 의 connect() 메서드 / try 문 안의 emitter 객체 생성");
             emitter.send(SseEmitter.event()
                     .name("connect")                 // event 의 이름
                     .data(sseService.getRooms(0)));       // event 에 담을 data
-            log.info("[SSE] - Controller 의 connect() 메서드 / try 문 안의 / 생성된 emitter : {}", emitter);
         } catch (IOException e) {
-            log.info("[SSE] - Controller 의 connect() 메서드 / try 문 안의 예외 처리 터짐 / remove 실행");
-            log.info("", e);
             sseEmitters.remove(emitter);
         }
 

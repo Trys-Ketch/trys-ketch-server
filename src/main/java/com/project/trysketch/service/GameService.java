@@ -58,8 +58,6 @@ public class GameService {
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - startGame] >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>> [GameService - startGame] RoomId : {}", requestDto.getRoomId());
-        log.info(">>>>>>> [GameService - startGame] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - startGame] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
@@ -99,9 +97,8 @@ public class GameService {
         // GameRoom 의 상태를 true(게임 시작)로 변경
         gameRoom.GameRoomStatusUpdate(true);
 
-        // GameRoom의 roundMaxNum(최대 라운드)을 저장
+        // GameRoom 의 roundMaxNum(최대 라운드)을 저장
         gameRoom.RoundMaxNumUpdate(gameRoom.getGameRoomUserList().size());
-        log.info(">>>>>>>>>>>>>> [GameService - startGame 메서드, gameRoom.getRoundMaxNum()] {}", gameRoom.getRoundMaxNum());
 
         // isIngame 으로 구독하고 있는 User 에게 start 메세지 전송
         Map<String, Boolean> message = new HashMap<>();
@@ -118,9 +115,6 @@ public class GameService {
     public void getGameMode(GameFlowRequestDto requestDto) {
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
-        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 token : {}", requestDto.getRoomId(), requestDto.getToken());
-        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 검증결과 / 유저 아이디 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 / 요청한 유저의 검증결과 / 유저 닉네임 : {}", requestDto.getRoomId(), gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
@@ -134,9 +128,6 @@ public class GameService {
         message.put("difficulty", gameRoom.getDifficulty());
         message.put("timeLimit", gameRoom.getTimeLimit());
 
-        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 : 현재 게임 난이도 {}", gameRoom.getId(), gameRoom.getDifficulty());
-        log.info(">>>>>>> [GameService - getGameMode] #{}번 방 : 현재 타임 리미트 {}", gameRoom.getId(), gameRoom.getTimeLimit());
-
         sendingOperations.convertAndSend("/queue/game/gameroom-data/" + requestDto.getWebSessionId(), message);
     }
 
@@ -149,8 +140,6 @@ public class GameService {
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - endGame] >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>> [GameService - endGame] RoomId : {}", requestDto.getRoomId());
-        log.info(">>>>>>> [GameService - endGame] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - endGame] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
@@ -161,7 +150,6 @@ public class GameService {
         if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
-        log.info(">>>>>>> [GameService - endGame] gameRoom.getHostId() {}", gameRoom.getHostId());
 
         // 현재 GameRoom 이 시작되지 않았다면
         if (!gameRoom.isPlaying()) {
@@ -170,14 +158,12 @@ public class GameService {
 
         // GameRoom 에서 진행된 모든 GameFlow 삭제
         gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
-        log.info(">>>>>>> [GameService - endGame] gameFlow 다 삭제했다!");
 
         // GameRoom 에서 진행된 모든 GameFlowCount 삭제
         gameFlowCountRepository.deleteAllByRoomId(gameRoom.getId());
 
         // GameRoom 의 상태를 false 로 변경
         gameRoom.GameRoomStatusUpdate(false);
-        log.info(">>>>>>> [GameService - endGame] 방 상태 변경 false");
         gameRoom.update(0);
 
         // 현재 방의 유저 정보 가져오기
@@ -185,9 +171,6 @@ public class GameService {
 
         // 현재 방의 모든 유저의 playTime 정보 가져오기
         List<UserPlayTime> userPlayTimeList = playTimeRepository.findAllByGameRoomId(gameRoom.getId());
-        log.info(">>>>>>> [GameService - endGame] playtime 가져왔다");
-        log.info(">>>>>>> [GameService - endGame] playtime 의 size : {}", userPlayTimeList.size());
-        log.info(">>>>>>> [GameService - endGame] 현재방의 인원수 : {}", gameRoomUserList.size());
 
         // 현재 시간 저장
         LocalDateTime endTime = LocalDateTime.of(
@@ -204,7 +187,6 @@ public class GameService {
                 gameRoomUsers.update(false);
                 gameRoomUserRepository.save(gameRoomUsers);
             }
-            log.info(">>>>>>> [GameService - endGame] gameRoomUser ready 상태 false 로 변경");
             // 방장은 readyStatus 가 false 가 되는 경우가 없음 다시 true 로 만들 필요없음
 
             if (gameRoomUsers.getUserId() < 10000) {
@@ -214,8 +196,6 @@ public class GameService {
 
                         // 게임 종료시간 업데이트
                         userPlayTime.updateUserPlayTime(endTime);
-
-                        log.info(">>>>>>> [GameService - endGame] userId {}", gameRoomUsers.getUserId());
 
                         // 유저 정보 가져오기
                         User currentUser = userRepository.findById(gameRoomUsers.getUserId()).orElseThrow(
@@ -227,7 +207,6 @@ public class GameService {
 
                         // 분 단위로 변환
                         Long difference = duration.getSeconds() / 60;
-                        log.info(">>>>>>> [GameService - endGame] 실질적인 플레이타임 {}", difference);
 
                         // 해당 history 에 실질적인 플레이타임 업데이트
                         historyRepository.save(currentUser.getHistory().updatePlaytime(difference));
@@ -237,7 +216,6 @@ public class GameService {
 
                         // 해당 플레이타임 삭제
                         playTimeRepository.delete(userPlayTime);
-                        log.info(">>>>>>> [GameService - endGame] playtime 지웠다");
 
                         // 해당 history 에 실질적인 판수 업데이트
                         historyRepository.save(currentUser.getHistory().updateTrials(1L));
@@ -278,9 +256,6 @@ public class GameService {
         GameRoom gameRoom = gameRoomRepository.findById(gameRoomId).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
-        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.getId() {}", gameRoom.getId());
-        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.getTitle() {}", gameRoom.getTitle());
-        log.info(">>>>>>>>>>>>>>>>>>>>> [GameService - shutDownGame] gameRoom.isPlaying() {}", gameRoom.isPlaying());
 
         // GameRoom 에서 진행된 모든 GameFlow 삭제
         gameFlowRepository.deleteAllByRoomId(gameRoom.getId());
@@ -299,7 +274,6 @@ public class GameService {
             // 방장 제외한 모든 유저들의 ready 상태를 false 로 변경
             if (!gameRoomUsers.getUserId().equals(gameRoom.getHostId())) {
                 gameRoomUsers.update(false);
-                log.info(">>>>>>>> [GameService - shutDownGame] 유저 readyStatus 업데이트 : {}", gameRoomUsers.isReadyStatus());
                 gameRoomUserRepository.save(gameRoomUsers);
             }
             if (gameRoomUsers.getUserId() < 10000) {
@@ -307,7 +281,6 @@ public class GameService {
 
                 // 해당 플레이타임 삭제
                 playTimeRepository.delete(userPlayTime);
-                log.info(">>>>>>> [GameService - endGame] playtime 강제로 지웠다");
             }
         }
 
@@ -336,11 +309,9 @@ public class GameService {
         Map<String, Long> submitCount = new HashMap<>();          // 제출 인원 / 총 인원
         Map<Integer, String> keywordList = new HashMap<>();     // 키워드 리스트
 
-        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 현재 방의 난이도 : {}",gameRoom.getId() ,gameRoom.getDifficulty());
         // 난이도 easy 이냐 hard 이냐에 따라 가져오는 키워드가 다르다
         switch (gameRoom.getDifficulty()) {
             case "easy" -> {
-                log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / easy 난이도 키워드 생성",gameRoom.getId());
                 for (int i = 0; i < gameRoomUserList.size(); i++) {
                     // 명사 리스트중 1개
                     int nounId = (int) (Math.random() * nounSize + 1);
@@ -350,7 +321,6 @@ public class GameService {
                 }
             }
             case "hard" -> {
-                log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / hard 난이도 키워드 생성",gameRoom.getId());
                 for (int i = 0; i < gameRoomUserList.size(); i++) {
                     // 형용사 리스트중 1개
                     int adId = (int) (Math.random() * adSize + 1);
@@ -365,7 +335,6 @@ public class GameService {
             }
         }
 
-        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 키워드 전송 시작",gameRoom.getId());
         // GameRoomUser 돌면서 키워드 전송
         for (int i = 0; i < gameRoomUserList.size(); i++) {
             String webSessionId = gameRoomUserList.get(i).getWebSessionId();
@@ -378,13 +347,11 @@ public class GameService {
             sendingOperations.convertAndSend("/queue/game/ingame-data/" + webSessionId, message);
         }
 
-        log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 키워드 전송 완료",gameRoom.getId());
         Long maxCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId());
 
         submitCount.put("trueCount", 0L);
         submitCount.put("maxTrueCount", maxCount);
 
-        log.info(">>>>>>> [GameService - getInGameData] #{} 번 방의 현재 인원 : {}", requestDto.getRoomId(), maxCount);
         sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), submitCount);
 
         log.info(">>>>>>>> [GameService - getInGameData] #{}번 방 / 카운트 전송 완료",gameRoom.getId());
@@ -411,34 +378,27 @@ public class GameService {
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeTimeLimit] >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>> [GameService - changeTimeLimit] RoomId : {}", requestDto.getRoomId());
-        log.info(">>>>>>> [GameService - changeTimeLimit] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - changeTimeLimit] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
-        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
 
         // 방장이 아닐경우
         if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
-        log.info(">>>>>>> [GameService - changeTimeLimit] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
-        log.info(">>>>>>> [GameService - changeTimeLimit] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
 
         Map<String, Object> message = new HashMap<>();
         Long currentTimeLimit = gameRoom.getTimeLimit();  // 현재 방의 라운드 타임 가져오기
         Long timeInterval = 30000L;                       // 한번에 30초씩 업/다운(밀리세컨드)
 
-        log.info(">>>>>>> [GameService - changeTimeLimit] #{}번 방 / 현재 타임 리미트 : {}",gameRoom.getId() ,gameRoom.getTimeLimit());
 
         switch (changeTime) {
             case "increase-time" -> {
                 currentTimeLimit = currentTimeLimit + timeInterval; // 30초 증가
                 // 요청한 시간이 2분 30초(밀리 세컨드) 이하일 시 변경 가능하다. 즉, "2분 30초 초과" 이면 변경 불가능
                 if (currentTimeLimit <= 150000L) {
-                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 증가 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), currentTimeLimit);
                     message.put("timeLimit", currentTimeLimit);
                     gameRoom.timeLimitUpdate(currentTimeLimit);     // 변경된 타임리미트로 방 정보 변경
                     sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
@@ -450,7 +410,6 @@ public class GameService {
                 currentTimeLimit = currentTimeLimit - timeInterval;  // 30초 감소
                 // 요청한 시간이 1분(밀리 세컨드) 이상일 시 변경 가능하다. 즉, "1분 미만" 이면 변경 불가능
                 if (currentTimeLimit >= 30000L) {
-                    log.info(">>>>>>> [GameService - changeTimeLimit] 타임 리미트 감소 / #{}번 방 : 타임 리미트 {} 로 변경", requestDto.getRoomId(), currentTimeLimit);
                     message.put("timeLimit", currentTimeLimit);
                     gameRoom.timeLimitUpdate(currentTimeLimit);      // 변경된 타임리미트로 방 정보 변경
                     sendingOperations.convertAndSend("/topic/game/time-limit/" + requestDto.getRoomId(), message);
@@ -470,28 +429,19 @@ public class GameService {
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - changeDifficulty] >>>>>>>>>>>>>>>>>>>>>>>>");
         log.info(">>>>>>> [GameService - changeDifficulty] RoomId : {}", requestDto.getRoomId());
-        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - changeDifficulty] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 현재 방 정보 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAMEROOM_NOT_FOUND)
         );
-        log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 방 번호 : {}", gameRoom.getId());
-
         // 방장이 아닐경우
         if (!gameRoom.getHostId().toString().equals(gamerInfo.get(GamerEnum.ID.key()))) {
             throw new CustomException(StatusMsgCode.HOST_AUTHORIZATION_NEED);
         }
-        log.info(">>>>>>> [GameService - changeDifficulty] Repo 에서 찾은 hostID : {}", gameRoom.getHostId());
-        log.info(">>>>>>> [GameService - changeDifficulty] 토큰에서 가져온 hostID : {}", gamerInfo.get(GamerEnum.ID.key()));
 
         Map<String, Object> message = new HashMap<>();
 
-        log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 / 현재 난이도 : {}",gameRoom.getId() ,requestDto.getDifficulty());
-
         // 들어온 요청에 따라 easy 또는 hard 로 변경
-        log.info(">>>>>>> [GameService - changeDifficulty] #{}번 방 : {} 로 변경", requestDto.getRoomId(), requestDto.getDifficulty());
         message.put("difficulty", requestDto.getDifficulty());
         gameRoom.difficultyUpdate(requestDto.getDifficulty());      // gameRoom 의 난이도를 easy 로 변경
         sendingOperations.convertAndSend("/topic/game/difficulty/" + requestDto.getRoomId(), message);
@@ -506,7 +456,6 @@ public class GameService {
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
         log.info(">>>>>>> [GameService - getToggleSubmit] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
-        log.info(">>>>>>> [GameService - getToggleSubmit] 제출이면 false, 아니면 true : {}", requestDto.isSubmitted());
 
         // 현재 gameRoomUser 정보 가져오기
         GameRoomUser gameRoomUser = gameRoomUserRepository.findByWebSessionId(requestDto.getWebSessionId()).orElseThrow(
@@ -521,7 +470,6 @@ public class GameService {
                 requestDto.getRound(),
                 requestDto.getWebSessionId()
         )) {
-            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlow 가 없다면 -> gameFlow 생성 if 문 입장");
             // gameFlow 생성
             GameFlow gameFlow = buildGameFlow(requestDto, gamerInfo, gameRoomUser);
             gameFlowRepository.saveAndFlush(gameFlow);
@@ -530,7 +478,6 @@ public class GameService {
         }
         // 취소 : gameFlow 가 있다면 -> gameFlow 삭제
         else {
-            log.info(">>>>>>> [GameService - getToggleSubmit] gameFlow 가 있다면 -> gameFlow 삭제 else 문 입장");
             // gameFlow 삭제
             GameFlow gameFlow = gameFlowRepository.findByRoomIdAndRoundAndWebSessionId(
                     requestDto.getRoomId(),
@@ -541,36 +488,29 @@ public class GameService {
             // gameFlowCount 업데이트
             gameFlowCount = updateGameFlowCount(requestDto, !requestDto.isSubmitted());
         }
-        log.info(">>>>>>> [GameService - getToggleSubmit] userFlag : {}",!requestDto.isSubmitted());
 
         // 라운드 제출 인원수 카운트부
         int trueCount = gameFlowCount.getGameFlowCount();                                     // 현재 제출 한 인원
         Long nowUserCount = gameRoomUserRepository.countByGameRoomId(requestDto.getRoomId()); // 해당 방에서 제출할 총 인원
-        log.info(">>>>>>> [GameService - getToggleSubmit] nowUserCount size : {}", nowUserCount);
-        log.info(">>>>>>> [GameService - getToggleSubmit] getGameFlowCount : {}", gameFlowCount.getGameFlowCount());
-        log.info(">>>>>>> [GameService - getToggleSubmit] 중도 이탈 처리된 trueCount : {}", trueCount);
 
         // 클라이언트로 제출 인원 메시지 전송
         HashMap<String, Object> message = new HashMap<>();
         message.put("trueCount", trueCount);
         message.put("maxTrueCount", nowUserCount);
         sendingOperations.convertAndSend("/topic/game/true-count/" + requestDto.getRoomId(), message);
-        log.info(">>>>>>> [GameService - getToggleSubmit] 제출 인원 메시지 전송 성공! : {}", message);
 
         // 클라이언트로 접속한 유저의 제출 여부 메시지 전송
         Map<String, Object> submitMessage = new HashMap<>();
         submitMessage.put("isSubmitted", !requestDto.isSubmitted());
         sendingOperations.convertAndSend("/queue/game/is-submitted/" + requestDto.getWebSessionId(), submitMessage);
-        log.info(">>>>>>> [GameService - getToggleSubmit] 접속한 유저의 제출 여부 메시지 전송 성공! : {}", submitMessage);
 
         // 클라이언트로 해당 방의 전체 유저 제출 여부 메시지 전송
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendAllSubmitMessage] >>>>>>>>>>>>>>>>>>>>>>>>");
         GameFlowCount getGameFlowCount = gameFlowCountRepository.findByRoomIdAndRoundForUpdate(
                 requestDto.getRoomId(),
                 requestDto.getRound()
         );
+        log.info(">>>>>>> [GameService - getToggleSubmit] getGameFlowCount : {}", gameFlowCount.getGameFlowCount());
 
-        log.info(">>>>>>> [GameService - sendAllSubmitMessage] gameFlowCount.getGameFlowCount() : {}", gameFlowCount.getGameFlowCount());
         if (getGameFlowCount.getGameFlowCount() == nowUserCount) {
             // 이미지 라운드 인지 키워드 라운드 인지 판별 후 destination 부여
             String destination = requestDto.getImage() == null || requestDto.getImage().length() == 0 ? "word" : "image";
@@ -580,8 +520,6 @@ public class GameService {
             sendingOperations.convertAndSend("/topic/game/submit-" + destination + "/" + requestDto.getRoomId(), allSubmitMessage);
             log.info(">>>>>>> [GameService - isAllSubmit] 전체 제출 후 메시지 전송 성공! : {}", allSubmitMessage);
         }
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - sendAllSubmitMessage] 완료 >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getToggleSubmit] 완료 >>>>>>>>>>>>>>>>>>>>>>>>");
     }
 
     // 전체 제출 인원 업데이트
@@ -637,8 +575,6 @@ public class GameService {
     @Transactional
     public Image saveImage(GameFlowRequestDto requestDto) {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] 이미지 파일 있니? : {}", !requestDto.getImage().isEmpty());
-        log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - saveImage] image.length() : {}", requestDto.getImage().length());
         try {
             HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
             String nickname = gamerInfo.get(GamerEnum.NICK.key());
@@ -700,8 +636,6 @@ public class GameService {
     @Transactional
     public void getPrevious(GameFlowRequestDto requestDto, String destination) {
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getPrevious] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - getPrevious] 라운드 : {}", requestDto.getRound());
-        log.info(">>>>>>> [GameService - getPrevious] 받는사람 키워드 순번 : {}", requestDto.getKeywordIndex());
 
         // 라운드가 0인지 아닌지 검증
         if (requestDto.getRound() <= 0) {
@@ -721,36 +655,20 @@ public class GameService {
                 nextKeywordIndex).orElseThrow(
                 () -> new CustomException(StatusMsgCode.GAME_NOT_ONLINE)
         );
-        log.info(">>>>>>> [GameService - getPrevious] GameFlow -> 방 번호 : {}", gameFlow.getRoomId());
-        log.info(">>>>>>> [GameService - getPrevious] GameFlow -> 라운드 : {}", gameFlow.getRound());
-        log.info(">>>>>>> [GameService - getPrevious] GameFlow -> 새로운 키워드 번호 : {}", nextKeywordIndex);
-        log.info(">>>>>>> [GameService - getPrevious] GameFlow -> 새로운 키워드 : {}", gameFlow.getKeyword());
-        log.info(">>>>>>> [GameService - getPrevious] GameFlow -> 닉네임 : {}", gameFlow.getNickname());
-        log.info(">>>>>>> [GameService - getPrevious] GameFlow -> WebSessionId : {}", gameFlow.getWebSessionId());
-
         // 요청한 유저에게 다음 순번의 키워드 index 와 키워드 메시지 전송
         Map<String, Object> message = new HashMap<>();
         message.put("keywordIndex", nextKeywordIndex);
 
         switch (destination) {
-            case "word" -> {
-                message.put("keyword", gameFlow.getKeyword());
-                log.info(">>>>>>> [GameService - getPreviousKeyword] 메시지 : {}", message);
-            }
-            case "image" -> {
-                message.put("image", gameFlow.getImagePath());
-                log.info(">>>>>>> [GameService - getPreviousImage] 메시지 : {}", message);
-            }
-            default -> {
-                log.info(">>>>>>> [GameService - getPreviousImage] destination 잘못된 요청입니다.");
-            }
+            case "word" -> message.put("keyword", gameFlow.getKeyword());
+            case "image" -> message.put("image", gameFlow.getImagePath());
+            default -> log.info(">>>>>>> [GameService - getPreviousImage] destination 잘못된 요청입니다.");
         }
         sendingOperations.convertAndSend("/queue/game/before-" + destination + "/" + requestDto.getWebSessionId(), message);
 
         // 방장이 다음 라운드 gameFlowCount 미리 생성
         String hostWebSessionId = gameRoomUserRepository.findByUserId(gameRoom.getHostId()).getWebSessionId();
         if (requestDto.getWebSessionId().equals(hostWebSessionId)) {
-            log.info(">>>>>>> [GameService - getPrevious] 방장이 gameFlowCount 생성");
             GameFlowCount gameFlowCount = GameFlowCount.builder()
                     .gameFlowCount(0)
                     .roomId(requestDto.getRoomId())
@@ -781,8 +699,6 @@ public class GameService {
         // 유저 검증부
         HashMap<String, String> gamerInfo = userService.getGamerInfo(requestDto.getToken());
         log.info(">>>>>>>>>>>>>>>>>>>>>>>> [GameService - getGameFlow] >>>>>>>>>>>>>>>>>>>>>>>>");
-        log.info(">>>>>>> [GameService - getGameFlow] gamerInfo id : {}", gamerInfo.get(GamerEnum.ID.key()));
-        log.info(">>>>>>> [GameService - getGameFlow] gamerInfo nickname : {}", gamerInfo.get(GamerEnum.NICK.key()));
 
         // 게임룸 불러와서 거기서 roundmaxNum 가져오기
         GameRoom gameRoom = gameRoomRepository.findById(requestDto.getRoomId()).orElseThrow(
@@ -796,7 +712,6 @@ public class GameService {
         // 중첩 for 문 돌면서 round, keyword index 에 해당하는 데이터 불러오기
         for (int i = 1; i <= roundMaxNum; i++) {
             for (int j = 1; j <= roundMaxNum; j++) {
-                log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> requestDto.getRoomId() {}", requestDto.getRoomId());
 
                 // 2차원 배열의 요소에 해당하는 리스트 생성 (요소에 들어가는 것 : 닉네임, 키워드 or imagePath, 프로필사진)
                 Map<String, String> gameResultMap = new HashMap<>();
@@ -808,7 +723,7 @@ public class GameService {
                 // 2차원 배열의 요소에 닉네임 저장
                 gameResultMap.put("nickname",gameFlow.getNickname());
 
-                // 2차원 배열의 요소에 키워드 or imagePath저장
+                // 2차원 배열의 요소에 키워드 or imagePath 저장
                 if (j % 2 == 0) {
                     // 짝수 round 일 때 -> 이미지 가져오기
                     gameResultMap.put("imgPath", gameFlow.getImagePath());
@@ -825,8 +740,6 @@ public class GameService {
                 resultList[i - 1][j - 1] = gameResultMap;
             }
         }
-        log.info(">>>>>>> [GameService - getGameFlow] 2차원 배열 : {}", Arrays.deepToString(resultList));
-
         // 요청한 유저가 방장인지 아닌지 조회
         Long userId = Long.valueOf(gamerInfo.get(GamerEnum.ID.key()));
         boolean isHost = gameRoom.getHostId().equals(userId);
@@ -856,7 +769,6 @@ public class GameService {
     public void submitLeftRound(String webSessionId) {
         if (webSessionId == null) {
             // 강퇴당한 경우 webSessionId 가 null 이기 때문에 바로 리턴
-            log.info(">>>>>>> 위치 : GameRoomService 의 submitLeftRound 메서드 / 이미 강퇴된 상태면 아무런 로직 실행 없이 바로 반환");
             return;
         }
 
@@ -865,60 +777,46 @@ public class GameService {
                 () -> new CustomException(StatusMsgCode.GAME_ROOM_USER_NOT_FOUND)
         );
         boolean isPlaying = gameRoomUser.getGameRoom().isPlaying();
-        log.info(">>>>>>> [Gameservice - submitLeftRound] isPlaying {}", isPlaying);
 
-        // 게임 중일 경우에만 남은 라운드 null로 제출
-        if (!isPlaying) {
-            return;
-        } else {
-            // gameRoomUser로부터 roomId, roundMaxNum 저장
+        // 게임 중일 경우에만 남은 라운드 null 로 제출
+        if (isPlaying) {
+            // gameRoomUser 로부터 roomId, roundMaxNum 저장
             Long gameRoomId = gameRoomUser.getGameRoom().getId();
             int roundMaxNum = gameRoomUser.getGameRoom().getRoundMaxNum();
 
-            // 해당 방에서 만들어진 유저의 gameFlow에서 가장 마지막 round, keywordIndex 구하기, next keywordIndex 구하기
+            // 해당 방에서 만들어진 유저의 gameFlow 에서 가장 마지막 round, keywordIndex 구하기, next keywordIndex 구하기
             List<GameFlow> gameFlows = gameFlowRepository.findAllByWebSessionIdAndRoomId(webSessionId, gameRoomId);
-            int maxRound = 0;           // 방에서 나간 유저의 마지막 gameFlow의 round 숫자
-            int lastKeywordIndex = 0;   // 방에서 나간 유저의 마지막 gameFlow의 keywordIndex
-            int currentKeywordIndex;    // 나간시점에서 저장해야할 첫 gameFLow의 keywordIndex
+            int maxRound = 0;           // 방에서 나간 유저의 마지막 gameFlow 의 round 숫자
+            int lastKeywordIndex = 0;   // 방에서 나간 유저의 마지막 gameFlow 의 keywordIndex
+            int currentKeywordIndex;    // 나간시점에서 저장해야할 첫 gameFLow 의 keywordIndex
             for (GameFlow gameFlow : gameFlows) {
                 maxRound = (maxRound > gameFlow.getRound()) ? maxRound : gameFlow.getRound();
                 lastKeywordIndex = (maxRound > gameFlow.getRound()) ? lastKeywordIndex : gameFlow.getKeywordIndex();
             }
-//            currentKeywordIndex = lastKeywordIndex + 1;
             currentKeywordIndex = lastKeywordIndex + 1 > roundMaxNum ? (lastKeywordIndex + 1 - roundMaxNum) : lastKeywordIndex + 1;
 
             List<GameFlowCount> gameFlowCountList = gameFlowCountRepository.findAllByRoomId(gameRoomId);
             int currentRound = gameFlowCountList.size();
-            log.info(">>>>>>> [Gameservice - submitLeftRound] currentRound {}", currentRound);
             if (maxRound == currentRound) {
                 GameFlowCount gameFlowCount = gameFlowCountRepository.findByRoomIdAndRoundForUpdate(
                         gameRoomId,
                         currentRound
                 );
-                log.info(">>>>>>> [Gameservice - submitLeftRound] gameFlowCount.getRound() {}", gameFlowCount.getRound());
                 gameFlowCount.update(-1);
             }
 
 
-            // 첫 라운드에서 방 나가서 유저의 gameFlow가 하나도 없는 경우
+            // 첫 라운드에서 방 나가서 유저의 gameFlow 가 하나도 없는 경우
             int count = 0;
             if (lastKeywordIndex == 0) {
-                // 첫 라운드에서 gameRoomUserList의 id 순서대로 keywordIndex 오름차순으로 받으므로 이를 계산
+                // 첫 라운드에서 gameRoomUserList 의 id 순서대로 keywordIndex 오름차순으로 받으므로 이를 계산
                 List<GameRoomUser> gameRoomUserList = gameRoomUserRepository.findAllByGameRoomId(gameRoomId);
-                log.info(">>>>>>> [Gameservice - submitLeftRound] gameRoomUserList.size() {}", gameRoomUserList.size());
                 for (GameRoomUser roomUser : gameRoomUserList) {
-                    log.info(">>>>>>> [Gameservice - submitLeftRound] roomUser.getId() {}", roomUser.getId());
 
                     count = (gameRoomUser.getId() >= roomUser.getId()) ? count + 1 : count;
                     currentKeywordIndex = count;
-                    log.info(">>>>>>> [Gameservice - submitLeftRound] count {}", count);
                 }
             }
-            log.info(">>>>>>> [Gameservice - submitLeftRound] lastKeywordIndex {}", lastKeywordIndex);
-            log.info(">>>>>>> [Gameservice - submitLeftRound] maxRound {}", maxRound);
-            log.info(">>>>>>> [Gameservice - submitLeftRound] roundMaxNum {}", roundMaxNum);
-            log.info(">>>>>>> [Gameservice - submitLeftRound] currentKeywordIndex {}", currentKeywordIndex);
-
 
             // 남은 라운드부터 마지막 라운드까지 null 로 저장하기
             for (int i = maxRound + 1, j = currentKeywordIndex; i <= roundMaxNum; i++, j++) {

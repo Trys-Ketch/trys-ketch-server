@@ -14,7 +14,6 @@ public class UserRequestDto {
 
     @Pattern(regexp = "^[a-zA-Z0-9가-힣 ]{2,12}$", message = "닉네임은 2자이상, 12자이하이어야하며 한글, 대소문자, 숫자, 띄어쓰기만 가능합니다.")
     private String nickname;
-
     private String imgUrl;
 
 }

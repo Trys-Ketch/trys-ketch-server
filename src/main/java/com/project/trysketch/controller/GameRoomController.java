@@ -34,7 +34,6 @@ public class GameRoomController {
     // 게임 방 상세 조회
     @GetMapping("/room/{id}")
     public ResponseEntity<DataMsgResponseDto> getGameRoom(@PathVariable Long id, HttpServletRequest request) {
-        log.info(">>> 방 상세조회 - 방 id : {}, 유저 id : {}", id, request);
         return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK, gameRoomService.getGameRoom(id, request)));
     }
 
@@ -42,7 +41,6 @@ public class GameRoomController {
     @PostMapping("/room")
     public ResponseEntity<DataMsgResponseDto> createGameRoom(@RequestBody @Valid GameRoomRequestDto gameRoomRequestDto,
                                                              HttpServletRequest request) {
-        log.info(">>> 메인페이지 이동 - 방 이름 : {},", gameRoomRequestDto.getTitle());
         return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK,
                 gameRoomService.createGameRoom(gameRoomRequestDto, request)));
     }
@@ -50,7 +48,6 @@ public class GameRoomController {
     // 게임 방 입장
     @PostMapping("/room/enter/{randomCode}")
     public ResponseEntity<DataMsgResponseDto> enterGameRoom(@PathVariable String randomCode, HttpServletRequest request) {
-        log.info(">>> 방 입장 - 방 randomCode : {}, 유저 id : {}", randomCode, request);
         return ResponseEntity.ok(new DataMsgResponseDto(StatusMsgCode.OK, gameRoomService.enterGameRoom(randomCode, request)));
     }
 }
