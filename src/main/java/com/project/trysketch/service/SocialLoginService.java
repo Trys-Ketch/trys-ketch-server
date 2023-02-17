@@ -5,24 +5,29 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.dto.SocialLoginVendor;
 import com.project.trysketch.dto.request.OAuthRequestDto;
-import com.project.trysketch.entity.History;
-import com.project.trysketch.entity.User;
 import com.project.trysketch.dto.response.DataMsgResponseDto;
+import com.project.trysketch.entity.History;
+import com.project.trysketch.global.jwt.RefreshToken;
+import com.project.trysketch.entity.User;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.repository.HistoryRepository;
+import com.project.trysketch.repository.RefreshTokenRepository;
 import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.List;
@@ -43,8 +48,9 @@ public class SocialLoginService {
     private final HistoryService historyService;
     private final JwtUtil jwtUtil;
     private final SocialLoginVendor socialLoginVendor;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public DataMsgResponseDto socialLogin(String vendor, String code, String state, HttpServletResponse response) throws JsonProcessingException {
+    public DataMsgResponseDto socialLogin(String vendor, String code, String state, HttpServletResponse response, HttpServletRequest request) throws JsonProcessingException {
 
         String randomNickname = userService.getRandomNick();
 
@@ -62,9 +68,55 @@ public class SocialLoginService {
 
         List<String> achievementNameList = historyService.getTrophyOfVisit(socialUser);
 
-        // JWT 토큰 반환
-        String createToken = jwtUtil.createToken(socialUser.getEmail(), socialUser.getNickname());
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, createToken);
+        // AccessToken 토큰 반환 및 헤더에 추가
+        String createToken = jwtUtil.createAcToken(socialUser.getEmail(), socialUser.getNickname());
+        response.addHeader(JwtUtil.ACCESS_TOKEN_HEADER, createToken);
+
+        Cookie[] cookies = request.getCookies();
+        boolean checkToken = false;
+
+        // 쿠키 중 RefreshToken 가져오기 존재하면 삭제
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                String name = cookie.getName();
+                String value = cookie.getValue();
+                if (name.equals("RefreshToken")) {
+                    log.info(">>>>> SocialLoginService 의 socialLogin 메서드 / 기존의 RefreshToken 발견 DB 삭제 진행");
+                    checkToken = true;
+                    refreshTokenRepository.deleteById(value);
+                    break;
+                }
+            }
+        }
+
+        // Email 암호화 및 RefreshToken 생성
+        String encodedEmail = passwordEncoder.encode(socialUser.getEmail());
+        String rfToken = jwtUtil.createRfToken(socialUser.getEmail(), socialUser.getNickname());
+
+        // Redis 에 key 로 암호화된 이메일, value 로 토큰을 저장
+        RefreshToken newRefreshToken = new RefreshToken(encodedEmail, rfToken);
+        refreshTokenRepository.save(newRefreshToken);
+
+        log.info(">>>>> SocialLoginService 의 socialLogin 메서드 / 만들어진 RefreshToken : {}", rfToken);
+
+        // 기존에 사용하던 set-cookie 에서는 sameSite 를 지원하지 않는다. 따라서 ResponseCookie 를 사용
+        ResponseCookie rfCookie = ResponseCookie.from(JwtUtil.REFRESH_TOKEN_HEADER, encodedEmail)
+                .path("/")
+                .domain("trys-ketch.com")
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(7 * 24 * 60 * 60)       // 7일
+                .build();
+        if (checkToken) {
+            log.info(">>>>> SocialLoginService 의 socialLogin 메서드 / setHeader 진행");
+            response.setHeader("Set-Cookie", rfCookie.toString());
+        } else {
+            log.info(">>>>> SocialLoginService 의 socialLogin 메서드 / addHeader 진행");
+            response.addHeader("Set-Cookie", rfCookie.toString());
+        }
+
+        log.info(">>>>> SocialLoginService 의 socialLogin 메서드 / 만들어진 AccessToken : {}", createToken);
+
         if (achievementNameList.size() == 0) {
             return new DataMsgResponseDto(StatusMsgCode.LOG_IN);
         } else {
