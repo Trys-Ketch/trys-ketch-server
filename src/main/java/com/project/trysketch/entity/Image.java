@@ -1,6 +1,5 @@
 package com.project.trysketch.entity;
 
-import com.project.trysketch.entity.ImageLike;
 import com.project.trysketch.global.utill.Timestamped;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,19 +16,18 @@ import java.util.List;
 public class Image extends Timestamped {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;                     // id
+    private Long id;
 
-    @Column(nullable = false)            // image 경로
+    @Column(nullable = false)                                 // image URL
     private String path;
 
-    @Column(nullable = false)            // 그린사람의 닉네임
+    @Column(nullable = false)                                 // 그린사람의 닉네임
     private String painter;
 
-    @OneToMany(mappedBy = "image")
+    @OneToMany(mappedBy = "image", fetch = FetchType.EAGER)   // 이미지에 눌린 좋아요
     private List<ImageLike> imageLikes = new ArrayList<>();
 
 
-    //생성자
     public Image(String path, String painter) {
         this.path = path;
         this.painter = painter;

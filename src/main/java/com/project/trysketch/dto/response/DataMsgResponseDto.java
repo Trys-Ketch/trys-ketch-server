@@ -1,4 +1,4 @@
-package com.project.trysketch.global.dto;
+package com.project.trysketch.dto.response;
 
 import com.project.trysketch.global.exception.StatusMsgCode;
 import lombok.Getter;
@@ -22,5 +22,10 @@ public class DataMsgResponseDto {
     public DataMsgResponseDto(StatusMsgCode statusMsgCode) {
         this.statusCode = statusMsgCode.getHttpStatus().value();
         this.message = statusMsgCode.getDetail();
+    }
+
+    public DataMsgResponseDto(int statusCode, String message) {
+        this.statusCode = statusCode;
+        this.message = message;
     }
 }

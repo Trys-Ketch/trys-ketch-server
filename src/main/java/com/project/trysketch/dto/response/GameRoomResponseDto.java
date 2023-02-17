@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
-// 1. 기능   : 게임 방 response용 dto
+// 1. 기능   : 게임 방 response 용 DTO
 // 2. 작성자 : 김재영
 @Getter
 @NoArgsConstructor

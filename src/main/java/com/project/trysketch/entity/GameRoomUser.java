@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 
 // 1. 기능   : 방에 들어가있는 유저 엔티티
 // 2. 작성자 : 김재영, 서혁수
@@ -23,35 +20,33 @@ public class GameRoomUser {
 
     @JoinColumn(name = "gameroom_id")
     @ManyToOne
-    private GameRoom gameRoom;
+    private GameRoom gameRoom;      // 게임방
 
-//    @ManyToOne
-    @Column(name = "user_id")
-    private Long userId;
+    @Column(nullable = false)
+    private Long userId;            // 유저 ID
 
-    @Column(name = "nickname")
-    private String nickname;
-
-    @Column(name = "web_session_id")
-    private String webSessionId;
-
-    @Column(name = "ready_status")
-    private boolean readyStatus;
+    @Column(nullable = false)
+    private String nickname;        // 유저 닉네임
 
     @Column
-    private String imgUrl;
+    private String webSessionId;    // webSessionId
 
-//    @OneToOne(mappedBy = "gameRoomUser") 원래코드
-    @OneToOne(mappedBy = "gameRoomUser", cascade = CascadeType.REMOVE) // 1.31
-    private UserPlayTime userPlayTime;
-    
+    @Column(nullable = false)
+    private boolean readyStatus;    // 레디상태
+
+    @Column(nullable = false)
+    private String imgUrl;          // 유저 프로필사진 URL
+
+    @OneToOne(mappedBy = "gameRoomUser", cascade = CascadeType.REMOVE)
+    private UserPlayTime userPlayTime;      // 해당 유저의 플레이타임
+
     public void update(boolean readyStatus) {
         this.readyStatus = readyStatus;
     }
 
-    public void update(boolean readyStatus, String userUUID) {
+    public void update(boolean readyStatus, String webSessionId) {
         this.readyStatus = readyStatus;
-        this.webSessionId = userUUID;
+        this.webSessionId = webSessionId;
     }
 
 }

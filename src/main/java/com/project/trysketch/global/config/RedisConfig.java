@@ -16,7 +16,6 @@ import org.springframework.data.redis.core.RedisKeyValueAdapter.ShadowCopy;
 import org.springframework.data.redis.core.RedisKeyValueAdapter.EnableKeyspaceEvents;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
@@ -40,29 +39,6 @@ public class RedisConfig {
     @Value("${spring.redis.password}")
     private String password;                    // Password 설정
 
-    // 단일 Topic 사용을 위한 Bean 설정
-//    @Bean
-//    public ChannelTopic channelTopic() {
-//        return new ChannelTopic("chatroom");
-//    }
-//
-//    // Redis 에 발행(publish)된 메시지 처리를 위한 리스너 설정
-//    @Bean
-//    public RedisMessageListenerContainer redisMessageListener(RedisConnectionFactory connectionFactory,
-//                                                              MessageListenerAdapter listenerAdapter,
-//                                                              ChannelTopic channelTopic) {
-//        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-//        container.setConnectionFactory(connectionFactory);
-//        container.addMessageListener(listenerAdapter, channelTopic);
-//        return container;
-//    }
-//
-//    // 실제 메시지를 처리하는 subscriber 설정 추가
-//    @Bean
-//    public MessageListenerAdapter listenerAdapter(ChatSubscriber subscriber) {
-//        return new MessageListenerAdapter(subscriber, "sendMessage");
-//    }
-
     // Redis 와 연결
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -85,14 +61,7 @@ public class RedisConfig {
         // Serializer(직렬화) Spring 과 Redis 간 데이터 직, 역직렬화시 사용하는 방식이 JDK 직렬화 방식이다
         // redis-cli 를 통해 직접 데이터를 보려고 할 때 알아볼 수 있는 형태로 출력하기 위해서
         redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
-
-        // Hash 를 사용할 경우 시리얼라이저
-//        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-//        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
-
-        // 모든 경우
-        // redisTemplate.setDefaultSerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new StringRedisSerializer());
 
         return redisTemplate;
     }
@@ -116,5 +85,4 @@ public class RedisConfig {
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .build();
     }
-
 }
