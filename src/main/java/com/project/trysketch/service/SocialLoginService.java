@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.trysketch.dto.SocialLoginVendor;
 import com.project.trysketch.dto.request.OAuthRequestDto;
-import com.project.trysketch.entity.History;
-import com.project.trysketch.entity.RefreshToken;
-import com.project.trysketch.entity.User;
 import com.project.trysketch.dto.response.DataMsgResponseDto;
+import com.project.trysketch.entity.History;
+import com.project.trysketch.global.jwt.RefreshToken;
+import com.project.trysketch.entity.User;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
 import com.project.trysketch.repository.HistoryRepository;
@@ -16,7 +16,11 @@ import com.project.trysketch.repository.RefreshTokenRepository;
 import com.project.trysketch.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -99,7 +103,6 @@ public class SocialLoginService {
         ResponseCookie rfCookie = ResponseCookie.from(JwtUtil.REFRESH_TOKEN_HEADER, encodedEmail)
                 .path("/")
                 .domain("trys-ketch.com")
-                .sameSite("None")
                 .httpOnly(true)
                 .secure(true)
                 .maxAge(7 * 24 * 60 * 60)       // 7일

@@ -1,13 +1,20 @@
 package com.project.trysketch.service;
 
-import com.project.trysketch.entity.*;
 import com.project.trysketch.dto.GamerEnum;
-import com.project.trysketch.repository.*;
+import com.project.trysketch.entity.Guest;
+import com.project.trysketch.entity.RandomNick;
+import com.project.trysketch.global.jwt.RefreshToken;
+import com.project.trysketch.entity.ThumbImg;
+import com.project.trysketch.entity.User;
 import com.project.trysketch.global.exception.CustomException;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import com.project.trysketch.global.jwt.JwtUtil;
+import com.project.trysketch.repository.GuestRepository;
+import com.project.trysketch.repository.RandomNickRepository;
+import com.project.trysketch.repository.RefreshTokenRepository;
+import com.project.trysketch.repository.ThumbImgRepository;
+import com.project.trysketch.repository.UserRepository;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
@@ -31,7 +38,6 @@ public class UserService {
     private final GuestRepository guestRepository;
     private final ThumbImgRepository thumbImgRepository;
     private final JwtUtil jwtUtil;
-    private final GuestService guestService;
     private final RefreshTokenRepository refreshTokenRepository;
     private static int IMG_MAXMUM = 3;
     private static int IMG_NUM = 0;
@@ -200,7 +206,6 @@ public class UserService {
                     ResponseCookie rfCookie = ResponseCookie.from(JwtUtil.REFRESH_TOKEN_HEADER, value)
                             .path("/")
                             .domain("trys-ketch.com")
-                            .sameSite("None")
                             .httpOnly(true)
                             .secure(true)
                             .maxAge(0)

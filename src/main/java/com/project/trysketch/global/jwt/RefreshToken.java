@@ -1,4 +1,4 @@
-package com.project.trysketch.entity;
+package com.project.trysketch.global.jwt;
 
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
