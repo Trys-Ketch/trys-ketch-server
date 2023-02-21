@@ -1,4 +1,8 @@
+
+
+
 <div align="center">
+<img src="https://user-images.githubusercontent.com/97332044/220380338-23dbff5d-2e21-4582-aa49-3eb06076baed.png" width="100%" height="50%">
     <h1>눈치 코치 캐치 : TRY'S KETCH !</h1>
 </div>
 
