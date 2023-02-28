@@ -1,5 +1,6 @@
 package com.project.trysketch.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.project.trysketch.global.exception.StatusMsgCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,12 +9,13 @@ import lombok.NoArgsConstructor;
 // 2. 작성자 : 김재영
 @Getter
 @NoArgsConstructor
-public class DataMsgResponseDto {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class DataMsgResponseDto<T> {
     private int statusCode;
     private String message;
-    private Object data;
+    private T data;
 
-    public DataMsgResponseDto(StatusMsgCode statusMsgCode, Object data) {
+    public DataMsgResponseDto(StatusMsgCode statusMsgCode, T data) {
         this.statusCode = statusMsgCode.getHttpStatus().value();
         this.message = statusMsgCode.getDetail();
         this.data = data;
