@@ -43,7 +43,7 @@
 <br/>
 
 ### 👉🏻 [게임 한판 하러 가시죠 !](https://trys-ketch.com/)
-### 👉🏻 [눈코캐 팀 노션은 여기입니다 !](https://www.notion.so/eunsolan/TRY-S-KETCH-23948fe736a44c8fbb75f7846c8f3eac)
+### 👉🏻 [눈코캐 팀 노션은 여기입니다 !](https://synuns.notion.site/TRY-S-KETCH-b57e17c3e7644be3a7ab9355d8d65212)
 ### 🎬 **[시연 영상 한번 보고 가시죠 !](https://youtu.be/pD0Y13e36Ro)**
 
 <br/>
